@@ -3,7 +3,6 @@
 //
 
 #include "Log.hpp"
-#include "../Thread.hpp"
 
 namespace Base {
 
@@ -17,14 +16,14 @@ namespace Base {
                 Queue *target = nullptr;
                 while (!stop) {
                     {
-                        std::unique_lock l(IO_lock);
+                        Lock l(IO_lock);
                         clear_empty_buffer();
                         put_to_empty_buffer(target);
-                        if (condition.wait_for(l, FLUSH_TIME) == std::cv_status::no_timeout) {
+                        if (condition.wait_for(l, FLUSH_TIME)) {
                             target = full_queue;
                             full_queue = nullptr;
                         } else {
-                            if (!l.owns_lock()) l.lock();
+                            if (!l.is_owner()) l.lock();
                             if (full_queue) {
                                 target = full_queue;
                                 full_queue = nullptr;
@@ -54,7 +53,7 @@ namespace Base {
         Log_basic::~Log_basic() {
             stop = true;
             condition.notify_all();
-            unique_lock l(IO_lock);
+            Lock l(IO_lock);
             condition.wait(l, [this] { return !stop; });
             clear_empty_buffer();
         }
@@ -132,9 +131,9 @@ namespace Base {
     }
 
 
-    void Log::push(int rank, const char *data, size_t size) {
+    void Log::push(int rank, const char *data, uint64 size) {
         auto time = get_time_now();
-        unique_lock l(basic->IO_lock);
+        Lock l(basic->IO_lock);
         if (!basic->current_queue) {
             basic->get_new_buffer();
             basic->current_queue->buffer.append(rank, time, data, size);

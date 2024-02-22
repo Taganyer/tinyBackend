@@ -2,8 +2,8 @@
 // Created by taganyer on 24-2-13.
 //
 
-#ifndef TEST_TIMER_HPP
-#define TEST_TIMER_HPP
+#ifndef BASE_TIMER_HPP
+#define BASE_TIMER_HPP
 
 #include <ctime>
 #include <functional>
@@ -36,6 +36,13 @@ namespace Base {
         [[nodiscard]] double to_ms() const { return (double) nanoseconds / MS_; };
 
         [[nodiscard]] double to_us() const { return (double) nanoseconds / US_; };
+
+        [[nodiscard]] timespec to_timespec() const {
+            struct timespec time{};
+            time.tv_sec = nanoseconds / SEC_;
+            time.tv_nsec = nanoseconds % SEC_;
+            return time;
+        };
 
     };
 
@@ -135,4 +142,4 @@ namespace Base {
 }
 
 
-#endif //TEST_TIMER_HPP
+#endif //BASE_TIMER_HPP

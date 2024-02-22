@@ -2,8 +2,8 @@
 // Created by taganyer on 24-2-12.
 //
 
-#ifndef TEST_TIMESTAMP_HPP
-#define TEST_TIMESTAMP_HPP
+#ifndef BASE_TIMESTAMP_HPP
+#define BASE_TIMESTAMP_HPP
 
 #include "../Detail/config.hpp"
 #include <ctime>
@@ -51,6 +51,10 @@ namespace Base {
         [[nodiscard]] Time get_time(bool UTC = false) const;
 
         [[nodiscard]] int64 us_since_epoch() const { return _us_SE; };
+
+        [[nodiscard]] timespec to_timespec() const {
+            return {_us_SE / coefficient, _us_SE % coefficient};
+        };
 
     private:
 
@@ -109,4 +113,4 @@ namespace Base {
 }
 
 
-#endif //TEST_TIMESTAMP_HPP
+#endif //BASE_TIMESTAMP_HPP

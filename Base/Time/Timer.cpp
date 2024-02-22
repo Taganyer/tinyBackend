@@ -45,10 +45,7 @@ namespace Base {
 
     void Timer::start() {
         struct itimerspec timeout{};
-        int64 sec = _time.nanoseconds / SEC_;
-        int64 ns = _time.nanoseconds % SEC_;
-        timeout.it_value.tv_sec = timeout.it_interval.tv_sec = sec;
-        timeout.it_value.tv_nsec = timeout.it_interval.tv_nsec = ns;
+        timeout.it_value = timeout.it_interval = _time.to_timespec();
 
         if (fd == -1) {
             fd = timerfd_create(CLOCK_REALTIME, 0);

@@ -2,22 +2,20 @@
 // Created by taganyer on 23-12-27.
 //
 
-#ifndef TEST_LOG_CONFIG_HPP
-#define TEST_LOG_CONFIG_HPP
-
+#ifndef BASE_LOG_CONFIG_HPP
+#define BASE_LOG_CONFIG_HPP
 
 #include <fstream>
-#include <condition_variable>
+#include "../Time/Timer.hpp"
 #include "../Time/TimeStamp.hpp"
 
 
 namespace Base::Detail {
 
-    constexpr size_t BUF_SIZE = 2 << 20;
-    constexpr size_t FILE_RESTRICT = 2 << 30;
+    constexpr uint64 BUF_SIZE = 2 << 20;
+    constexpr uint64 FILE_RESTRICT = 2 << 30;
 
-    using namespace std::chrono_literals;
-    constexpr std::chrono::milliseconds FLUSH_TIME = 2s;
+    constexpr int64 FLUSH_TIME = 2 * SEC_;
 
     enum {
         INFO,
@@ -36,7 +34,7 @@ namespace Base::Detail {
 
     class Log_buffer {
     public:
-        bool append(int rank, const Time &time, const char *data, size_t size) {
+        bool append(int rank, const Time &time, const char *data, uint64 size) {
             if (BUF_SIZE - index <= size + TimeStamp::Time_us_format_len + 7) return false;
             format(buffer + index, time);
             buffer[index += TimeStamp::Time_us_format_len] = ' ';
@@ -56,13 +54,13 @@ namespace Base::Detail {
             return buffer;
         };
 
-        [[nodiscard]] size_t size() const { return index; }
+        [[nodiscard]] uint64 size() const { return index; }
 
         ~Log_buffer() { delete[] buffer; };
 
     private:
         char *buffer = new char[BUF_SIZE + 1];
-        size_t index = 0;
+        uint64 index = 0;
 
     };
 
@@ -83,4 +81,4 @@ namespace Base::Detail {
 }
 
 
-#endif //TEST_LOG_CONFIG_HPP
+#endif //BASE_LOG_CONFIG_HPP

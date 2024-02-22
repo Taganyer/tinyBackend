@@ -2,23 +2,22 @@
 // Created by taganyer on 23-12-27.
 //
 
-#ifndef TEST_LOG_HPP
-#define TEST_LOG_HPP
+#ifndef BASE_LOG_HPP
+#define BASE_LOG_HPP
 
+#include <memory>
 #include "Log_config.hpp"
+#include "../Thread.hpp"
+#include "../Condition.hpp"
 
 namespace Base {
 
-    using std::mutex;
-    using std::unique_lock;
-    using std::condition_variable;
-    using namespace std::chrono_literals;
 
     namespace Detail {
         class Log_basic {
         public:
-            std::mutex IO_lock;
-            std::condition_variable condition;
+            Mutex IO_lock;
+            Condition condition;
             bool stop = false;
 
             struct Queue {
@@ -63,7 +62,7 @@ namespace Base {
         Log(std::string dictionary_path) :
                 basic(std::make_shared<Detail::Log_basic>(std::move(dictionary_path))) {};
 
-        void push(int rank, const char *data, size_t size);
+        void push(int rank, const char *data, uint64 size);
 
     private:
 
@@ -73,4 +72,4 @@ namespace Base {
 
 }
 
-#endif //TEST_LOG_HPP
+#endif //BASE_LOG_HPP

@@ -2,10 +2,11 @@
 // Created by taganyer on 24-2-6.
 //
 
-#ifndef TEST_THREADPOOL_HPP
-#define TEST_THREADPOOL_HPP
+#ifndef BASE_THREADPOOL_HPP
+#define BASE_THREADPOOL_HPP
 
 #include "Detail/Pool.hpp"
+#include "Exception.hpp"
 #include <functional>
 #include <future>
 
@@ -246,4 +247,4 @@ namespace Base {
     }
 }
 
-#endif //TEST_THREADPOOL_HPP
+#endif //BASE_THREADPOOL_HPP

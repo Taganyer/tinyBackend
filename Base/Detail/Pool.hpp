@@ -5,11 +5,9 @@
 #ifndef BASE_POOL_HPP
 #define BASE_POOL_HPP
 
-#include "config.hpp"
 #include "../Thread.hpp"
-#include "../Exception.hpp"
-#include <mutex>
-#include <condition_variable>
+#include "../Condition.hpp"
+#include <atomic>
 
 namespace Base::Detail {
 
@@ -17,9 +15,9 @@ namespace Base::Detail {
         using A_Size = std::atomic<uint32>;
         using Size = uint32;
         using State = std::atomic<uint8>;
-        using Mutex = std::mutex;
-        using Condition = std::condition_variable;
-        using Lock = std::unique_lock<Mutex>;
+        using Mutex = Base::Mutex;
+        using Condition = Base::Condition;
+        using Lock = Base::Lock<Mutex>;
 
         enum { RUNNING = 0, RESUMING = 2, STOP = 4, SHUTTING = 8, TERMINATED = 16 };
 
@@ -109,9 +107,10 @@ namespace Base::Detail {
     void Pool<Creator>::create_threads(Pool::Size size) {
         Size record = data->core_threads.load() + size;
         for (Size i = 0; i < size; ++i) {
-            Thread thread(string("threadPool"), [this] {
+            Thread thread([this] {
                 Creator item = creator.create_thread();
                 data->core_threads.fetch_add(1);
+                Detail::this_thread_name.append("(pool)");
                 Task *task;
                 while (true) {
                     {

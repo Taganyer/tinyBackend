@@ -19,7 +19,7 @@ namespace Base::Detail {
 
     std::string get_thread_name() {
         if (main_thread_id != thread_tid) {
-            std::string name("Thread");
+            std::string name("T_");
             name += std::to_string(thread_tid);
             return name;
         } else {

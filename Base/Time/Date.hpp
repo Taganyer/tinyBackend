@@ -2,8 +2,8 @@
 // Created by taganyer on 24-2-12.
 //
 
-#ifndef TEST_DATE_HPP
-#define TEST_DATE_HPP
+#ifndef BASE_DATE_HPP
+#define BASE_DATE_HPP
 
 #include "../Detail/config.hpp"
 #include <string>
@@ -104,4 +104,4 @@ namespace Base {
 
 }
 
-#endif //TEST_DATE_HPP
+#endif //BASE_DATE_HPP

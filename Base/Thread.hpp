@@ -6,19 +6,18 @@
 #define BASE_THREAD_HPP
 
 #include "Detail/CurrentThread.hpp"
+#include "Detail/NoCopy.hpp"
 #include <atomic>
 #include <functional>
 
 
 namespace Base {
 
-    class Thread {
+    class Thread : NoCopy {
     public:
         using Thread_fun = std::function<void()>;
 
         using Id = pthread_t;
-
-        Thread(const Thread &) = delete;
 
         Thread(Thread &&other) noexcept;
 

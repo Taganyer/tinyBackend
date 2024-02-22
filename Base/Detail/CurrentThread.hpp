@@ -2,10 +2,8 @@
 // Created by taganyer on 24-2-20.
 //
 
-#ifndef TEST_CURRENTTHREAD_HPP
-#define TEST_CURRENTTHREAD_HPP
-
-#endif //TEST_CURRENTTHREAD_HPP
+#ifndef BASE_CURRENTTHREAD_HPP
+#define BASE_CURRENTTHREAD_HPP
 
 #include "config.hpp"
 #include <string>
@@ -37,3 +35,5 @@ namespace Base {
     inline string &thread_name() { return Detail::this_thread_name; }
 
 }
+
+#endif // BASE_CURRENTTHREAD_HPP
