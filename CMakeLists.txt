@@ -27,7 +27,8 @@ add_executable(tinyBackend main.cpp
         Base/Log/Log.hpp
         Base/Mutex.hpp
         Base/Detail/NoCopy.hpp
-        Base/Condition.hpp)
+        Base/Condition.hpp
+        Base/BlockQueue.hpp)
 
 target_link_libraries(tinyBackend mysqlclient)
 

@@ -17,6 +17,10 @@ namespace Base {
             check(pthread_cond_init(&_cond, nullptr))
         };
 
+        Condition(Condition &&other) noexcept: _cond(other._cond) {
+            other._cond = {0};
+        };
+
         ~Condition() {
             check(pthread_cond_destroy(&_cond))
         };
@@ -49,8 +53,7 @@ namespace Base {
 
         template<typename Mutex, typename Fun>
         bool wait_for(Lock<Mutex> &lock, Time_difference ns, Fun fun) {
-            auto diff = ns + Unix_to_now();
-            auto time = diff.to_timespec();
+            auto time = (ns + Unix_to_now()).to_timespec();
             while (!fun()) {
                 if (!wait_until(lock, time))
                     return fun();
@@ -81,7 +84,7 @@ namespace Base {
         bool wait_until(Lock<Mutex> &lock, const timespec &time) {
             lock._lock.owner_thread = 0;
             int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &time);
-            if (t == 0) lock._lock.owner_thread = tid();
+            lock._lock.owner_thread = tid();
             return t == 0;
         }
 

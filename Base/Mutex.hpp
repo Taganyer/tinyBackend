@@ -49,18 +49,6 @@ namespace Base {
             _lock.unlock();
         };
 
-        void lock() {
-            _lock.lock();
-        };
-
-        void unlock() {
-            _lock.unlock();
-        };
-
-        bool is_owner() {
-            return _lock.is_owner();
-        };
-
     private:
 
         Mutex &_lock;
@@ -99,7 +87,7 @@ namespace Base {
         bool try_lock() {
             int flag = pthread_mutex_trylock(&_lock);
             if (flag == 0) owner_thread = tid();
-            return flag;
+            return flag == 0;
         };
 
         void unlock() {
@@ -158,7 +146,7 @@ namespace Base {
         bool try_lock() {
             int flag = pthread_spin_trylock(&_lock);
             if (flag == 0) owner_thread = tid();
-            return flag;
+            return flag == 0;
         };
 
         void unlock() {

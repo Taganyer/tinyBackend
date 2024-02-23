@@ -23,7 +23,6 @@ namespace Base {
                             target = full_queue;
                             full_queue = nullptr;
                         } else {
-                            if (!l.is_owner()) l.lock();
                             if (full_queue) {
                                 target = full_queue;
                                 full_queue = nullptr;
