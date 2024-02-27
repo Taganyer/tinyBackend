@@ -61,30 +61,24 @@ namespace Base {
 
     };
 
-    inline bool operator<(const Date &left, const Date &right) {
-        return left.get_julianDayNumber() < right.get_julianDayNumber();
+#define Date_operator(symbol) \
+    inline bool operator symbol(const Date &left, const Date &right) { \
+        return left.get_julianDayNumber() < right.get_julianDayNumber(); \
     }
 
-    inline bool operator<=(const Date &left, const Date &right) {
-        return left.get_julianDayNumber() <= right.get_julianDayNumber();
-    }
+    Date_operator(<)
 
-    inline bool operator>(const Date &left, const Date &right) {
-        return left.get_julianDayNumber() > right.get_julianDayNumber();
-    }
+    Date_operator(<=)
 
+    Date_operator(>)
 
-    inline bool operator>=(const Date &left, const Date &right) {
-        return left.get_julianDayNumber() >= right.get_julianDayNumber();
-    }
+    Date_operator(>=)
 
-    inline bool operator==(const Date &left, const Date &right) {
-        return left.get_julianDayNumber() == right.get_julianDayNumber();
-    }
+    Date_operator(==)
 
-    inline bool operator!=(const Date &left, const Date &right) {
-        return left.get_julianDayNumber() != right.get_julianDayNumber();
-    }
+    Date_operator(!=)
+
+#undef Date_operator
 
     inline int32 operator-(const Date &left, const Date &right) {
         return left.get_julianDayNumber() - right.get_julianDayNumber();

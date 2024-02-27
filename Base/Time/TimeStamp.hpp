@@ -66,29 +66,24 @@ namespace Base {
 
     };
 
-    inline bool operator<(const TimeStamp &left, const TimeStamp &right) {
-        return left.us_since_epoch() < right.us_since_epoch();
+#define TS_operator(symbol) \
+    inline bool operator symbol(const TimeStamp &left, const TimeStamp &right) { \
+        return left.us_since_epoch() symbol right.us_since_epoch(); \
     }
 
-    inline bool operator<=(const TimeStamp &left, const TimeStamp &right) {
-        return left.us_since_epoch() <= right.us_since_epoch();
-    }
+    TS_operator(<)
 
-    inline bool operator>(const TimeStamp &left, const TimeStamp &right) {
-        return left.us_since_epoch() > right.us_since_epoch();
-    }
+    TS_operator(<=)
 
-    inline bool operator>=(const TimeStamp &left, const TimeStamp &right) {
-        return left.us_since_epoch() >= right.us_since_epoch();
-    }
+    TS_operator(>)
 
-    inline bool operator==(const TimeStamp &left, const TimeStamp &right) {
-        return left.us_since_epoch() == right.us_since_epoch();
-    }
+    TS_operator(>=)
 
-    inline bool operator!=(const TimeStamp &left, const TimeStamp &right) {
-        return left.us_since_epoch() != right.us_since_epoch();
-    }
+    TS_operator(==)
+
+    TS_operator(!=)
+
+#undef TS_operator
 
     inline double operator-(const TimeStamp &left, const TimeStamp &right) {
         return (double) (left.us_since_epoch() - right.us_since_epoch()) / TimeStamp::coefficient;
