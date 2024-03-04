@@ -7,8 +7,8 @@
 
 namespace Base {
 
-    Log::Log(std::string dictionary_path) :
-            path(std::move(dictionary_path)) {
+    Log::Log(std::string dictionary_path, LogRank rank) :
+            path(std::move(dictionary_path)), outputRank(rank) {
         if (path.back() != '/') path.push_back('/');
         open_new_file();
         Thread thread([this] {
@@ -127,6 +127,7 @@ namespace Base {
 
 
     void Log::push(int rank, const char *data, uint64 size) {
+        if (rank < outputRank) return;
         auto time = get_time_now();
         Lock l(IO_lock);
         if (!current_queue) {
@@ -141,10 +142,14 @@ namespace Base {
         }
     }
 
-#ifdef GLOBAL_LOG
-
-    Log Global_Logger(GLOBAL_LOG_PATH);
-
-#endif
+    LogStream Log::stream(int rank) {
+        return {*this, rank};
+    }
 
 }
+
+#ifdef GLOBAL_LOG
+
+Base::Log Global_Logger(GLOBAL_LOG_PATH, Base::LogRank::TRACE);
+
+#endif

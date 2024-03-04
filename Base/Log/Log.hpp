@@ -31,13 +31,17 @@ namespace Base {
     class Log : NoCopy {
     public:
 
-        Log(std::string dictionary_path);
+        Log(std::string dictionary_path, LogRank rank);
 
         void push(int rank, const char *data, uint64 size);
 
         ~Log();
 
         LogStream stream(int rank);
+
+        void set_rank(LogRank rank) { outputRank = rank; };
+
+        [[nodiscard]] LogRank get_rank() const { return outputRank; };
 
     private:
 
@@ -62,6 +66,8 @@ namespace Base {
 
         size_t file_current_size = 0;
 
+        LogRank outputRank;
+
         inline void get_new_buffer();
 
         inline void put_full_buffer();
@@ -77,87 +83,113 @@ namespace Base {
     };
 
 
-    class LogStream {
+    class LogStream : NoCopy {
     public:
 
-        LogStream(Log &log, int rank) : _log(log), _rank(rank) {};
-
-        ~LogStream() {
-            _log.push(_rank, _info.c_str(), _info.size());
+        LogStream(Log &log, int rank) : _log(&log), _rank(rank) {
+            if (log.get_rank() > rank)
+                _index = 257;
         };
 
-        template<typename Type>
-        LogStream &operator<<(const Type &val) {
-            _info += std::to_string(val);
+        ~LogStream() {
+            if (_index > 0 && _index != 257) {
+                _log->push(_rank, _message, _index);
+            }
+        };
+
+        LogStream &operator<<(const std::string &val) {
+            if (_index >= 256) return *this;
+            int temp = val.size() > 256 - _index ? 256 - _index : val.size();
+            memcpy(_message + _index, val.data(), temp);
+            _index += temp;
             return *this;
         };
 
-#define StreamOperator(type) LogStream &operator<<(type val) { \
-                _info += val;                                  \
-                return *this;                                  \
+        LogStream &operator<<(const std::string_view &val) {
+            if (_index >= 256) return *this;
+            int temp = val.size() > 256 - _index ? 256 - _index : val.size();
+            memcpy(_message + _index, val.data(), temp);
+            _index += temp;
+            return *this;
         };
 
-        StreamOperator(char)
+#define StreamOperator(type, f) LogStream &operator<<(type val) { \
+            if (_index >= 256) return *this;                      \
+            _index += snprintf(_message + _index, 256 - _index, f, val); \
+            return *this;                                         \
+        };
 
-        StreamOperator(char *)
+        StreamOperator(char, "%c")
 
-        StreamOperator(const char *)
+        StreamOperator(const char *, "%s")
 
-        StreamOperator(const std::string &)
+        StreamOperator(int, "%d")
 
-        StreamOperator(std::string_view)
+        StreamOperator(long, "%ld")
+
+        StreamOperator(long long, "%lld")
+
+        StreamOperator(unsigned, "%u")
+
+        StreamOperator(unsigned long, "%lu")
+
+        StreamOperator(unsigned long long, "%llu")
+
+        StreamOperator(double, "%lf")
 
 #undef StreamOperator
 
     private:
 
-        Log &_log;
+        Log *_log;
 
         int _rank;
 
-        string _info;
+        int _index = 0;
+
+        char _message[256];
 
     };
 
-#define TRACE(val) (val.stream(LogRank::TRACE))
+}
 
-#define DEBUG(val) (val.stream(LogRank::DEBUG))
+#define TRACE(val) (val.stream(Base::LogRank::TRACE))
 
-#define INFO(val) (val.stream(LogRank::INFO))
+#define DEBUG(val) (val.stream(Base::LogRank::DEBUG))
 
-#define WARN(val) (val.stream(LogRank::WARN))
+#define INFO(val) (val.stream(Base::LogRank::INFO))
 
-#define ERROR(val) (val.stream(LogRank::ERROR))
+#define WARN(val) (val.stream(Base::LogRank::WARN))
 
-#define FATAL(val) (val.stream(LogRank::FATAL))
+#define ERROR(val) (val.stream(Base::LogRank::ERROR))
+
+#define FATAL(val) (val.stream(Base::LogRank::FATAL))
 
 
-
-//#define GLOBAL_LOG
-
+#define GLOBAL_LOG
 
 #ifdef GLOBAL_LOG
 
-    constexpr char GLOBAL_LOG_PATH[] = "";
+constexpr char GLOBAL_LOG_PATH[] = "/home/taganyer/Codes/Clion_Project/test/logs";
 
-    static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
+static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
 
-    extern  Log Global_Logger;
+extern Base::Log Global_Logger;
 
-#define G_TRACE (Global_Logger.stream(LogRank::TRACE))
+#define G_TRACE (Global_Logger.stream(Base::LogRank::TRACE))
 
-#define G_DEBUG (Global_Logger.stream(LogRank::DEBUG))
+#define G_DEBUG (Global_Logger.stream(Base::LogRank::DEBUG))
 
-#define G_INFO (Global_Logger.stream(LogRank::INFO))
+#define G_INFO (Global_Logger.stream(Base::LogRank::INFO))
 
-#define G_WARN (Global_Logger.stream(LogRank::WARN))
+#define G_WARN (Global_Logger.stream(Base::LogRank::WARN))
 
-#define G_ERROR (Global_Logger.stream(LogRank::ERROR))
+#define G_ERROR (Global_Logger.stream(Base::LogRank::ERROR))
 
-#define G_FATAL (Global_Logger.stream(LogRank::FATAL))
+#define G_FATAL (Global_Logger.stream(Base::LogRank::FATAL))
+
 
 #endif
 
-}
 
 #endif //BASE_LOG_HPP
