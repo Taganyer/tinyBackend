@@ -31,7 +31,15 @@ add_executable(tinyBackend main.cpp
         Base/BlockQueue.hpp
         Base/File.hpp
         Base/Detail/iFile.hpp
-        Base/Detail/oFile.hpp)
+        Base/Detail/oFile.hpp
+        Net/Channel.cpp
+        Net/Channel.hpp
+        Net/Poller.cpp
+        Net/Poller.hpp
+        Net/poller/PollPoller.cpp
+        Net/poller/PollPoller.hpp
+        Net/poller/EpollPoller.cpp
+        Net/poller/EpollPoller.hpp)
 
 target_link_libraries(tinyBackend mysqlclient)
 

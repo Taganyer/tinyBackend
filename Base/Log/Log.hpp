@@ -86,19 +86,14 @@ namespace Base {
     class LogStream : NoCopy {
     public:
 
-        LogStream(Log &log, int rank) : _log(&log), _rank(rank) {
-            if (log.get_rank() > rank)
-                _index = 257;
-        };
+        LogStream(Log &log, int rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
-            if (_index > 0 && _index != 257) {
-                _log->push(_rank, _message, _index);
-            }
+            _log->push(_rank, _message, _index);
         };
 
         LogStream &operator<<(const std::string &val) {
-            if (_index >= 256) return *this;
+            if (_log->get_rank() > _rank) return *this;
             int temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
             _index += temp;
@@ -106,17 +101,17 @@ namespace Base {
         };
 
         LogStream &operator<<(const std::string_view &val) {
-            if (_index >= 256) return *this;
-            int temp = val.size() > 256 - _index ? 256 - _index : val.size();
+            if (_log->get_rank() > _rank) return *this;
+            auto temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
             _index += temp;
             return *this;
         };
 
 #define StreamOperator(type, f) LogStream &operator<<(type val) { \
-            if (_index >= 256) return *this;                      \
-            _index += snprintf(_message + _index, 256 - _index, f, val); \
-            return *this;                                         \
+                if (_log->get_rank() > _rank) return *this;       \
+                _index += snprintf(_message + _index, 256 - _index, f, val); \
+                return *this;                                     \
         };
 
         StreamOperator(char, "%c")
@@ -153,17 +148,23 @@ namespace Base {
 
 }
 
-#define TRACE(val) (val.stream(Base::LogRank::TRACE))
+#define TRACE(val) if (val.get_rank() <= Base::LogRank::TRACE) \
+                        (val.stream(Base::LogRank::TRACE))
 
-#define DEBUG(val) (val.stream(Base::LogRank::DEBUG))
+#define DEBUG(val) if (val.get_rank() <= Base::LogRank::DEBUG) \
+                        (val.stream(Base::LogRank::DEBUG))
 
-#define INFO(val) (val.stream(Base::LogRank::INFO))
+#define INFO(val) if (val.get_rank() <= Base::LogRank::INFO) \
+                        (val.stream(Base::LogRank::INFO))
 
-#define WARN(val) (val.stream(Base::LogRank::WARN))
+#define WARN(val) if (val.get_rank() <= Base::LogRank::WARN) \
+                        (val.stream(Base::LogRank::WARN))
 
-#define ERROR(val) (val.stream(Base::LogRank::ERROR))
+#define ERROR(val) if (val.get_rank() <= Base::LogRank::ERROR) \
+                        (val.stream(Base::LogRank::ERROR))
 
-#define FATAL(val) (val.stream(Base::LogRank::FATAL))
+#define FATAL(val) if (val.get_rank() <= Base::LogRank::FATAL) \
+                        (val.stream(Base::LogRank::FATAL))
 
 
 #define GLOBAL_LOG
@@ -176,17 +177,23 @@ static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
 
 extern Base::Log Global_Logger;
 
-#define G_TRACE (Global_Logger.stream(Base::LogRank::TRACE))
+#define G_TRACE if (Global_Logger.get_rank() <= Base::LogRank::TRACE) \
+                    (Global_Logger.stream(Base::LogRank::TRACE))
 
-#define G_DEBUG (Global_Logger.stream(Base::LogRank::DEBUG))
+#define G_DEBUG if (Global_Logger.get_rank() <= Base::LogRank::DEBUG) \
+                    (Global_Logger.stream(Base::LogRank::DEBUG))
 
-#define G_INFO (Global_Logger.stream(Base::LogRank::INFO))
+#define G_INFO if (Global_Logger.get_rank() <= Base::LogRank::INFO) \
+                    (Global_Logger.stream(Base::LogRank::INFO))
 
-#define G_WARN (Global_Logger.stream(Base::LogRank::WARN))
+#define G_WARN if (Global_Logger.get_rank() <= Base::LogRank::WARN) \
+                    (Global_Logger.stream(Base::LogRank::WARN))
 
-#define G_ERROR (Global_Logger.stream(Base::LogRank::ERROR))
+#define G_ERROR if (Global_Logger.get_rank() <= Base::LogRank::ERROR) \
+                    (Global_Logger.stream(Base::LogRank::ERROR))
 
-#define G_FATAL (Global_Logger.stream(Base::LogRank::FATAL))
+#define G_FATAL if (Global_Logger.get_rank() <= Base::LogRank::FATAL) \
+                    (Global_Logger.stream(Base::LogRank::FATAL))
 
 
 #endif
