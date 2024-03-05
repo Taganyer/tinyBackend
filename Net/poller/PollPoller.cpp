@@ -45,7 +45,6 @@ Channel *PollPoller::get_events() {
 
 void PollPoller::add_channel(ConnectionsManger *manger, Channel *channel) {
     assert_in_right_thread("PollPoller::add_channel ");
-    assert_Manger_in_same_thread(*manger);
     assert(_channels.find(channel->fd()) == _channels.end());
     _channels.insert({channel->fd(), {channel, _eventsQueue.size()}});
     _eventsQueue.push_back({channel->fd(), 0, 0});
@@ -54,7 +53,6 @@ void PollPoller::add_channel(ConnectionsManger *manger, Channel *channel) {
 
 void PollPoller::remove_channel(ConnectionsManger *manger, int fd) {
     assert_in_right_thread("PollPoller::remove_channel ");
-    assert_Manger_in_same_thread(*manger);
     auto iter = _channels.find(fd);
     assert(iter != _channels.end());
     if (int i = iter->second.second; i != _eventsQueue.size() - 1) {

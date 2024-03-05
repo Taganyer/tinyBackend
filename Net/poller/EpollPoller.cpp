@@ -58,7 +58,6 @@ Channel *EpollPoller::get_events() {
 
 void EpollPoller::add_channel(ConnectionsManger *manger, Channel *channel) {
     assert_in_right_thread("EpollPoll::add_channel ");
-    assert_Manger_in_same_thread(*manger);
     if (_eventsQueue.capacity() == _channels.size()) {
         ActiveEvents temp;
         temp.reserve(_eventsQueue.capacity() << 1);
@@ -71,7 +70,6 @@ void EpollPoller::add_channel(ConnectionsManger *manger, Channel *channel) {
 
 void EpollPoller::remove_channel(ConnectionsManger *manger, int fd) {
     assert_in_right_thread("EpollPoller::remove_channel ");
-    assert_Manger_in_same_thread(*manger);
     auto iter = _channels.find(fd);
     assert(iter != _channels.end());
     operate(EPOLL_CTL_DEL, iter->second);
