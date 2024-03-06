@@ -44,3 +44,7 @@
 ## 2024.3.5
 
 今天一口气将之前写的到现在基本完善的 Poller 和 Channel 类更新。
+
+## 2024.3.6
+
+今天更新了 EventLoop & RingBuffer 

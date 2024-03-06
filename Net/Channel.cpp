@@ -33,9 +33,9 @@ void Channel::invoke() {
     }
 
     if (_revents & (POLLERR | POLLNVAL)) {
-        if (_revents & POLLERR)
+        if (_revents & POLLERR) {
             G_ERROR << "fd " << _fd << "error. error() called";
-            else G_ERROR << "fd " << _fd << " is invalid. error() called";
+        } else G_ERROR << "fd " << _fd << " is invalid. error() called";
         if (errorCallback) errorCallback();
     }
 

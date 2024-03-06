@@ -61,6 +61,14 @@ void EpollPoller::add_channel(ConnectionsManger *manger, Channel *channel) {
     if (_eventsQueue.capacity() == _channels.size()) {
         ActiveEvents temp;
         temp.reserve(_eventsQueue.capacity() << 1);
+        if (_end != _begin) {
+            memcpy(temp.data(), _eventsQueue.data() + _begin,
+                   (_end - _begin) * sizeof(epoll_event));
+            _begin = 0;
+            _end = _end - _begin;
+        } else {
+            _begin = _end = 0;
+        }
         _eventsQueue.swap(temp);
     }
     assert(_channels.find(channel->fd()) == _channels.end());

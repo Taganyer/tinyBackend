@@ -148,6 +148,8 @@ namespace Base {
 
 }
 
+/// 注意这些宏定义可能会造成意外的 else 悬挂。
+
 #define TRACE(val) if (val.get_rank() <= Base::LogRank::TRACE) \
                         (val.stream(Base::LogRank::TRACE))
 

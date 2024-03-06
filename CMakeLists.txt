@@ -39,7 +39,11 @@ add_executable(tinyBackend main.cpp
         Net/poller/PollPoller.cpp
         Net/poller/PollPoller.hpp
         Net/poller/EpollPoller.cpp
-        Net/poller/EpollPoller.hpp)
+        Net/poller/EpollPoller.hpp
+        Base/RingBuffer.cpp
+        Base/RingBuffer.hpp
+        Net/EventLoop.cpp
+        Net/EventLoop.hpp)
 
 target_link_libraries(tinyBackend mysqlclient)
 
