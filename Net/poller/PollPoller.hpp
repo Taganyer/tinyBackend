@@ -20,19 +20,15 @@ namespace Net {
 
         using ActiveEvents = std::vector<struct pollfd>;
 
-        void poll(int timeoutMS) override;
+        int poll(int timeoutMS, ChannelList &list) override;
 
-        Channel *get_events() override;
+        void add_channel(Channel *channel) override;
 
-        void add_channel(ConnectionsManger *manger, Channel *channel) override;
-
-        void remove_channel(ConnectionsManger *manger, int fd) override;
+        void remove_channel(int fd) override;
 
         void update_channel(Channel *channel) override;
 
         [[nodiscard]] uint32 events_size() const override { return _channels.size(); };
-
-        [[nodiscard]] uint32 active_events_size() const override { return _active_size; };
 
     private:
 
@@ -40,10 +36,7 @@ namespace Net {
 
         ActiveEvents _eventsQueue;
 
-        /// 用来记录下一个活跃事件在 _eventsQueue 中的位置。
-        uint32 _index = 0;
-
-        uint32 _active_size = 0;
+        void get_events(ChannelList &list, int size);
 
     };
 

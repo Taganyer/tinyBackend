@@ -6,6 +6,7 @@
 #define NET_POLLER_HPP
 
 #include <pthread.h>
+#include <vector>
 #include "../Base/Detail/config.hpp"
 
 namespace Net {
@@ -14,10 +15,12 @@ namespace Net {
 
     class EventLoop;
 
-    class ConnectionsManger;
+    class ChannelsManger;
 
     class Poller {
     public:
+
+        using ChannelList = std::vector<Channel *>;
 
         static constexpr int UntilEventOccur = -1;
 
@@ -25,39 +28,28 @@ namespace Net {
 
         virtual ~Poller() = default;
 
-        virtual void poll(int timeoutMS) = 0;
+        virtual int poll(int timeoutMS, ChannelList &list) = 0;
 
-        /// 逐个返回活跃事件，无活跃事件返回 nullptr。
-        virtual Channel *get_events() = 0;
+        /// 由所属同一个线程的 ChannelsManager 调用。
+        virtual void add_channel(Channel *channel) = 0;
 
-        /// 只能由所属同一个线程的 EventLoop 调用。
-        virtual void add_channel(ConnectionsManger *manger, Channel *channel) = 0;
-
-        /// 只能由所属同一个线程的 EventLoop 调用。
-        virtual void remove_channel(ConnectionsManger *manger, int fd) = 0;
+        /// 由所属同一个线程的 ChannelsManger 调用,直接调用可能会带来错误。
+        virtual void remove_channel(int fd) = 0;
 
         /// 改变 channel 的读写状态。
         virtual void update_channel(Channel *channel) = 0;
 
         void set_tid(pthread_t tid) { _tid = tid; };
 
-        void set_EventLoop(EventLoop *loop) { _loop = loop; };
-
         void assert_in_right_thread(const char *message) const;
 
         [[nodiscard]] virtual uint32 events_size() const = 0;
 
-        [[nodiscard]] virtual uint32 active_events_size() const = 0;
-
         [[nodiscard]] pthread_t tid() const { return _tid; };
-
-        [[nodiscard]] EventLoop *eventLoop() const { return _loop; };
 
     protected:
 
         pthread_t _tid;
-
-        EventLoop *_loop;
 
     };
 

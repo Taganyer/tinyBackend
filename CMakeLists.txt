@@ -43,7 +43,11 @@ add_executable(tinyBackend main.cpp
         Base/RingBuffer.cpp
         Base/RingBuffer.hpp
         Net/EventLoop.cpp
-        Net/EventLoop.hpp)
+        Net/EventLoop.hpp
+        Net/ChannelsManger.cpp
+        Net/ChannelsManger.hpp
+        Net/NetLink.cpp
+        Net/NetLink.hpp)
 
 target_link_libraries(tinyBackend mysqlclient)
 

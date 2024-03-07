@@ -53,7 +53,7 @@ void EventLoop::set_distributor(EventLoop::Event event) {
     _distributor = std::move(event);
 }
 
-void EventLoop::put_events(EventLoop::Event event) {
+void EventLoop::put_event(EventLoop::Event event) {
     Base::Lock l(_mutex);
     _waiting.push_back(std::move(event));
     G_TRACE << "put 1 " << "event in EventLoop "

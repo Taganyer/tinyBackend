@@ -14,15 +14,25 @@ namespace Net {
 
     class Poller;
 
+    class ChannelsManger;
+
+    namespace Detail {
+
+        class LinkData;
+
+    }
+
     class Channel : private Base::NoCopy {
     public:
 
-        using EventCallback = std::function<void()>;
+        using Data = Detail::LinkData;
 
-        using ChannelPtr = std::unique_ptr<Channel>;
+        using ChannelPtr = Channel *;
 
-        /// 隐藏了构造函数，保证生成的对象都是唯一对象。
-        static ChannelPtr create_Channel(int fd);
+        /// 隐藏了构造函数，保证生成的对象都是 heap 对象。
+        static ChannelPtr create_Channel(int fd, const std::shared_ptr<Data> &data);
+
+        static void destroy_Channel(Channel *channel);
 
         ~Channel();
 
@@ -38,21 +48,18 @@ namespace Net {
 
         void set_nonevent();
 
-        void set_readCallback(EventCallback event) { readCallback = std::move(event); };
-
-        void set_writeCallback(EventCallback event) { writeCallback = std::move(event); };
-
-        void set_errorCallback(EventCallback event) { errorCallback = std::move(event); };
-
-        void set_closeCallback(EventCallback event) { closeCallback = std::move(event); };
-
-        /// 提供给 Poller 使用。
-        void active() { _last_active_time = Base::Unix_to_now(); };
-
-        void set_poller(Poller *poller) { _poller = poller; }
+        void set_events(short events);
 
         /// 提供给 Poller 使用。
         void set_revents(short revents) { _revents = revents; };
+
+        /// 提供给 ChannelsManager 使用。
+        bool timeout(const Base::Time_difference &time);
+
+        void remove_this();
+
+        /// 完成 invoke 中应有的事件后调用，invoke 会主动调用。
+        void finish_revents() { _revents = NoEvent; };
 
         [[nodiscard]] int fd() const { return _fd; };
 
@@ -60,7 +67,7 @@ namespace Net {
 
         [[nodiscard]] bool is_nonevent() const { return _events == NoEvent; };
 
-        [[nodiscard]] bool has_event() const { return _revents != NoEvent; };
+        [[nodiscard]] bool has_aliveEvent() const { return _revents != NoEvent; };
 
         [[nodiscard]] bool can_read() const { return _events & Readable; };
 
@@ -70,7 +77,9 @@ namespace Net {
 
     private:
 
-        Channel(int fd);
+        using DataPtr = std::weak_ptr<Data>;
+
+        Channel(int fd, const std::shared_ptr<Data> &data);
 
         static const short NoEvent;
 
@@ -80,21 +89,19 @@ namespace Net {
 
         const int _fd;
 
-        Poller *_poller = nullptr;
-
         short _events = 0;
 
         short _revents = NoEvent;
 
-        EventCallback readCallback;
+        ChannelsManger *_manger = nullptr;
 
-        EventCallback writeCallback;
-
-        EventCallback errorCallback;
-
-        EventCallback closeCallback;
+        DataPtr _data;
 
         Base::Time_difference _last_active_time = Base::Unix_to_now();
+
+    public:
+
+        Channel *_prev = nullptr, *_next = nullptr;
 
     };
 

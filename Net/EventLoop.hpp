@@ -29,7 +29,7 @@ namespace Net {
         /// 无锁保护，注意。
         void set_distributor(Event event);
 
-        void put_events(Event event);
+        void put_event(Event event);
 
         template<typename Fun>
         void put_events(int32 size, Fun fun);

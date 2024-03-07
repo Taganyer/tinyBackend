@@ -30,53 +30,32 @@ EpollPoller::~EpollPoller() {
     ::close(_epfd);
 }
 
-void EpollPoller::poll(int timeoutMS) {
+int EpollPoller::poll(int timeoutMS, ChannelList &list) {
     assert_in_right_thread("EpollPoller::poll ");
-    if (_begin != _end) return;
     int active = ::epoll_wait(_epfd, _eventsQueue.data(),
                               _eventsQueue.capacity(), timeoutMS);
     if (active > 0) {
-        _begin = 0;
-        _end = active;
         G_TRACE << "EpollPoller::poll " << _tid << " get " << active << " events";
+        get_events(list, active);
     } else if (active == 0) {
         G_INFO << "EpollPoller::poll " << _tid << " timeout " << timeoutMS << " ms";
     } else {
         G_ERROR << "EpollPoller::poll " << _tid << " error";
     }
+    return active;
 }
 
-Channel *EpollPoller::get_events() {
-    assert_in_right_thread("EpollPoller::get_event ");
-    if (_begin == _end) return nullptr;
-    auto iter = _channels.find(_eventsQueue[_begin].data.fd);
-    assert(iter != _channels.end());
-    iter->second->set_revents((short) _eventsQueue[_begin].events);
-    ++_begin;
-    return iter->second;
-}
-
-void EpollPoller::add_channel(ConnectionsManger *manger, Channel *channel) {
+void EpollPoller::add_channel(Channel *channel) {
     assert_in_right_thread("EpollPoll::add_channel ");
     if (_eventsQueue.capacity() == _channels.size()) {
-        ActiveEvents temp;
-        temp.reserve(_eventsQueue.capacity() << 1);
-        if (_end != _begin) {
-            memcpy(temp.data(), _eventsQueue.data() + _begin,
-                   (_end - _begin) * sizeof(epoll_event));
-            _begin = 0;
-            _end = _end - _begin;
-        } else {
-            _begin = _end = 0;
-        }
-        _eventsQueue.swap(temp);
+        _eventsQueue.reserve(_eventsQueue.capacity() << 1);
     }
     assert(_channels.find(channel->fd()) == _channels.end());
     operate(EPOLL_CTL_ADD, channel);
-    _channels.insert({channel->fd(), channel});
+    assert(_channels.insert({channel->fd(), channel}).second);
 }
 
-void EpollPoller::remove_channel(ConnectionsManger *manger, int fd) {
+void EpollPoller::remove_channel(int fd) {
     assert_in_right_thread("EpollPoller::remove_channel ");
     auto iter = _channels.find(fd);
     assert(iter != _channels.end());
@@ -92,7 +71,7 @@ void EpollPoller::update_channel(Channel *channel) {
     if (iter->second == nullptr) {
         operate(EPOLL_CTL_ADD, channel);
         iter->second = channel;
-    } else if (channel->has_event()) {
+    } else if (!channel->is_nonevent()) {
         operate(EPOLL_CTL_MOD, channel);
     } else {
         operate(EPOLL_CTL_DEL, channel);
@@ -120,5 +99,16 @@ void EpollPoller::operate(int operation, Channel *channel) {
         } else {
             G_TRACE << "epoll_ctl MOD " << fd;
         }
+    }
+}
+
+void EpollPoller::get_events(Poller::ChannelList &list, int size) {
+    assert_in_right_thread("EpollPoller::get_event ");
+    list.reserve(size + list.size());
+    for (int i = 0; i < size; ++i) {
+        auto iter = _channels.find(_eventsQueue[i].data.fd);
+        assert(iter != _channels.end());
+        iter->second->set_revents((short) _eventsQueue[i].events);
+        list.push_back(iter->second);
     }
 }

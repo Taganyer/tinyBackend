@@ -6,7 +6,6 @@
 #define NET_EPOLLPOLLER_HPP
 
 #include <map>
-#include <vector>
 #include "../Poller.hpp"
 
 struct epoll_event;
@@ -24,19 +23,15 @@ namespace Net {
 
         ~EpollPoller() override;
 
-        void poll(int timeoutMS) override;
+        int poll(int timeoutMS, ChannelList &list) override;
 
-        Channel *get_events() override;
+        void add_channel(Channel *channel) override;
 
-        void add_channel(ConnectionsManger *manger, Channel *channel) override;
-
-        void remove_channel(ConnectionsManger *manger, int fd) override;
+        void remove_channel(int fd) override;
 
         void update_channel(Channel *channel) override;
 
         [[nodiscard]] uint32 events_size() const override { return _channels.size(); };
-
-        [[nodiscard]] uint32 active_events_size() const override { return _end - _begin; };
 
     private:
 
@@ -46,9 +41,9 @@ namespace Net {
 
         int _epfd = -1;
 
-        int _begin = 0, _end = 0;
-
         void operate(int operation, Channel *channel);
+
+        void get_events(ChannelList &list, int size);
 
     };
 
