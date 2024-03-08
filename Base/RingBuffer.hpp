@@ -6,11 +6,12 @@
 #define BASE_RINGBUFFER_HPP
 
 #include "Detail/config.hpp"
+#include "Detail/NoCopy.hpp"
 #include <string_view>
 
 namespace Base {
 
-    class RingBuffer {
+    class RingBuffer : NoCopy {
     public:
 
         using View = std::string_view;

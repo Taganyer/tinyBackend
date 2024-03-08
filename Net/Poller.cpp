@@ -10,8 +10,8 @@ using namespace Net;
 
 
 void Poller::assert_in_right_thread(const char *message) const {
-    if (unlikely(_tid != tid())) {
-        G_ERROR << message << _tid << " running in wrong thread " << tid();
-        assert(_tid != tid());
+    if (unlikely(_tid != Base::tid())) {
+        G_ERROR << message << _tid << " running in wrong thread " << Base::tid();
+        assert(_tid != Base::tid());
     }
 }

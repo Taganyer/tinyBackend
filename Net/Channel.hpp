@@ -6,6 +6,7 @@
 #define NET_CHANNEL_HPP
 
 #include <memory>
+#include <bits/poll.h>
 #include "../Base/Detail/config.hpp"
 #include "../Base/Detail/NoCopy.hpp"
 #include "../Base/Time/Timer.hpp"
@@ -30,7 +31,7 @@ namespace Net {
         using ChannelPtr = Channel *;
 
         /// 隐藏了构造函数，保证生成的对象都是 heap 对象。
-        static ChannelPtr create_Channel(int fd, const std::shared_ptr<Data> &data);
+        static ChannelPtr create_Channel(int fd, const std::shared_ptr<Data> &data, ChannelsManger &manger);
 
         static void destroy_Channel(Channel *channel);
 
@@ -58,7 +59,26 @@ namespace Net {
 
         void remove_this();
 
-        /// 完成 invoke 中应有的事件后调用，invoke 会主动调用。
+        /// 会解除监控，但在下一次 loop 循环中，会继续调用。
+        void continue_events();
+
+        /// TODO 以下九个函数提供给上层对象完成 invoke 中应有的事件后调用，invoke 不会主动调用。
+        void set_readRevents() { _revents |= POLLIN; };
+
+        void set_writeRevents() { _revents |= POLLOUT; };
+
+        void set_errorRevents() { _revents |= POLLERR; };
+
+        void set_closeRevents() { _revents |= POLLHUP; };
+
+        void finish_readRevents() { _revents &= ~POLLIN; };
+
+        void finish_writeRevents() { _revents &= ~POLLOUT; };
+
+        void finish_errorRevents() { _revents &= ~(POLLERR | POLLNVAL); };
+
+        void finish_closeRevents() { _revents &= ~POLLHUP; };
+
         void finish_revents() { _revents = NoEvent; };
 
         [[nodiscard]] int fd() const { return _fd; };
@@ -79,7 +99,7 @@ namespace Net {
 
         using DataPtr = std::weak_ptr<Data>;
 
-        Channel(int fd, const std::shared_ptr<Data> &data);
+        Channel(int fd, const std::shared_ptr<Data> &data, ChannelsManger &manger);
 
         static const short NoEvent;
 

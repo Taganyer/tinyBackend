@@ -69,6 +69,12 @@ namespace Net {
 
         Base::Time_difference _timeout{-1};
 
+    public:
+
+        using ActiveChannelList = std::vector<Channel *>;
+
+        ActiveChannelList activeList;
+
     };
 
 }

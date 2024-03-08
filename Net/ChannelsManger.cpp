@@ -49,8 +49,8 @@ void ChannelsManger::set_timeout(const Base::Time_difference &timeout) {
 }
 
 void ChannelsManger::assert_in_right_thread() const {
-    if (unlikely(tid() != _tid)) {
-        G_WARN << "Channels " << _tid << " assert in " << tid();
+    if (unlikely(Base::tid() != _tid)) {
+        G_WARN << "Channels " << _tid << " assert in " << Base::tid();
         assert("ChannelsManger in wrong thread");
     }
 }

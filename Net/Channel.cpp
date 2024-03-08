@@ -2,7 +2,6 @@
 // Created by taganyer on 24-2-29.
 //
 
-#include <poll.h>
 #include "Poller.hpp"
 #include "Channel.hpp"
 #include "ChannelsManger.hpp"
@@ -19,8 +18,9 @@ const short Channel::Readable = POLLIN | POLLPRI;
 
 const short Channel::Writeable = POLLOUT;
 
-Channel::ChannelPtr Channel::create_Channel(int fd, const std::shared_ptr<Data> &data) {
-    return new Channel(fd, data);
+Channel::ChannelPtr Channel::create_Channel(int fd, const std::shared_ptr<Data> &data,
+                                            ChannelsManger &manger) {
+    return new Channel(fd, data, manger);
 }
 
 void Channel::destroy_Channel(Channel *channel) {
@@ -60,7 +60,6 @@ void Channel::invoke() {
     _last_active_time = Unix_to_now();
     _manger->put_to_top(this);
 
-    finish_revents();
 }
 
 void Channel::enable_read() {
@@ -93,7 +92,8 @@ void Channel::set_events(short events) {
     _manger->poller()->update_channel(this);
 }
 
-Channel::Channel(int fd, const std::shared_ptr<Data> &data) : _fd(fd), _data(data) {
+Channel::Channel(int fd, const std::shared_ptr<Data> &data,
+                 ChannelsManger &manger) : _fd(fd), _manger(&manger), _data(data) {
     G_TRACE << "Channel " << _fd << "create";
 }
 
@@ -108,4 +108,10 @@ bool Channel::timeout(const Time_difference &time) {
 
 void Channel::remove_this() {
     _manger->remove_channel(this);
+}
+
+void Channel::continue_events() {
+    if (!is_nonevent())
+        set_nonevent();
+    _manger->activeList.push_back(this);
 }

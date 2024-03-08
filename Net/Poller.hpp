@@ -39,13 +39,14 @@ namespace Net {
         /// 改变 channel 的读写状态。
         virtual void update_channel(Channel *channel) = 0;
 
+        /// TODO 只在初始化时调用
         void set_tid(pthread_t tid) { _tid = tid; };
 
         void assert_in_right_thread(const char *message) const;
 
-        [[nodiscard]] virtual uint32 events_size() const = 0;
-
         [[nodiscard]] pthread_t tid() const { return _tid; };
+
+        [[nodiscard]] virtual uint32 events_size() const = 0;
 
     protected:
 

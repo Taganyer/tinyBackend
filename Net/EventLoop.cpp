@@ -63,7 +63,7 @@ void EventLoop::put_event(EventLoop::Event event) {
 
 void EventLoop::assert_in_thread() const {
     if (!object_in_thread()) {
-        G_ERROR << "EventLoop " << _tid << " assert in " << tid();
+        G_ERROR << "EventLoop " << _tid << " assert in " << Base::tid();
     }
 }
 
