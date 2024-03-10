@@ -6,7 +6,7 @@
 #define NET_CHANNEL_HPP
 
 #include <memory>
-#include <bits/poll.h>
+#include <sys/poll.h>
 #include "../Base/Detail/config.hpp"
 #include "../Base/Detail/NoCopy.hpp"
 #include "../Base/Time/Timer.hpp"
@@ -88,6 +88,8 @@ namespace Net {
         [[nodiscard]] bool is_nonevent() const { return _events == NoEvent; };
 
         [[nodiscard]] bool has_aliveEvent() const { return _revents != NoEvent; };
+
+        [[nodiscard]] ChannelsManger *manger() const { return _manger; };
 
         [[nodiscard]] bool can_read() const { return _events & Readable; };
 

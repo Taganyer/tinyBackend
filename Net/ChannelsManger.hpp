@@ -15,12 +15,14 @@ namespace Net {
 
     class Channel;
 
+    class EventLoop;
+
     class ChannelsManger : Base::NoCopy {
     public:
 
         friend class Node;
 
-        ChannelsManger(Poller *poller, pthread_t tid);
+        ChannelsManger(EventLoop *loop, Poller *poller, pthread_t tid);
 
         ~ChannelsManger();
 
@@ -43,6 +45,8 @@ namespace Net {
 
         [[nodiscard]] pthread_t tid() const { return _tid; };
 
+        [[nodiscard]] EventLoop *loop() const { return _loop; };
+
         [[nodiscard]] Poller *poller() const { return _poller; };
 
         [[nodiscard]] uint32 channels_size() const { return _size; };
@@ -60,6 +64,8 @@ namespace Net {
 
         /// 主要是防止在本线程中，上层强行移除拥有活跃任务的 channel。
         Channel *remove_head = nullptr;
+
+        EventLoop *_loop;
 
         Poller *_poller;
 

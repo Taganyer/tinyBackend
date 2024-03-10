@@ -18,8 +18,6 @@ namespace Base {
 
         using ViewPair = std::pair<View, View>;
 
-        RingBuffer() = default;
-
         explicit RingBuffer(uint32 size = 1024) : _buffer(new char[size]), _size(size) {};
 
         ~RingBuffer() { delete[] _buffer; };
@@ -28,13 +26,13 @@ namespace Base {
 
         void reposition();
 
-        uint32 write(const char *target, uint32 size);
+        uint32 write(const void *target, uint32 size);
 
         char *write_data() { return _write; };
 
         void write_advance(uint32 step);
 
-        uint32 read_to(char *dest, uint32 size);
+        uint32 read_to(void *dest, uint32 size);
 
         [[nodiscard]] const char *read_data() const { return _read; };
 
@@ -55,7 +53,11 @@ namespace Base {
             return dis >= _readable ? _readable : _readable - dis;
         };
 
-        [[nodiscard]] uint32 continuously_writable() const { return end() - _write; };
+        [[nodiscard]] uint32 continuously_writable() const {
+            auto e = end();
+            if (e == _write) return _buffer - _read;
+            else return e - _write;
+        };
 
         [[nodiscard]] bool empty() const { return _read == _write && _readable == 0; };
 

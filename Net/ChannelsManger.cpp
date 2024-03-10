@@ -11,7 +11,8 @@ using namespace Base;
 
 using namespace Net;
 
-ChannelsManger::ChannelsManger(Poller *poller, pthread_t tid) : _poller(poller), _tid(tid) {}
+ChannelsManger::ChannelsManger(EventLoop *loop, Poller *poller, pthread_t tid) :
+        _loop(loop), _poller(poller), _tid(tid) {}
 
 ChannelsManger::~ChannelsManger() {
     remove_channels(queue_head);

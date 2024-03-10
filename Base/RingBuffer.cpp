@@ -47,27 +47,29 @@ void Base::RingBuffer::reposition() {
     _write = _read + _readable;
 }
 
-uint32 Base::RingBuffer::write(const char *target, uint32 size) {
+uint32 Base::RingBuffer::write(const void *target, uint32 size) {
     uint32 writable = writable_len();
     if (size > writable) size = writable;
     if (_write + writable <= end()) {
         std::memcpy(_write, target, size);
     } else {
         auto len = end() - _write;
+        auto p = (const char *) target + len;
         std::memcpy(_write, target, len);
-        std::memcpy(_buffer, target + len, size - len);
+        std::memcpy(_buffer, p, size - len);
     }
     write_move(size);
     return size;
 }
 
-uint32 Base::RingBuffer::read_to(char *dest, uint32 size) {
+uint32 Base::RingBuffer::read_to(void *dest, uint32 size) {
     if (size > _readable) size = _readable;
     if (auto len = end() - _read; len >= size) {
         std::memcpy(dest, _read, size);
     } else {
+        auto p = (char *) dest + len;
         std::memcpy(dest, _read, len);
-        std::memcpy(dest + len, _buffer, size - len);
+        std::memcpy(p, _buffer, size - len);
     }
     read_move(size);
     return size;

@@ -47,7 +47,9 @@ add_executable(tinyBackend main.cpp
         Net/ChannelsManger.cpp
         Net/ChannelsManger.hpp
         Net/NetLink.cpp
-        Net/NetLink.hpp)
+        Net/NetLink.hpp
+        Net/socket/Interface.cpp
+        Net/socket/Interface.hpp)
 
 target_link_libraries(tinyBackend mysqlclient)
 
