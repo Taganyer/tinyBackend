@@ -8,6 +8,7 @@
 #include "../Base/Detail/config.hpp"
 #include "../Base/RingBuffer.hpp"
 #include "../Base/Time/Timer.hpp"
+#include "Socket.hpp"
 #include <functional>
 #include <memory>
 
@@ -17,34 +18,38 @@ namespace Net {
 
     class EventLoop;
 
+    class NetLink;
+
+    struct error_mark;
+
     namespace Detail {
 
         class LinkData {
         public:
 
-            using ReadCallback = std::function<void()>;
+            Socket socket;
 
-            using WriteCallback = std::function<void()>;
+            Channel *_channel = nullptr;
 
-            using ErrorCallback = std::function<void()>;
+            using ReadCallback = std::function<void(Base::RingBuffer &)>;
 
-            using CloseCallback = std::function<void()>;
+            using WriteCallback = std::function<void(Base::RingBuffer &)>;
 
-            void set_readCallback(ReadCallback event) { _readFun = std::move(event); };
+            using ErrorCallback = std::function<void(error_mark)>;
 
-            void set_writeCallback(WriteCallback event) { _writeFun = std::move(event); };
+            using CloseCallback = std::function<void(error_mark)>;
 
-            void set_errorCallback(ErrorCallback event) { _errorFun = std::move(event); };
+            explicit LinkData(int fd) : socket(fd) {};
 
-            void set_closeCallback(CloseCallback event) { _closeFun = std::move(event); };
+            ~LinkData();
 
-            void handle_read(Channel &channel);
+            void handle_read();
 
-            void handle_write(Channel &channel);
+            void handle_write();
 
-            void handle_error(Channel &channel);
+            void handle_error();
 
-            void handle_close(Channel &channel);
+            void handle_close();
 
             bool handle_timeout();
 
@@ -62,6 +67,8 @@ namespace Net {
 
             Base::RingBuffer _output;
 
+            friend class Net::NetLink;
+
         };
 
     }
@@ -70,10 +77,42 @@ namespace Net {
     class NetLink {
     public:
 
+        using ReadCallback = Detail::LinkData::ReadCallback;
+
+        using WriteCallback = Detail::LinkData::WriteCallback;
+
+        using ErrorCallback = Detail::LinkData::ErrorCallback;
+
+        using CloseCallback = Detail::LinkData::CloseCallback;
+
         NetLink(int fd, EventLoop *loop);
 
-        void send(const char *target, uint32 size);
+        ~NetLink();
 
+        /// NOTE 在 channel 的线程中并且发送缓冲区无数据时会直接发送，多线程不安全。
+        uint32 send(const void *target, uint32 size);
+
+        uint64 send_file();
+
+        void set_channel_read(bool turn_on);
+
+        void set_channel_write(bool turn_on);
+
+        void shutdown_write();
+
+        void force_close();
+
+        void set_readCallback(ReadCallback event) { _data->_readFun = std::move(event); };
+
+        void set_writeCallback(WriteCallback event) { _data->_writeFun = std::move(event); };
+
+        void set_errorCallback(ErrorCallback event) { _data->_errorFun = std::move(event); };
+
+        void set_closeCallback(CloseCallback event) { _data->_closeFun = std::move(event); };
+
+        [[nodiscard]] bool valid() const { return _data.operator bool() && _data->_channel; };
+
+        [[nodiscard]] int fd() const { return _data->socket.fd(); };
 
     private:
 
@@ -81,15 +120,11 @@ namespace Net {
 
         using DataPtr = std::shared_ptr<LinkData>;
 
-        const int _fd = -1;
-
-        int32 state = 0;
-
-        EventLoop *_loop;
-
         DataPtr _data;
 
-        friend class Channel;
+        void send_to_loop(std::function<void()> event);
+
+        [[nodiscard]] bool in_loop_thread() const;
 
     };
 

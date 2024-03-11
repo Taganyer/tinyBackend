@@ -2,11 +2,11 @@
 // Created by taganyer on 24-3-4.
 //
 
-#include <poll.h>
 #include <cassert>
 
 #include "../Channel.hpp"
 #include "PollPoller.hpp"
+#include "../functions/poll_interface.hpp"
 #include "../../Base/Log/Log.hpp"
 
 using namespace Net;

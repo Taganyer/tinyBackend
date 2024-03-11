@@ -6,7 +6,6 @@
 #define NET_POLLPOLLER_HPP
 
 #include <map>
-#include <vector>
 #include "../Poller.hpp"
 
 struct pollfd;

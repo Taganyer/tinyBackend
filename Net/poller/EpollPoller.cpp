@@ -2,11 +2,8 @@
 // Created by taganyer on 24-3-4.
 //
 
-#include <poll.h>
-#include <sys/epoll.h>
-#include <unistd.h>
-
 #include "EpollPoller.hpp"
+#include "../functions/poll_interface.hpp"
 #include "../../Base/Log/Log.hpp"
 #include "../Channel.hpp"
 
@@ -21,19 +18,19 @@ using namespace Net;
 
 EpollPoller::EpollPoller() {
     _eventsQueue.reserve(1);
-    if ((_epfd = ::epoll_create1(EPOLL_CLOEXEC)) < 0) {
+    if ((_epfd = ops::epoll_create()) < 0) {
         G_ERROR << "EpollPoller create failed in " << _tid;
     }
 }
 
 EpollPoller::~EpollPoller() {
-    ::close(_epfd);
+    ops::epoll_close(_epfd);
 }
 
 int EpollPoller::poll(int timeoutMS, ChannelList &list) {
     assert_in_right_thread("EpollPoller::poll ");
-    int active = ::epoll_wait(_epfd, _eventsQueue.data(),
-                              _eventsQueue.capacity(), timeoutMS);
+    int active = ops::epoll_wait(_epfd, _eventsQueue.data(),
+                                 _eventsQueue.capacity(), timeoutMS);
     if (active > 0) {
         G_TRACE << "EpollPoller::poll " << _tid << " get " << active << " events";
         get_events(list, active);
@@ -64,7 +61,7 @@ void EpollPoller::remove_channel(int fd) {
 }
 
 void EpollPoller::update_channel(Channel *channel) {
-    assert_in_right_thread("EpollPoller::remove_channel ");
+    assert_in_right_thread("EpollPoller::update_channel ");
     int fd = channel->fd();
     auto iter = _channels.find(fd);
     assert(iter != _channels.end());
@@ -80,10 +77,8 @@ void EpollPoller::update_channel(Channel *channel) {
 }
 
 void EpollPoller::operate(int operation, Channel *channel) {
-    struct epoll_event event{};
-    event.events = channel->events();
     int fd = channel->fd();
-    if (::epoll_ctl(_epfd, operation, fd, &event) < 0) {
+    if (ops::epoll_ctl(_epfd, operation, fd, channel->events()) < 0) {
         if (operation == EPOLL_CTL_DEL) {
             G_ERROR << "epoll_ctl DEl failed " << fd;
         } else if (operation == EPOLL_CTL_ADD) {

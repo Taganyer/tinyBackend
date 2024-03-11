@@ -41,54 +41,41 @@ void Channel::invoke() {
     }
     if ((_revents & POLLHUP) && !(_revents & POLLIN)) {
         G_TRACE << "fd " << _fd << "is hang up and no data to read. close() called";
-        data->handle_close(*this);
+        data->handle_close();
     }
 
     if (_revents & (POLLERR | POLLNVAL)) {
         if (_revents & POLLERR) {
             G_ERROR << "fd " << _fd << "error. error() called";
         } else G_ERROR << "fd " << _fd << " is invalid. error() called";
-        data->handle_error(*this);
+        data->handle_error();
     }
 
     if (_revents & (POLLIN | POLLPRI | POLLRDHUP))
-        data->handle_read(*this);
+        data->handle_read();
 
     if (_revents & POLLOUT)
-        data->handle_write(*this);
+        data->handle_write();
 
     _last_active_time = Unix_to_now();
     _manger->put_to_top(this);
 
 }
 
-void Channel::enable_read() {
-    _events |= Readable;
+void Channel::set_read(bool turn_on) {
+    if (turn_on) _events |= Readable;
+    else _events &= ~Readable;
     _manger->poller()->update_channel(this);
 }
 
-void Channel::enable_write() {
-    _events |= Writeable;
-    _manger->poller()->update_channel(this);
-}
-
-void Channel::disable_read() {
-    _events &= ~Readable;
-    _manger->poller()->update_channel(this);
-}
-
-void Channel::disable_write() {
-    _events &= ~Writeable;
+void Channel::set_write(bool turn_on) {
+    if (turn_on)_events |= Writeable;
+    else _events &= ~Writeable;
     _manger->poller()->update_channel(this);
 }
 
 void Channel::set_nonevent() {
     _events = NoEvent;
-    _manger->poller()->update_channel(this);
-}
-
-void Channel::set_events(short events) {
-    _events = events;
     _manger->poller()->update_channel(this);
 }
 

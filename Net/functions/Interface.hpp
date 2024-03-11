@@ -1,0 +1,125 @@
+//
+// Created by taganyer on 3/9/24.
+//
+
+#ifndef NET_INTERFACE_HPP
+#define NET_INTERFACE_HPP
+
+#include "../../Base/Detail/config.hpp"
+#include <sys/uio.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+struct sockaddr;
+struct sockaddr_in;
+struct sockaddr_in6;
+struct iovec;
+
+namespace Net {
+
+    using size_t = unsigned long;
+
+    namespace ops {
+
+        inline const sockaddr *sockaddr_cast(const sockaddr_in6 *addr) {
+            return static_cast<const sockaddr *>((const void *) addr);
+        }
+
+        inline sockaddr *sockaddr_cast(sockaddr_in6 *addr) {
+            return static_cast<sockaddr *>((void *) (addr));
+        }
+
+        inline const sockaddr *sockaddr_cast(const sockaddr_in *addr) {
+            return static_cast<const sockaddr *>((const void *) (addr));
+        }
+
+        inline const sockaddr_in *sockaddr_in_cast(const sockaddr *addr) {
+            return static_cast<const struct sockaddr_in *>((const void *) (addr));
+        }
+
+        inline const sockaddr_in6 *sockaddr_in6_cast(const sockaddr *addr) {
+            return static_cast<const struct sockaddr_in6 *>((const void *) (addr));
+        }
+
+        inline int createNonblockSocket(int domain) {
+            int sock = ::socket(domain, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+            return sock;
+        }
+
+        inline bool close(int fd) {
+            int ret = ::close(fd) == 0;
+            return ret == 0;
+        }
+
+        inline int64 read(int fd, void *dest, uint32 size) {
+            int64 ret = ::read(fd, dest, size);
+            return ret;
+        }
+
+        inline int64 readv(int fd, const iovec *iov, int iov_size) {
+            int64 ret = ::readv(fd, iov, iov_size);
+            return ret;
+        }
+
+        inline int64 write(int fd, const void *target, uint32 size) {
+            int64 ret = ::write(fd, target, size);
+            return ret;
+        }
+
+        inline int connect(int fd, const sockaddr *addr) {
+            int ret = ::connect(fd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
+            return ret;
+        }
+
+        inline bool bind(int fd, const sockaddr *addr) {
+            int ret = ::bind(fd, addr, sizeof(*addr));
+            return ret == 0;
+        }
+
+        inline bool listen(int fd, uint32 size) {
+            int ret = ::listen(fd, size);
+            return ret == 0;
+        }
+
+        inline int accept(int fd, sockaddr_in6 *addr) {
+            auto len = static_cast<socklen_t>(sizeof *addr);
+#if VALGRIND || defined (NO_ACCEPT4)
+            int ret = ::accept(sockfd, sockaddr_cast(addr), &addrlen);
+#else
+            int ret = ::accept4(fd, sockaddr_cast(addr),
+                                &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+#endif
+            return ret;
+        }
+
+        inline bool shutdownWrite(int fd) {
+            int ret = ::shutdown(fd, SHUT_WR);
+            return ret == 0;
+        }
+
+        void toIpPort(char *buf, uint32 size, const sockaddr *addr);
+
+        void toIp(char *buf, uint32 size, const sockaddr *addr);
+
+        void fromIpPort(const char *ip, uint16 port, sockaddr_in *addr);
+
+        void fromIpPort(const char *ip, uint16 port, sockaddr_in6 *addr);
+
+        int getSocketError(int fd);
+
+        sockaddr_in6 getLocalAddr(int fd);
+
+        sockaddr_in6 getPeerAddr(int fd);
+
+        bool isSelfConnect(int fd);
+
+        bool Encoding_conversion(const char *from, const char *to,
+                                 char *target, size_t input_len,
+                                 char *dest, size_t output_len);
+
+    }
+
+}
+
+
+#endif //NET_INTERFACE_HPP

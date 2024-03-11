@@ -39,17 +39,11 @@ namespace Net {
 
         void invoke();
 
-        void enable_read();
+        void set_read(bool turn_on);
 
-        void enable_write();
-
-        void disable_read();
-
-        void disable_write();
+        void set_write(bool turn_on);
 
         void set_nonevent();
-
-        void set_events(short events);
 
         /// 提供给 Poller 使用。
         void set_revents(short revents) { _revents = revents; };
@@ -62,22 +56,26 @@ namespace Net {
         /// 会解除监控，但在下一次 loop 循环中，会继续调用。
         void continue_events();
 
-        /// TODO 以下九个函数提供给上层对象完成 invoke 中应有的事件后调用，invoke 不会主动调用。
-        void set_readRevents() { _revents |= POLLIN; };
+        /// TODO 以下五个函数提供给上层对象完成 invoke 中应有的事件后调用，invoke 不会主动调用。
+        void set_readRevents(bool turn_on) {
+            if (turn_on)_revents |= POLLIN;
+            else _revents &= ~POLLIN;
+        };
 
-        void set_writeRevents() { _revents |= POLLOUT; };
+        void set_writeRevents(bool turn_on) {
+            if (turn_on) _revents |= POLLOUT;
+            else _revents &= ~POLLOUT;
+        };
 
-        void set_errorRevents() { _revents |= POLLERR; };
+        void set_errorRevents(bool turn_on) {
+            if (turn_on) _revents |= POLLERR;
+            else _revents &= ~(POLLERR | POLLNVAL);
+        };
 
-        void set_closeRevents() { _revents |= POLLHUP; };
-
-        void finish_readRevents() { _revents &= ~POLLIN; };
-
-        void finish_writeRevents() { _revents &= ~POLLOUT; };
-
-        void finish_errorRevents() { _revents &= ~(POLLERR | POLLNVAL); };
-
-        void finish_closeRevents() { _revents &= ~POLLHUP; };
+        void set_closeRevents(bool turn_on) {
+            if (turn_on) _revents |= POLLHUP;
+            else _revents &= ~POLLHUP;
+        };
 
         void finish_revents() { _revents = NoEvent; };
 
@@ -123,7 +121,8 @@ namespace Net {
 
     public:
 
-        Channel *_prev = nullptr, *_next = nullptr;
+        Channel *_prev = nullptr;
+        Channel *_next = nullptr;
 
     };
 
