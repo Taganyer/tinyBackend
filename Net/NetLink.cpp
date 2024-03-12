@@ -6,7 +6,6 @@
 #include "Channel.hpp"
 #include "ChannelsManger.hpp"
 #include "EventLoop.hpp"
-#include "../Base/Log/Log.hpp"
 #include "functions/Interface.hpp"
 #include "functions/errors.hpp"
 
@@ -16,10 +15,6 @@ using namespace Net::Detail;
 
 using namespace Base;
 
-
-LinkData::~LinkData() {
-
-}
 
 void LinkData::handle_read() {
     auto len = _input.continuously_writable();
@@ -42,6 +37,10 @@ void LinkData::handle_read() {
         }
     }
     G_TRACE << socket.fd() << " read " << size << " bytes";
+
+    if (_readFun) _readFun(_input);
+    _channel->set_readRevents(false);
+    /// FIXME read_revents close
 }
 
 void LinkData::handle_write() {
@@ -65,22 +64,40 @@ void LinkData::handle_write() {
         }
     }
     G_TRACE << socket.fd() << " write " << size << " bytes";
+    if (_writeFun) _writeFun(_output);
+    _channel->set_writeRevents(false);
+    /// FIXME write_revents close
 }
 
-void LinkData::handle_error() {
-    _errorFun({})
+void LinkData::handle_error(int error_code) {
+    G_ERROR << "error occur in Link " << socket.fd();
+    if (_errorFun) _errorFun({error_types::Link_ErrorEvent, error_code});
+    /// FIXME error_revents close
 }
 
 void LinkData::handle_close() {
-
+    G_TRACE << "Link " << socket.fd() << " close";
+    if (_closeFun) _closeFun({error_types::Link_CloseEvent, _channel->events()});
+    _channel->set_nonevent();
+    _channel->set_revents(0);
+    _channel->remove_this();
 }
 
 bool LinkData::handle_timeout() {
+    G_WARN << "Link " << socket.fd() << " timeout";
+    /// FIXME
     return false;
 }
 
-NetLink::NetLink(int fd, EventLoop *loop) {
-
+NetLink::NetLink(Socket &&socket, ChannelsManger &manger) :
+        _data(std::make_shared<LinkData>(std::move(socket))) {
+    send_to_loop([&manger, ptr = std::weak_ptr(_data),
+                         channel = Channel::create_Channel(
+                                 _data->socket.fd(), _data, manger)] {
+        manger.add_channel(channel);
+        auto d = ptr.lock();
+        d->_channel = channel;
+    });
 }
 
 NetLink::~NetLink() {
@@ -97,6 +114,7 @@ uint32 NetLink::send(const void *target, uint32 size) {
             writen = 0;
         } else {
             G_TRACE << "write " << writen << " byte in " << fd();
+            if (_data->_writeFun) _data->_writeFun(_data->_output);
         }
     }
     if (writen < size) {
@@ -108,7 +126,7 @@ uint32 NetLink::send(const void *target, uint32 size) {
 void NetLink::shutdown_write() {
     send_to_loop([ptr = std::weak_ptr(_data)] {
         auto data = ptr.lock();
-        data->socket.shutdown_write();
+        data->socket.shutdown_TcpWrite();
     });
 }
 
@@ -120,7 +138,7 @@ void NetLink::set_channel_read(bool turn_on) {
     send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
         auto data = ptr.lock();
         if (data && data->_channel) {
-            data->_channel->set_read(turn_on);
+            data->_channel->set_readable(turn_on);
         }
     });
 }
@@ -129,7 +147,7 @@ void NetLink::set_channel_write(bool turn_on) {
     send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
         auto data = ptr.lock();
         if (data && data->_channel) {
-            data->_channel->set_write(turn_on);
+            data->_channel->set_writable(turn_on);
         }
     });
 }
@@ -142,5 +160,3 @@ void NetLink::send_to_loop(std::function<void()> event) {
 bool NetLink::in_loop_thread() const {
     return _data->_channel->manger()->tid() == Base::tid();
 }
-
-

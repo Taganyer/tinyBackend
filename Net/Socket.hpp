@@ -7,6 +7,8 @@
 
 #include "../Base/Detail/NoCopy.hpp"
 
+struct tcp_info;
+
 namespace Net {
 
     class InetAddress;
@@ -16,33 +18,37 @@ namespace Net {
 
         Socket(int domain, int type, int protocol = 0);
 
-        explicit Socket(int fd);
+        explicit Socket(int fd) : _fd(fd) {};
+
+        Socket(Socket &&other) noexcept: _fd(other._fd) {
+            other._fd = -1;
+        };
 
         ~Socket();
 
-        bool Bind(const InetAddress &address);
+        bool Bind(InetAddress &address);
 
         bool tcpListen(int max_size);
 
-        bool tcpConnect();
+        bool tcpConnect(InetAddress &address);
 
-        bool tcpAccept();
+        int tcpAccept(InetAddress &address);
 
         /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
-        void setTcpNoDelay(bool on);
-
-        /// Enable/disable SO_REUSEADDR
-        void setReuseAddr(bool on);
-
-        /// Enable/disable SO_REUSEPORT
-        void setReusePort(bool on);
+        bool setTcpNoDelay(bool on);
 
         /// Enable/disable SO_KEEPALIVE
-        void setKeepAlive(bool on);
+        bool setTcpKeepAlive(bool on);
 
-        void shutdown_write();
+        /// Enable/disable SO_REUSEADDR
+        bool setReuseAddr(bool on);
 
-        bool TcpInfo(struct tcp_info *) const;
+        /// Enable/disable SO_REUSEPORT
+        bool setReusePort(bool on);
+
+        void shutdown_TcpWrite();
+
+        bool TcpInfo(struct tcp_info *info) const;
 
         bool TcpInfo(char *buf, int len) const;
 
@@ -52,7 +58,7 @@ namespace Net {
 
     private:
 
-        const int _fd;
+        int _fd;
     };
 
 }

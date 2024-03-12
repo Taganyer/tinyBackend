@@ -77,3 +77,8 @@ RingBuffer）的功能进行了进一步完善。
 今天对底层 API 做了进一步优化，将错误处理分开，并引进了 error_mark，使得 NetLink 的接口形式变得明确，用户可根据
 该结构判断错误，得到原因，进行对应逻辑处理。
 进一步完善了 NetLink，引入了 Socket 类，对 Channel 类进行了简化和修正。
+
+## 2024.3.12
+
+今天引入了 InetAddress 类，初步完成了 Socket 类的全部方法，将 NetLink 类的大部分方法进行了补全，同时对 Interface
+中的方法进行了补充。

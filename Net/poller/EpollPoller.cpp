@@ -3,6 +3,7 @@
 //
 
 #include "EpollPoller.hpp"
+#include "../functions/errors.hpp"
 #include "../functions/poll_interface.hpp"
 #include "../../Base/Log/Log.hpp"
 #include "../Channel.hpp"
@@ -24,7 +25,9 @@ EpollPoller::EpollPoller() {
 }
 
 EpollPoller::~EpollPoller() {
-    ops::epoll_close(_epfd);
+    if (ops::epoll_close(_epfd) < 0) {
+        G_FATAL << "EpollPoller " << _epfd << ' ' << ops::get_close_error(errno);
+    }
 }
 
 int EpollPoller::poll(int timeoutMS, ChannelList &list) {
@@ -37,7 +40,7 @@ int EpollPoller::poll(int timeoutMS, ChannelList &list) {
     } else if (active == 0) {
         G_INFO << "EpollPoller::poll " << _tid << " timeout " << timeoutMS << " ms";
     } else {
-        G_ERROR << "EpollPoller::poll " << _tid << " error";
+        G_ERROR << "EpollPoller " << _tid << ' ' << ops::get_epoll_wait_error(errno);
     }
     return active;
 }
@@ -80,11 +83,11 @@ void EpollPoller::operate(int operation, Channel *channel) {
     int fd = channel->fd();
     if (ops::epoll_ctl(_epfd, operation, fd, channel->events()) < 0) {
         if (operation == EPOLL_CTL_DEL) {
-            G_ERROR << "epoll_ctl DEl failed " << fd;
+            G_ERROR << "EpollPoller DEL " << fd << ' ' << ops::get_epoll_ctl_error(errno);
         } else if (operation == EPOLL_CTL_ADD) {
-            G_FATAL << "epoll_ctl ADD failed " << fd;
+            G_FATAL << "epoll_ctl ADD " << fd << ' ' << ops::get_epoll_ctl_error(errno);
         } else {
-            G_FATAL << "epoll_ctl MOD failed " << fd;
+            G_FATAL << "epoll_ctl MOD " << fd << ' ' << ops::get_epoll_ctl_error(errno);
         }
     } else {
         if (operation == EPOLL_CTL_DEL) {

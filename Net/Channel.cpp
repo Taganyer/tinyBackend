@@ -5,8 +5,8 @@
 #include "Poller.hpp"
 #include "Channel.hpp"
 #include "ChannelsManger.hpp"
-#include "../Base/Log/Log.hpp"
 #include "NetLink.hpp"
+#include "../Base/Log/Log.hpp"
 
 using namespace Net;
 
@@ -18,9 +18,11 @@ const short Channel::Readable = POLLIN | POLLPRI;
 
 const short Channel::Writeable = POLLOUT;
 
-Channel::ChannelPtr Channel::create_Channel(int fd, const std::shared_ptr<Data> &data,
+Channel::ChannelPtr Channel::create_Channel(int fd,
+                                            const std::shared_ptr<Data> &data,
                                             ChannelsManger &manger) {
-    return new Channel(fd, data, manger);
+    auto channel = new Channel(fd, data, manger);
+    return channel;
 }
 
 void Channel::destroy_Channel(Channel *channel) {
@@ -48,7 +50,7 @@ void Channel::invoke() {
         if (_revents & POLLERR) {
             G_ERROR << "fd " << _fd << "error. error() called";
         } else G_ERROR << "fd " << _fd << " is invalid. error() called";
-        data->handle_error();
+        data->handle_error(_revents & (POLLERR | POLLNVAL));
     }
 
     if (_revents & (POLLIN | POLLPRI | POLLRDHUP))
@@ -62,13 +64,13 @@ void Channel::invoke() {
 
 }
 
-void Channel::set_read(bool turn_on) {
+void Channel::set_readable(bool turn_on) {
     if (turn_on) _events |= Readable;
     else _events &= ~Readable;
     _manger->poller()->update_channel(this);
 }
 
-void Channel::set_write(bool turn_on) {
+void Channel::set_writable(bool turn_on) {
     if (turn_on)_events |= Writeable;
     else _events &= ~Writeable;
     _manger->poller()->update_channel(this);
@@ -97,7 +99,7 @@ void Channel::remove_this() {
     _manger->remove_channel(this);
 }
 
-void Channel::continue_events() {
+void Channel::send_to_next_loop() {
     if (!is_nonevent())
         set_nonevent();
     _manger->activeList.push_back(this);

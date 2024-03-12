@@ -39,9 +39,9 @@ namespace Net {
 
         void invoke();
 
-        void set_read(bool turn_on);
+        void set_readable(bool turn_on);
 
-        void set_write(bool turn_on);
+        void set_writable(bool turn_on);
 
         void set_nonevent();
 
@@ -53,8 +53,8 @@ namespace Net {
 
         void remove_this();
 
-        /// 会解除监控，但在下一次 loop 循环中，会继续调用。
-        void continue_events();
+        /// 解除 Poller 的监控，同时 channel 会在下一次 loop 循环中按照 revents 的值继续调用。
+        void send_to_next_loop();
 
         /// TODO 以下五个函数提供给上层对象完成 invoke 中应有的事件后调用，invoke 不会主动调用。
         void set_readRevents(bool turn_on) {

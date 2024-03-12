@@ -16,7 +16,7 @@ namespace Net {
 
     class Channel;
 
-    class EventLoop;
+    class ChannelsManger;
 
     class NetLink;
 
@@ -39,15 +39,13 @@ namespace Net {
 
             using CloseCallback = std::function<void(error_mark)>;
 
-            explicit LinkData(int fd) : socket(fd) {};
-
-            ~LinkData();
+            explicit LinkData(Socket &&s) : socket(std::move(s)) {};
 
             void handle_read();
 
             void handle_write();
 
-            void handle_error();
+            void handle_error(int error_code);
 
             void handle_close();
 
@@ -85,7 +83,7 @@ namespace Net {
 
         using CloseCallback = Detail::LinkData::CloseCallback;
 
-        NetLink(int fd, EventLoop *loop);
+        NetLink(Socket &&socket, ChannelsManger &manger);
 
         ~NetLink();
 
@@ -113,6 +111,9 @@ namespace Net {
         [[nodiscard]] bool valid() const { return _data.operator bool() && _data->_channel; };
 
         [[nodiscard]] int fd() const { return _data->socket.fd(); };
+
+        /// TODO 提供给用户使用，所有关于 channel 的调用必须在对应的 EventLoop 线程中。
+        [[nodiscard]] Channel *channel() const { return _data->_channel; };
 
     private:
 

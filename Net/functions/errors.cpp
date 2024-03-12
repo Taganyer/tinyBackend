@@ -389,4 +389,141 @@ namespace Net::ops {
         return ret;
     }
 
+    const char *get_poll_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EFAULT:
+                ret = "poll: fds points outside the process's accessible address space.";
+                break;
+            case EINTR:
+                ret = "poll: a signal occurred before any requested event.";
+                break;
+            case EINVAL:
+                ret = "poll: nfds value exceeds the RLIMIT_NOFILE value or "
+                      "(ppoll())  The  timeout value expressed in *ip is invalid";
+                break;
+            case ENOMEM:
+                ret = "poll: unable to allocate memory for kernel data structures.";
+                break;
+            default:
+                ret = "poll: unknown error.";
+        }
+        return ret;
+    }
+
+    const char *get_epoll_create_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EINVAL:
+                ret = "epoll_create: size is not positive or (epoll_create1()) "
+                      "invalid value specified in flags.";
+                break;
+            case EMFILE:
+                ret = "epoll_create: The number of epoll instances reaches the user limit"
+                      "(control by /proc/sys/fs/epoll/max_user_instances) or "
+                      "the number of fd reaches process/system limit.";
+                break;
+            case ENOMEM:
+                ret = "epoll_create: insufficient memory to create the kernel object.";
+                break;
+            default:
+                ret = "epoll_create: unknown error.";
+        }
+        return ret;
+    }
+
+    const char *get_epoll_wait_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EBADF:
+                ret = "epoll_wait: epfd is not a valid file descriptor.";
+                break;
+            case EFAULT:
+                ret = "epoll_wait: The memory area pointed to by events is not "
+                      "accessible with write permissions.";
+                break;
+            case EINTR:
+                ret = "epoll_wait: The call was interrupted by a signal.";
+                break;
+            case EINVAL:
+                ret = "epoll_wait: epfd is not an epoll fd, or maxevents is less than one.";
+                break;
+            default:
+                ret = "epoll_wait: unknown error.";
+                break;
+        }
+        return ret;
+    }
+
+    const char *get_epoll_ctl_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EBADF:
+                ret = "epoll_ctl: epfd or fd is invalid.";
+                break;
+            case EEXIST:
+                ret = "epoll_ctl: EPOLL_CTL_ADD: supplied fd is already registered.";
+                break;
+            case EINVAL:
+                ret = "epoll_ctl: epfd is not an epoll fd; or fd is the same as epfd; "
+                      "or the requested operation op not support; "
+                      "or invalid event type is specified in the event; "
+                      "or EPOLL_CTL_MOD: events included EPOLLEXCLUSIVE or "
+                      "the EPOLLEXCLUSIVE flag has previously been applied to epfd; "
+                      "or EPOLLEXCLUSIVE was specified in event and fd refers to an epoll instance.";
+                break;
+            case ELOOP:
+                ret = "epoll_ctl: fd refers to an epoll instance.";
+                break;
+            case ENOENT:
+                ret = "epoll_ctl: EPOLL_CTL_MOD or EPOLL_CTL_DEL: fd is not registered.";
+                break;
+            case ENOMEM:
+                ret = "epoll_ctl: insufficient memory to handle the requested op control operation.";
+                break;
+            case ENOSPC:
+                ret = "epoll_wait: register fd reaches limit(by /proc/sys/fs/epoll/max_user_watches).";
+                break;
+            case EPERM:
+                ret = "epoll_wait: target file fd does not support epoll.";
+                break;
+            default:
+                ret = "epoll_wait: unknown error.";
+                break;
+        }
+        return ret;
+    }
+
+    const char *get_socket_setOpt_error(int error) {
+        const char *ret;
+
+        return ret;
+    }
+
+    const char *get_socket_opt_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EBADF:
+                ret = "getsockopt: fd is invalid.";
+                break;
+            case EFAULT:
+                ret = "getsockopt: address pointed to by optval is not in a valid part of "
+                      "the process address space.";
+                break;
+            case EINVAL:
+                ret = "getsockopt: optlen invalid in setsockopt().";
+                break;
+            case ENOPROTOOPT:
+                ret = "getsockopt: option is unknown at the level indicated.";
+                break;
+            case ENOTSOCK:
+                ret = "getsockopt: fd does not refer to a socket.";
+                break;
+            default:
+                ret = "getsockopt: unknown error.";
+                break;
+        }
+        return ret;
+    }
+
 }

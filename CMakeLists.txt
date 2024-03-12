@@ -54,7 +54,9 @@ add_executable(tinyBackend main.cpp
         Net/Socket.cpp
         Net/Socket.hpp
         Net/functions/errors.cpp
-        Net/functions/errors.hpp)
+        Net/functions/errors.hpp
+        Net/InetAddress.cpp
+        Net/InetAddress.hpp)
 
 target_link_libraries(tinyBackend mysqlclient)
 

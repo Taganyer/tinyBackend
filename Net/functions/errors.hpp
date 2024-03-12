@@ -19,14 +19,21 @@ namespace Net {
         Accept,
         Shutdown,
         Poll,
-        Timeout,
-        Encoding
+        Epoll_create,
+        Epoll_wait,
+        Epoll_ctl,
+        Socket_opt,
+        Encoding,
+        Link_ErrorEvent,
+        Link_CloseEvent,
+        Link_TimeoutEvent
     };
 
     struct error_mark {
         error_types types = error_types::Null;
         int codes = -1;
     };
+
 
     namespace ops {
 
@@ -49,6 +56,16 @@ namespace Net {
         const char *get_shutdown_error(int error);
 
         const char *get_encoding_error(int error);
+
+        const char *get_poll_error(int error);
+
+        const char *get_epoll_create_error(int error);
+
+        const char *get_epoll_wait_error(int error);
+
+        const char *get_epoll_ctl_error(int error);
+
+        const char *get_socket_opt_error(int error);
 
     }
 

@@ -128,7 +128,7 @@ namespace Base {
 
     inline size_t oFile::put_line(const char *str, size_t len) {
         size_t flag = write(str, len);
-        flag += fputc('\n', _file) == EOF;
+        if (fputc('\n', _file) != EOF) ++flag;
         return flag;
     }
 

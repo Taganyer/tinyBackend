@@ -8,6 +8,7 @@
 #include "PollPoller.hpp"
 #include "../functions/poll_interface.hpp"
 #include "../../Base/Log/Log.hpp"
+#include "../functions/errors.hpp"
 
 using namespace Net;
 
@@ -15,14 +16,14 @@ using namespace Base;
 
 int PollPoller::poll(int timeoutMS, ChannelList &list) {
     assert_in_right_thread("PollPoller::poll ");
-    int active = ::poll(_eventsQueue.data(), _eventsQueue.size(), timeoutMS);
+    int active = ops::poll(_eventsQueue.data(), _eventsQueue.size(), timeoutMS);
     if (active > 0) {
         get_events(list, active);
         G_TRACE << "PollPoller::poll " << _tid << " get " << active << " events";
     } else if (active == 0) {
         G_INFO << "PollPoller::poll " << _tid << " timeout " << timeoutMS << " ms";
     } else {
-        G_ERROR << "PollPoller::poll " << _tid << " error";
+        G_ERROR << "PollPoller " << _tid << ' ' << ops::get_poll_error(errno);
     }
     return active;
 }
