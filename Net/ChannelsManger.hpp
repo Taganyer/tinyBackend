@@ -8,6 +8,7 @@
 #include "../Base/Time/Timer.hpp"
 #include "../Base/Detail/NoCopy.hpp"
 #include "../Base/Mutex.hpp"
+#include <vector>
 
 namespace Net {
 
@@ -20,9 +21,7 @@ namespace Net {
     class ChannelsManger : Base::NoCopy {
     public:
 
-        friend class Node;
-
-        ChannelsManger(EventLoop *loop, Poller *poller, pthread_t tid);
+        ChannelsManger(EventLoop *loop, Poller *poller);
 
         ~ChannelsManger();
 
@@ -53,10 +52,10 @@ namespace Net {
 
     private:
 
-        /// timeout <= 0 移除所有活动的 channels，以懒方式调用。
+        /// timeout <= 0 将不会有超时现象。
         void remove_timeout_channels();
 
-        void remove_channels(Channel *channel);
+        void close();
 
         void remove();
 
@@ -71,7 +70,7 @@ namespace Net {
 
         uint32 _size = 0;
 
-        pthread_t _tid;
+        pthread_t _tid = Base::tid();
 
         Base::Time_difference _timeout{-1};
 

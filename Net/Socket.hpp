@@ -5,7 +5,7 @@
 #ifndef NET_SOCKET_HPP
 #define NET_SOCKET_HPP
 
-#include "../Base/Detail/NoCopy.hpp"
+#include "FileDescriptor.hpp"
 
 struct tcp_info;
 
@@ -13,18 +13,16 @@ namespace Net {
 
     class InetAddress;
 
-    class Socket : Base::NoCopy {
+    class Socket : public FileDescriptor {
     public:
 
         Socket(int domain, int type, int protocol = 0);
 
-        explicit Socket(int fd) : _fd(fd) {};
+        explicit Socket(int fd) : FileDescriptor(fd) {};
 
-        Socket(Socket &&other) noexcept: _fd(other._fd) {
+        Socket(Socket &&other) noexcept: FileDescriptor(other._fd) {
             other._fd = -1;
         };
-
-        ~Socket();
 
         bool Bind(InetAddress &address);
 
@@ -52,13 +50,8 @@ namespace Net {
 
         bool TcpInfo(char *buf, int len) const;
 
-        [[nodiscard]] int fd() const { return _fd; };
-
         [[nodiscard]] bool valid() const { return _fd > 0; };
 
-    private:
-
-        int _fd;
     };
 
 }

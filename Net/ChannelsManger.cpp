@@ -11,15 +11,11 @@ using namespace Base;
 
 using namespace Net;
 
-ChannelsManger::ChannelsManger(EventLoop *loop, Poller *poller, pthread_t tid) :
-        _loop(loop), _poller(poller), _tid(tid) {}
+ChannelsManger::ChannelsManger(EventLoop *loop, Poller *poller) :
+        _loop(loop), _poller(poller) {}
 
 ChannelsManger::~ChannelsManger() {
-    remove_channels(queue_head);
-    queue_head = queue_tail = nullptr;
-    while (remove_head) {
-        remove();
-    }
+    close();
 }
 
 void ChannelsManger::add_channel(Channel *channel) {
@@ -29,6 +25,7 @@ void ChannelsManger::add_channel(Channel *channel) {
     channel->_prev = nullptr;
     channel->_next = queue_head;
     queue_head = channel;
+    ++_size;
 }
 
 void ChannelsManger::remove_channel(Channel *channel) {
@@ -74,7 +71,7 @@ void ChannelsManger::put_to_top(Channel *channel) {
 }
 
 void ChannelsManger::remove_timeout_channels() {
-    if (_timeout < 0 || !queue_head) return;
+    if (_timeout <= 0 || !queue_head) return;
     auto time = Unix_to_now() - _timeout;
     Channel *record = queue_tail;
     while (queue_tail && queue_tail->timeout(time)) {
@@ -93,15 +90,21 @@ void ChannelsManger::remove_timeout_channels() {
     remove_head->_prev = nullptr;
 }
 
-void ChannelsManger::remove_channels(Channel *channel) {
+void ChannelsManger::close() {
     assert_in_right_thread();
-    if (!channel) return;
-    Channel *temp = channel;
-    while (temp->_next) {
-        temp = temp->_next;
+    if (_size != 0)
+        G_WARN << "ChannelsManger " << _tid << " has " << _size << " channels close abnormal";
+    Channel *temp;
+    while (queue_head) {
+        temp = queue_head;
+        queue_head = queue_head->_next;
+        Channel::destroy_Channel(temp);
     }
-    temp->_next = remove_head;
-    remove_head = channel;
+    while (remove_head) {
+        temp = remove_head;
+        remove_head = remove_head->_next;
+        Channel::destroy_Channel(temp);
+    }
 }
 
 void ChannelsManger::remove() {
@@ -123,5 +126,3 @@ void ChannelsManger::remove() {
         temp = t;
     }
 }
-
-

@@ -45,6 +45,11 @@ namespace Net {
             return static_cast<const sockaddr_in6 *>((const void *) (addr));
         }
 
+        inline int socket(int domain, int type, int protocol) {
+            int sock = ::socket(domain, type, protocol);
+            return sock;
+        }
+
         inline int createNonblockSocket(int domain) {
             int sock = ::socket(domain, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
             return sock;

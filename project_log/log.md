@@ -82,3 +82,16 @@ RingBuffer）的功能进行了进一步完善。
 
 今天引入了 InetAddress 类，初步完成了 Socket 类的全部方法，将 NetLink 类的大部分方法进行了补全，同时对 Interface
 中的方法进行了补充。
+
+## 2024.3.13
+
+今天进行了大的变动，主要集中在 Channel & NetLink 类中，同时引入了 Reactor 类。
+
+Reactor 类集合了 EventLoop & ChannelsManger & Poller 类，对它们统一进行管理，隐藏了内部细节。
+
+NetLink 类进行了大变动，主要是隐藏了操作 Channel 类的细节，Channel 类不被用户使用，而是通过 netLink 就可以
+完成所有的灵活变动。
+Channel 类引入了 error_type 类，提供了更细节的错误处理机会，相应的，NetLink 的 ErrorCallback 引入了 error_type
+参数，用户可根据此对不同错误进行处理，通过返回值决定是否关闭。
+
+其他类也做了相应调整与优化。

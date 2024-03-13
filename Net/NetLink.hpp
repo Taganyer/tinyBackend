@@ -8,11 +8,13 @@
 #include "../Base/Detail/config.hpp"
 #include "../Base/RingBuffer.hpp"
 #include "../Base/Time/Timer.hpp"
-#include "Socket.hpp"
+#include "FileDescriptor.hpp"
 #include <functional>
 #include <memory>
 
 namespace Net {
+
+    class EventLoop;
 
     class Channel;
 
@@ -27,7 +29,7 @@ namespace Net {
         class LinkData {
         public:
 
-            Socket socket;
+            std::unique_ptr<FileDescriptor> FD;
 
             Channel *_channel = nullptr;
 
@@ -35,17 +37,28 @@ namespace Net {
 
             using WriteCallback = std::function<void(Base::RingBuffer &)>;
 
-            using ErrorCallback = std::function<void(error_mark)>;
+            /*
+             * 返回值表示是否调用 CloseCallback
+             * 可能返回的错误有：
+             *                error_type::Read,
+             *                error_type::Write,
+             *                error_type::Epoll_ctl,
+             *                error_type::Link_ErrorEvent,
+             *                error_type::Link_TimeoutEvent
+            */
+            using ErrorCallback = std::function<bool(error_mark)>;
 
-            using CloseCallback = std::function<void(error_mark)>;
+            using CloseCallback = std::function<void()>;
 
-            explicit LinkData(Socket &&s) : socket(std::move(s)) {};
+            using FdPtr = std::unique_ptr<FileDescriptor>;
+
+            explicit LinkData(FdPtr &&Fd) : FD(std::move(Fd)) {};
 
             void handle_read();
 
             void handle_write();
 
-            void handle_error(int error_code);
+            bool handle_error();
 
             void handle_close();
 
@@ -83,22 +96,35 @@ namespace Net {
 
         using CloseCallback = Detail::LinkData::CloseCallback;
 
-        NetLink(Socket &&socket, ChannelsManger &manger);
+        using FdPtr = Detail::LinkData::FdPtr;
+
+        NetLink(FdPtr &&Fd);
 
         ~NetLink();
 
         /// NOTE 在 channel 的线程中并且发送缓冲区无数据时会直接发送，多线程不安全。
         uint32 send(const void *target, uint32 size);
 
+        /// FIXME
         uint64 send_file();
 
-        void set_channel_read(bool turn_on);
+        void channel_read(bool turn_on);
 
-        void set_channel_write(bool turn_on);
+        void channel_write(bool turn_on);
 
-        void shutdown_write();
+        void read_event(bool turn_on);
 
-        void force_close();
+        void write_event(bool turn_on);
+
+        void error_event(bool turn_on);
+
+        void close_event(bool turn_on);
+
+        void wake_up_event();
+
+        void force_close_link();
+
+        void send_to_loop(std::function<void()> event);
 
         void set_readCallback(ReadCallback event) { _data->_readFun = std::move(event); };
 
@@ -108,12 +134,13 @@ namespace Net {
 
         void set_closeCallback(CloseCallback event) { _data->_closeFun = std::move(event); };
 
-        [[nodiscard]] bool valid() const { return _data.operator bool() && _data->_channel; };
+        [[nodiscard]] bool valid() const { return _data.operator bool(); };
 
-        [[nodiscard]] int fd() const { return _data->socket.fd(); };
+        [[nodiscard]] int fd() const { return _data->FD->fd(); };
 
-        /// TODO 提供给用户使用，所有关于 channel 的调用必须在对应的 EventLoop 线程中。
-        [[nodiscard]] Channel *channel() const { return _data->_channel; };
+        [[nodiscard]] bool has_channel() const { return _data.operator bool() && _data->_channel; };
+
+        [[nodiscard]] std::weak_ptr<Detail::LinkData> get_data() const { return _data; };
 
     private:
 
@@ -122,8 +149,6 @@ namespace Net {
         using DataPtr = std::shared_ptr<LinkData>;
 
         DataPtr _data;
-
-        void send_to_loop(std::function<void()> event);
 
         [[nodiscard]] bool in_loop_thread() const;
 

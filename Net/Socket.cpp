@@ -13,15 +13,9 @@ using namespace Net;
 
 
 Socket::Socket(int domain, int type, int protocol) :
-        _fd(::socket(domain, type, protocol)) {
+        FileDescriptor(ops::socket(domain, type, protocol)) {
     if (!valid())
         G_ERROR << "Socket create " << ops::get_socket_error(errno);
-}
-
-Socket::~Socket() {
-    if (_fd > 0 && !ops::close(_fd)) {
-        G_FATAL << "Socket " << _fd << ' ' << ops::get_close_error(errno);
-    }
 }
 
 bool Socket::Bind(InetAddress &address) {

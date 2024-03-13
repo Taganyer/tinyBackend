@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <vector>
 #include "../Base/Detail/config.hpp"
+#include "../Base/Detail/NoCopy.hpp"
 
 namespace Net {
 
@@ -17,7 +18,7 @@ namespace Net {
 
     class ChannelsManger;
 
-    class Poller {
+    class Poller : Base::NoCopy {
     public:
 
         using ChannelList = std::vector<Channel *>;
@@ -25,6 +26,8 @@ namespace Net {
         static constexpr int UntilEventOccur = -1;
 
         static constexpr int Immediately = 0;
+
+        Poller() = default;
 
         virtual ~Poller() = default;
 
@@ -40,7 +43,7 @@ namespace Net {
         virtual void update_channel(Channel *channel) = 0;
 
         /// TODO 只在初始化时调用
-        void set_tid(pthread_t tid) { _tid = tid; };
+        void set_tid(pthread_t tid);
 
         void assert_in_right_thread(const char *message) const;
 
@@ -50,7 +53,7 @@ namespace Net {
 
     protected:
 
-        pthread_t _tid;
+        pthread_t _tid = -1;
 
     };
 

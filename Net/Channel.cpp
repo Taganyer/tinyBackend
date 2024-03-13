@@ -14,9 +14,17 @@ using namespace Base;
 
 const short Channel::NoEvent = 0;
 
-const short Channel::Readable = POLLIN | POLLPRI;
+const short Channel::Read = POLLIN;
 
-const short Channel::Writeable = POLLOUT;
+const short Channel::Urgent = POLLPRI;
+
+const short Channel::Write = POLLOUT;
+
+const short Channel::Error = POLLERR;
+
+const short Channel::Invalid = POLLNVAL;
+
+const short Channel::Close = POLLHUP;
 
 Channel::ChannelPtr Channel::create_Channel(int fd,
                                             const std::shared_ptr<Data> &data,
@@ -37,42 +45,43 @@ Channel::~Channel() {
 void Channel::invoke() {
     std::shared_ptr data = _data.lock();
     if (!data) {
-        finish_revents();
+        _revents = NoEvent;
         remove_this();
         return;
     }
-    if ((_revents & POLLHUP) && !(_revents & POLLIN)) {
-        G_TRACE << "fd " << _fd << "is hang up and no data to read. close() called";
+
+    if (_revents & (Error | Invalid)) {
+        G_ERROR << "fd " << _fd << " error. error() called";
+        if (data->handle_error()) _revents |= Close;
+    }
+
+    if ((_revents & Close) && !(_revents & Read)) {
+        G_TRACE << "fd " << _fd << " is hang up and no data to read. close() called";
         data->handle_close();
     }
 
-    if (_revents & (POLLERR | POLLNVAL)) {
-        if (_revents & POLLERR) {
-            G_ERROR << "fd " << _fd << "error. error() called";
-        } else G_ERROR << "fd " << _fd << " is invalid. error() called";
-        data->handle_error(_revents & (POLLERR | POLLNVAL));
-    }
-
-    if (_revents & (POLLIN | POLLPRI | POLLRDHUP))
+    if (_revents & (Read | Urgent | Close))
         data->handle_read();
 
-    if (_revents & POLLOUT)
+    if (_revents & Write)
         data->handle_write();
 
-    _last_active_time = Unix_to_now();
-    _manger->put_to_top(this);
+    if (data->_channel) {
+        _last_active_time = Unix_to_now();
+        _manger->put_to_top(this);
+    }
 
 }
 
 void Channel::set_readable(bool turn_on) {
-    if (turn_on) _events |= Readable;
-    else _events &= ~Readable;
+    if (turn_on) _events |= Read;
+    else _events &= ~Read;
     _manger->poller()->update_channel(this);
 }
 
 void Channel::set_writable(bool turn_on) {
-    if (turn_on)_events |= Writeable;
-    else _events &= ~Writeable;
+    if (turn_on)_events |= Write;
+    else _events &= ~Write;
     _manger->poller()->update_channel(this);
 }
 
@@ -100,7 +109,5 @@ void Channel::remove_this() {
 }
 
 void Channel::send_to_next_loop() {
-    if (!is_nonevent())
-        set_nonevent();
     _manger->activeList.push_back(this);
 }

@@ -20,7 +20,7 @@ using namespace Net;
 EpollPoller::EpollPoller() {
     _eventsQueue.reserve(1);
     if ((_epfd = ops::epoll_create()) < 0) {
-        G_ERROR << "EpollPoller create failed in " << _tid;
+        G_FATAL << "EpollPoller create failed in " << _tid;
     }
 }
 
@@ -40,7 +40,7 @@ int EpollPoller::poll(int timeoutMS, ChannelList &list) {
     } else if (active == 0) {
         G_INFO << "EpollPoller::poll " << _tid << " timeout " << timeoutMS << " ms";
     } else {
-        G_ERROR << "EpollPoller " << _tid << ' ' << ops::get_epoll_wait_error(errno);
+        G_FATAL << "EpollPoller " << _tid << ' ' << ops::get_epoll_wait_error(errno);
     }
     return active;
 }
@@ -89,6 +89,11 @@ void EpollPoller::operate(int operation, Channel *channel) {
         } else {
             G_FATAL << "epoll_ctl MOD " << fd << ' ' << ops::get_epoll_ctl_error(errno);
         }
+        channel->errorMark.types = error_types::Epoll_ctl;
+        channel->errorMark.codes = errno;
+        channel->set_revents(Channel::Error);
+        channel->send_to_next_loop();
+        if (operation != EPOLL_CTL_DEL) channel->set_nonevent();
     } else {
         if (operation == EPOLL_CTL_DEL) {
             G_TRACE << "epoll_ctl DEl " << fd;
@@ -106,7 +111,7 @@ void EpollPoller::get_events(Poller::ChannelList &list, int size) {
     for (int i = 0; i < size; ++i) {
         auto iter = _channels.find(_eventsQueue[i].data.fd);
         assert(iter != _channels.end());
-        iter->second->set_revents((short) _eventsQueue[i].events);
+        iter->second->set_revents((short) _eventsQueue[i].events | iter->second->revents());
         list.push_back(iter->second);
     }
 }

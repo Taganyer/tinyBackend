@@ -25,7 +25,6 @@ namespace Net {
         Socket_opt,
         Encoding,
         Link_ErrorEvent,
-        Link_CloseEvent,
         Link_TimeoutEvent
     };
 
