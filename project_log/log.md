@@ -95,3 +95,12 @@ Channel 类引入了 error_type 类，提供了更细节的错误处理机会，
 参数，用户可根据此对不同错误进行处理，通过返回值决定是否关闭。
 
 其他类也做了相应调整与优化。
+
+## 2024.3.15
+
+重新构建了 NetLink 的行为，删除了 LinkData,增加了 Controller 类。
+
+用户不再通过 NetLink 直接操作 Channel 的行为，而是通过 Controller 控制。NetLink 取代了 LinkData 继承了
+std::enable_shared_from_this 同时在 Channel & Controller 中拥有其弱引用，解决了循环引用的隐患的同时，不影响
+正常使用。
+

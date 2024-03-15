@@ -18,11 +18,7 @@ namespace Net {
 
     class ChannelsManger;
 
-    namespace Detail {
-
-        class LinkData;
-
-    }
+    class NetLink;
 
     class Channel : private Base::NoCopy {
     public:
@@ -41,12 +37,16 @@ namespace Net {
 
         static const short Close;
 
-        using Data = Detail::LinkData;
+        using Data = NetLink;
 
         using ChannelPtr = Channel *;
 
+        using DataPtr = std::weak_ptr<Data>;
+
+        using SharedData = std::shared_ptr<Data>;
+
         /// 隐藏了构造函数，保证生成的对象都是 heap 对象。
-        static ChannelPtr create_Channel(int fd, const std::shared_ptr<Data> &data, ChannelsManger &manger);
+        static ChannelPtr create_Channel(int fd, const SharedData &data, ChannelsManger &manger);
 
         static void destroy_Channel(Channel *channel);
 
@@ -87,9 +87,7 @@ namespace Net {
 
     private:
 
-        using DataPtr = std::weak_ptr<Data>;
-
-        Channel(int fd, const std::shared_ptr<Data> &data, ChannelsManger &manger);
+        Channel(int fd, const SharedData &data, ChannelsManger &manger);
 
         const int _fd;
 

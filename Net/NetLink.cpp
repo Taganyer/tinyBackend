@@ -11,12 +11,10 @@
 
 using namespace Net;
 
-using namespace Net::Detail;
-
 using namespace Base;
 
 
-void LinkData::handle_read() {
+void NetLink::handle_read() {
     int revents = _channel->revents();
     _channel->set_revents(revents & ~(Channel::Read | Channel::Urgent));
 
@@ -46,7 +44,7 @@ void LinkData::handle_read() {
     if (_readFun) _readFun(_input);
 }
 
-void LinkData::handle_write() {
+void NetLink::handle_write() {
     int revents = _channel->revents();
     _channel->set_revents(revents & ~Channel::Write);
 
@@ -64,7 +62,7 @@ void LinkData::handle_write() {
         auto s = ops::write(FD->fd(), _output.read_data(), len);
         if (s < 0) {
             G_ERROR << FD->fd() << " handle_write " << ops::get_write_error(errno);
-            if (_errorFun({error_types::Read, errno}))
+            if (_errorFun({error_types::Write, errno}))
                 handle_close();
             return;
         } else {
@@ -76,16 +74,16 @@ void LinkData::handle_write() {
     if (_writeFun) _writeFun(_output);
 }
 
-bool LinkData::handle_error() {
+bool NetLink::handle_error() {
     int revents = _channel->revents();
     _channel->set_revents(revents & ~(Channel::Error | Channel::Invalid));
 
     G_ERROR << "error occur in Link " << FD->fd();
-    if (_errorFun) _errorFun(_channel->errorMark);
+    if (_errorFun) return _errorFun(_channel->errorMark);
+    return false;
 }
 
-void LinkData::handle_close() {
-    /// FIXME
+void NetLink::handle_close() {
     if (_channel->is_nonevent())
         _channel->set_nonevent();
     _channel->set_revents(Channel::NoEvent);
@@ -95,7 +93,7 @@ void LinkData::handle_close() {
     _channel = nullptr;
 }
 
-bool LinkData::handle_timeout() {
+bool NetLink::handle_timeout() {
     G_WARN << "Link " << FD->fd() << " timeout";
     if (_errorFun({error_types::Link_TimeoutEvent, _channel->revents()})) {
         if (_channel->is_nonevent())
@@ -109,156 +107,222 @@ bool LinkData::handle_timeout() {
     return false;
 }
 
-
-NetLink::NetLink(FdPtr &&Fd) :
-        _data(std::make_shared<LinkData>(std::move(Fd))) {}
+NetLink::LinkPtr NetLink::create_NetLinkPtr(NetLink::FdPtr &&Fd) {
+    return std::shared_ptr<NetLink>(new NetLink(std::move(Fd)));
+}
 
 NetLink::~NetLink() {
     force_close_link();
 }
 
-uint32 NetLink::send(const void *target, uint32 size) {
+void NetLink::channel_read(bool turn_on) {
+    if (in_loop_thread() && valid()) {
+        _channel->set_readable(turn_on);
+    } else {
+        send_to_loop([turn_on, ptr = weak_from_this()] {
+            auto data = ptr.lock();
+            if (data && data->_channel) {
+                data->_channel->set_readable(turn_on);
+            }
+        });
+    }
+}
+
+void NetLink::channel_write(bool turn_on) {
+    if (in_loop_thread() && valid()) {
+        _channel->set_writable(turn_on);
+    } else {
+        send_to_loop([turn_on, ptr = weak_from_this()] {
+            auto data = ptr.lock();
+            if (data && data->_channel) {
+                data->_channel->set_writable(turn_on);
+            }
+        });
+    }
+}
+
+void NetLink::wake_up_event() {
+    if (!valid())
+        return;
+    if (in_loop_thread()) {
+        _channel->send_to_next_loop();
+    } else {
+        send_to_loop([ptr = weak_from_this()] {
+            auto data = ptr.lock();
+            if (data && data->_channel)
+                data->_channel->send_to_next_loop();
+        });
+    }
+}
+
+void NetLink::force_close_link() {
+    FD.reset();
+}
+
+void NetLink::send_to_loop(std::function<void()> event) {
+    _channel->manger()->loop()->put_event(std::move(event));
+}
+
+bool NetLink::in_loop_thread() const {
+    return _channel->manger()->tid() == Base::tid();
+}
+
+
+Controller::Controller(const Controller::Shared &ptr) : _weak(ptr) {}
+
+uint32 Controller::send(const void *target, uint32 size) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return -1;
     int64 writen = 0;
-    if (in_loop_thread() && _data->_output.empty()) {
-        writen = ops::write(fd(), target, size);
+    if (ptr->in_loop_thread() && ptr->_output.empty()) {
+        writen = ops::write(ptr->fd(), target, size);
         if (writen < 0) {
-            G_ERROR << fd() << " NetLink " << ops::get_write_error(errno);
-            if (_data->_errorFun({error_types::Write, errno})) {
-                _data->handle_close();
-                return 0;
+            G_ERROR << ptr->fd() << " NetLink " << ops::get_write_error(errno);
+            if (ptr->_errorFun({error_types::Write, errno})) {
+                ptr->handle_close();
+                return -1;
             }
             writen = 0;
         } else {
-            G_TRACE << "write " << writen << " byte in " << fd();
-            if (_data->_writeFun) _data->_writeFun(_data->_output);
+            G_TRACE << "write " << writen << " byte in " << ptr->fd();
+            if (ptr->_writeFun) ptr->_writeFun(ptr->_output);
         }
     }
     if (writen < size) {
-        writen += _data->_output.write((const char *) target + writen, size - writen);
+        writen += ptr->_output.write((const char *) target + writen, size - writen);
     }
     return writen;
 }
 
-uint64 NetLink::send_file() {
+uint64 Controller::send_file() {
     return 0;
 }
 
-void NetLink::channel_read(bool turn_on) {
-    if (in_loop_thread() && _data->_channel) {
-        _data->_channel->set_readable(turn_on);
-        return;
+bool Controller::reset_readCallback(Controller::ReadCallback event) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->set_readCallback(std::move(event));
+    return true;
+}
+
+bool Controller::reset_writeCallback(Controller::WriteCallback event) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->set_writeCallback(std::move(event));
+    return true;
+}
+
+bool Controller::reset_errorCallback(Controller::ErrorCallback event) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->set_errorCallback(std::move(event));
+    return true;
+}
+
+bool Controller::reset_closeCallback(Controller::CloseCallback event) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->set_closeCallback(std::move(event));
+    return true;
+}
+
+bool Controller::channel_read(bool turn_on) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->channel_read(turn_on);
+    return true;
+}
+
+bool Controller::channel_write(bool turn_on) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->channel_write(turn_on);
+    return true;
+}
+
+bool Controller::read_event(bool turn_on) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    if (ptr->in_loop_thread() && ptr->_channel) {
+        int revents = ptr->_channel->revents();
+        if (turn_on) ptr->_channel->set_revents(revents | Channel::Read);
+        else ptr->_channel->set_revents(revents & ~Channel::Read);
+    } else {
+        ptr->send_to_loop([turn_on, weak = _weak] {
+            auto data = weak.lock();
+            if (data && data->_channel) {
+                int revents = data->_channel->revents();
+                if (turn_on) data->_channel->set_revents(revents | Channel::Read);
+                else data->_channel->set_revents(revents & ~Channel::Read);
+            }
+        });
     }
-    send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel) {
-            data->_channel->set_readable(turn_on);
-        }
-    });
+    return true;
 }
 
-void NetLink::channel_write(bool turn_on) {
-    if (in_loop_thread() && _data->_channel) {
-        _data->_channel->set_writable(turn_on);
-        return;
+bool Controller::write_event(bool turn_on) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    if (ptr->in_loop_thread() && ptr->_channel) {
+        int revents = ptr->_channel->revents();
+        if (turn_on) ptr->_channel->set_revents(revents | Channel::Write);
+        else ptr->_channel->set_revents(revents & ~Channel::Write);
+    } else {
+        ptr->send_to_loop([turn_on, weak = _weak] {
+            auto data = weak.lock();
+            if (data && data->_channel) {
+                int revents = data->_channel->revents();
+                if (turn_on) data->_channel->set_revents(revents | Channel::Write);
+                else data->_channel->set_revents(revents & ~Channel::Write);
+            }
+        });
     }
-    send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel) {
-            data->_channel->set_writable(turn_on);
-        }
-    });
+    return true;
 }
 
-void NetLink::read_event(bool turn_on) {
-    if (in_loop_thread() && _data->_channel) {
-        int revents = _data->_channel->revents();
-        if (turn_on) _data->_channel->set_revents(revents | Channel::Read);
-        else _data->_channel->set_revents(revents & ~Channel::Read);
-        return;
+bool Controller::error_event(bool turn_on) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    if (ptr->in_loop_thread() && ptr->_channel) {
+        int revents = ptr->_channel->revents();
+        if (turn_on) ptr->_channel->set_revents(revents | Channel::Error);
+        else ptr->_channel->set_revents(revents & ~Channel::Error);
+    } else {
+        ptr->send_to_loop([turn_on, weak = _weak] {
+            auto data = weak.lock();
+            if (data && data->_channel) {
+                int revents = data->_channel->revents();
+                if (turn_on) data->_channel->set_revents(revents | Channel::Error);
+                else data->_channel->set_revents(revents & ~Channel::Error);
+            }
+        });
     }
-    send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel) {
-            int revents = data->_channel->revents();
-            if (turn_on) data->_channel->set_revents(revents | Channel::Read);
-            else data->_channel->set_revents(revents & ~Channel::Read);
-        }
-    });
+    return true;
 }
 
-void NetLink::write_event(bool turn_on) {
-    if (in_loop_thread() && _data->_channel) {
-        int revents = _data->_channel->revents();
-        if (turn_on) _data->_channel->set_revents(revents | Channel::Write);
-        else _data->_channel->set_revents(revents & ~Channel::Write);
-        return;
+bool Controller::close_event(bool turn_on) {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    if (ptr->in_loop_thread() && ptr->_channel) {
+        int revents = ptr->_channel->revents();
+        if (turn_on) ptr->_channel->set_revents(revents | Channel::Close);
+        else ptr->_channel->set_revents(revents & ~Channel::Close);
+    } else {
+        ptr->send_to_loop([turn_on, weak = _weak] {
+            auto data = weak.lock();
+            if (data && data->_channel) {
+                int revents = data->_channel->revents();
+                if (turn_on) data->_channel->set_revents(revents | Channel::Close);
+                else data->_channel->set_revents(revents & ~Channel::Close);
+            }
+        });
     }
-    send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel) {
-            int revents = data->_channel->revents();
-            if (turn_on) data->_channel->set_revents(revents | Channel::Write);
-            else data->_channel->set_revents(revents & ~Channel::Write);
-        }
-    });
+    return true;
 }
 
-void NetLink::error_event(bool turn_on) {
-    if (in_loop_thread() && _data->_channel) {
-        int revents = _data->_channel->revents();
-        if (turn_on) _data->_channel->set_revents(revents | Channel::Error);
-        else _data->_channel->set_revents(revents & ~Channel::Error);
-        return;
-    }
-    send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel) {
-            int revents = data->_channel->revents();
-            if (turn_on) data->_channel->set_revents(revents | Channel::Error);
-            else data->_channel->set_revents(revents & ~Channel::Error);
-        }
-    });
-}
-
-void NetLink::close_event(bool turn_on) {
-    if (in_loop_thread() && _data->_channel) {
-        int revents = _data->_channel->revents();
-        if (turn_on) _data->_channel->set_revents(revents | Channel::Close);
-        else _data->_channel->set_revents(revents & ~Channel::Close);
-        return;
-    }
-    send_to_loop([turn_on, ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel) {
-            int revents = data->_channel->revents();
-            if (turn_on) data->_channel->set_revents(revents | Channel::Close);
-            else data->_channel->set_revents(revents & ~Channel::Close);
-        }
-    });
-}
-
-void NetLink::wake_up_event() {
-    if (!_data->_channel->has_aliveEvent())
-        return;
-    if (in_loop_thread() && _data->_channel) {
-        _data->_channel->send_to_next_loop();
-        return;
-    }
-    send_to_loop([ptr = std::weak_ptr(_data)] {
-        auto data = ptr.lock();
-        if (data && data->_channel)
-            data->_channel->send_to_next_loop();
-    });
-}
-
-void NetLink::force_close_link() {
-    _data = nullptr;
-}
-
-void NetLink::send_to_loop(std::function<void()> event) {
-    _data->_channel->manger()->loop()->put_event(std::move(event));
-}
-
-bool NetLink::in_loop_thread() const {
-    return _data->_channel->manger()->tid() == Base::tid();
+bool Controller::wake_up_event() {
+    Shared ptr = _weak.lock();
+    if (!ptr || !ptr->valid()) return false;
+    ptr->wake_up_event();
+    return true;
 }

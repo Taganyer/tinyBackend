@@ -4,6 +4,7 @@
 
 #include "Poller.hpp"
 #include "Channel.hpp"
+
 #include "ChannelsManger.hpp"
 #include "NetLink.hpp"
 #include "../Base/Log/Log.hpp"
@@ -27,7 +28,7 @@ const short Channel::Invalid = POLLNVAL;
 const short Channel::Close = POLLHUP;
 
 Channel::ChannelPtr Channel::create_Channel(int fd,
-                                            const std::shared_ptr<Data> &data,
+                                            const SharedData &data,
                                             ChannelsManger &manger) {
     auto channel = new Channel(fd, data, manger);
     return channel;
@@ -38,7 +39,9 @@ void Channel::destroy_Channel(Channel *channel) {
 }
 
 Channel::~Channel() {
-    assert(!has_aliveEvent());
+    SharedData data = _data.lock();
+    if (data && data->_channel == this)
+        data->_channel = nullptr;
     G_TRACE << "Channel " << _fd << " has been destroyed";
 }
 
@@ -90,8 +93,9 @@ void Channel::set_nonevent() {
     _manger->poller()->update_channel(this);
 }
 
-Channel::Channel(int fd, const std::shared_ptr<Data> &data,
-                 ChannelsManger &manger) : _fd(fd), _manger(&manger), _data(data) {
+Channel::Channel(int fd, const SharedData &data, ChannelsManger &manger) :
+        _fd(fd), _manger(&manger), _data(data) {
+    data->_channel = this;
     G_TRACE << "Channel " << _fd << "create";
 }
 

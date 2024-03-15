@@ -34,12 +34,10 @@ Reactor::~Reactor() {
 void Reactor::add_NetLink(NetLink &netLink) {
     assert(running());
     assert(netLink.valid() && !netLink.has_channel());
-    get_loop()->put_event([ptr = netLink.get_data(), m = _manger] {
+    _loop->put_event([ptr = netLink.weak_from_this(), m = _manger] {
         auto data = ptr.lock();
         if (data) {
-            Channel *channel = Channel::create_Channel(data->FD->fd(), data, *m);
-            m->add_channel(channel);
-            data->_channel = channel;
+            m->add_channel(Channel::create_Channel(data->fd(), data, *m));
         }
     });
 }
@@ -83,5 +81,3 @@ void Reactor::close() {
         });
     }
 }
-
-
