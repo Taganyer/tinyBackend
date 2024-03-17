@@ -39,9 +39,6 @@ void Channel::destroy_Channel(Channel *channel) {
 }
 
 Channel::~Channel() {
-    SharedData data = _data.lock();
-    if (data && data->_channel == this)
-        data->_channel = nullptr;
     G_TRACE << "Channel " << _fd << " has been destroyed";
 }
 
@@ -103,12 +100,19 @@ bool Channel::timeout(const Time_difference &time) {
     if (time >= _last_active_time) {
         std::shared_ptr data = _data.lock();
         if (!data) return true;
-        return data->handle_timeout();
+        if (data->handle_timeout()) {
+            if (data->_channel == this)
+                data->_channel = nullptr;
+            return true;
+        }
     }
     return false;
 }
 
 void Channel::remove_this() {
+    SharedData shared = _data.lock();
+    if (shared->_channel == this)
+        shared->_channel = nullptr;
     _manger->remove_channel(this);
 }
 
