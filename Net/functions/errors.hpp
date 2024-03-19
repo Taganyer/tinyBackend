@@ -25,7 +25,8 @@ namespace Net {
         Socket_opt,
         Encoding,
         Link_ErrorEvent,
-        Link_TimeoutEvent
+        Link_TimeoutEvent,
+        Link_UnexpectedShutdown
     };
 
     struct error_mark {

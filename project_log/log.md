@@ -116,3 +116,7 @@ std::enable_shared_from_this 同时在 Channel & Controller 中拥有其弱引�
   完全可以代替多 Channel 的功能。
 
 另：net 部分的基础大都完成，接下来再更新就是对功能的填充或者是有了新的想法（重构）。
+
+## 2024.3.19
+
+今天优化了 Channel 的控制逻辑，进一步提升了操作的灵活性，增加了控制的安全性。

@@ -46,7 +46,7 @@ namespace Net {
         using SharedData = std::shared_ptr<Data>;
 
         /// 隐藏了构造函数，保证生成的对象都是 heap 对象。
-        static ChannelPtr create_Channel(int fd, const SharedData &data, ChannelsManger &manger);
+        static ChannelPtr create_Channel(const SharedData &data, ChannelsManger &manger);
 
         static void destroy_Channel(Channel *channel);
 
@@ -87,7 +87,7 @@ namespace Net {
 
     private:
 
-        Channel(int fd, const SharedData &data, ChannelsManger &manger);
+        Channel(const SharedData &data, ChannelsManger &manger);
 
         const int _fd;
 

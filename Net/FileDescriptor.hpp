@@ -18,7 +18,11 @@ namespace Net {
 
         ~FileDescriptor();
 
+        operator bool() const { return _fd > 0; };
+
         [[nodiscard]] int fd() const { return _fd; };
+
+        [[nodiscard]] bool valid() const { return _fd > 0; };
 
     protected:
 

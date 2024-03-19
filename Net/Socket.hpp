@@ -50,8 +50,6 @@ namespace Net {
 
         bool TcpInfo(char *buf, int len) const;
 
-        [[nodiscard]] bool valid() const { return _fd > 0; };
-
     };
 
 }

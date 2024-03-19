@@ -34,9 +34,11 @@ namespace Base {
 
         uint32 read_to(void *dest, uint32 size);
 
-        [[nodiscard]] const char *read_data() const { return _read; };
+        [[nodiscard]] char *read_data() const { return _read; };
 
         void read_advance(uint32 step);
+
+        [[nodiscard]] char *data_begin() const { return _buffer; };
 
         inline char peek();
 

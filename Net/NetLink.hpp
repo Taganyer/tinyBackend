@@ -24,12 +24,14 @@ namespace Net {
 
     struct error_mark;
 
+    class Controller;
+
     class NetLink : public std::enable_shared_from_this<NetLink>, private Base::NoCopy {
     public:
 
-        using ReadCallback = std::function<void(Base::RingBuffer &)>;
+        using ReadCallback = std::function<void(Base::RingBuffer &, FileDescriptor &)>;
 
-        using WriteCallback = std::function<void(Base::RingBuffer &)>;
+        using WriteCallback = std::function<void(Base::RingBuffer &, FileDescriptor &)>;
 
         /*
          * 返回值表示是否调用 CloseCallback
@@ -40,9 +42,9 @@ namespace Net {
          *                error_type::Link_ErrorEvent,
          *                error_type::Link_TimeoutEvent
         */
-        using ErrorCallback = std::function<bool(error_mark)>;
+        using ErrorCallback = std::function<bool(error_mark, FileDescriptor &)>;
 
-        using CloseCallback = std::function<void()>;
+        using CloseCallback = std::function<void(FileDescriptor &)>;
 
         using FdPtr = std::unique_ptr<FileDescriptor>;
 
@@ -59,9 +61,14 @@ namespace Net {
 
         void wake_up_event();
 
-        void force_close_link();
+        /// 强行关闭文件描述符，多次调用不会出现问题。
+        void close_fd();
 
         void send_to_loop(std::function<void()> event);
+
+        Controller get_controller();
+
+        FileDescriptor &fileDescriptor() { return *FD; };
 
         void set_readCallback(ReadCallback event) { _readFun = std::move(event); };
 
@@ -103,7 +110,7 @@ namespace Net {
 
         void handle_write();
 
-        bool handle_error();
+        void handle_error(error_mark mark);
 
         void handle_close();
 
@@ -111,12 +118,12 @@ namespace Net {
 
         bool in_loop_thread() const;
 
-
-        NetLink(FdPtr &&Fd) : FD(std::move(Fd)) {};
+        NetLink(FdPtr &&Fd);
 
     };
 
 
+    /// 安全的控制 Channel,可自由复制，不会出现循环引用的问题。
     class Controller {
     public:
         using Weak = std::weak_ptr<NetLink>;
@@ -152,15 +159,22 @@ namespace Net {
 
         bool channel_write(bool turn_on);
 
-        bool read_event(bool turn_on);
+        bool wake_readCallback();
 
-        bool write_event(bool turn_on);
+        bool wake_writeCallback();
 
-        bool error_event(bool turn_on);
+        bool wake_error(error_mark mark);
 
-        bool close_event(bool turn_on);
+        bool wake_close();
 
         bool wake_up_event();
+
+        /// 使用时要小心注意
+        bool set_channelRevents(int revents);
+
+        void close_fd();
+
+        [[nodiscard]] int get_channelRevents() const;
 
     private:
 

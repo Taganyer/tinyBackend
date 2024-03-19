@@ -75,6 +75,11 @@ namespace Net {
             return ret;
         }
 
+        inline int64 writev(int fd, const iovec *iov, int iov_size) {
+            int64 ret = ::writev(fd, iov, iov_size);
+            return ret;
+        }
+
         inline bool connect(int fd, const sockaddr *addr) {
             int ret = ::connect(fd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
             return ret == 0;

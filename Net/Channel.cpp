@@ -27,11 +27,14 @@ const short Channel::Invalid = POLLNVAL;
 
 const short Channel::Close = POLLHUP;
 
-Channel::ChannelPtr Channel::create_Channel(int fd,
-                                            const SharedData &data,
+Channel::ChannelPtr Channel::create_Channel(const SharedData &data,
                                             ChannelsManger &manger) {
-    auto channel = new Channel(fd, data, manger);
-    return channel;
+    if (data->FD && *data->FD) {
+        auto channel = new Channel(data, manger);
+        data->_channel = channel;
+        return channel;
+    }
+    return nullptr;
 }
 
 void Channel::destroy_Channel(Channel *channel) {
@@ -52,7 +55,7 @@ void Channel::invoke() {
 
     if (_revents & (Error | Invalid)) {
         G_ERROR << "fd " << _fd << " error. error() called";
-        if (data->handle_error()) _revents |= Close;
+        data->handle_error(errorMark);
     }
 
     if ((_revents & Close) && !(_revents & Read)) {
@@ -90,8 +93,8 @@ void Channel::set_nonevent() {
     _manger->poller()->update_channel(this);
 }
 
-Channel::Channel(int fd, const SharedData &data, ChannelsManger &manger) :
-        _fd(fd), _manger(&manger), _data(data) {
+Channel::Channel(const SharedData &data, ChannelsManger &manger) :
+        _fd(data->fd()), _manger(&manger), _data(data) {
     data->_channel = this;
     G_TRACE << "Channel " << _fd << "create";
 }
@@ -100,19 +103,12 @@ bool Channel::timeout(const Time_difference &time) {
     if (time >= _last_active_time) {
         std::shared_ptr data = _data.lock();
         if (!data) return true;
-        if (data->handle_timeout()) {
-            if (data->_channel == this)
-                data->_channel = nullptr;
-            return true;
-        }
+        return data->handle_timeout();
     }
     return false;
 }
 
 void Channel::remove_this() {
-    SharedData shared = _data.lock();
-    if (shared->_channel == this)
-        shared->_channel = nullptr;
     _manger->remove_channel(this);
 }
 
