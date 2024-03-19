@@ -119,4 +119,4 @@ std::enable_shared_from_this 同时在 Channel & Controller 中拥有其弱引�
 
 ## 2024.3.19
 
-今天优化了 Channel 的控制逻辑，进一步提升了操作的灵活性，增加了控制的安全性。
+今天优化了 Controller 对 Channel 的控制逻辑，进一步增强了操作的灵活性，同时提升了控制的安全性。
