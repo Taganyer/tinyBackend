@@ -146,7 +146,7 @@ namespace Net {
         /// FIXME
         uint64 send_file();
 
-        /// 以下四个函数并不安全，合理使用。
+        /// 以下四个函数不会立即生效，合理使用。
         bool reset_readCallback(ReadCallback event);
 
         bool reset_writeCallback(WriteCallback event);
@@ -159,13 +159,13 @@ namespace Net {
 
         bool channel_write(bool turn_on);
 
-        bool wake_readCallback();
+        bool wake_readCallback(bool after = true);
 
-        bool wake_writeCallback();
+        bool wake_writeCallback(bool after = true);
 
-        bool wake_error(error_mark mark);
+        bool wake_error(error_mark mark, bool after = true);
 
-        bool wake_close();
+        bool wake_close(bool after = true);
 
         bool wake_up_event();
 

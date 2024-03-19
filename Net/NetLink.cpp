@@ -198,28 +198,44 @@ uint64 Controller::send_file() {
 bool Controller::reset_readCallback(Controller::ReadCallback event) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    ptr->set_readCallback(std::move(event));
+    ptr->send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+        Shared data = weak.lock();
+        if (data)
+            data->set_readCallback(std::move(e));
+    });
     return true;
 }
 
 bool Controller::reset_writeCallback(Controller::WriteCallback event) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    ptr->set_writeCallback(std::move(event));
+    ptr->send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+        Shared data = weak.lock();
+        if (data)
+            data->set_writeCallback(std::move(e));
+    });
     return true;
 }
 
 bool Controller::reset_errorCallback(Controller::ErrorCallback event) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    ptr->set_errorCallback(std::move(event));
+    ptr->send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+        Shared data = weak.lock();
+        if (data)
+            data->set_errorCallback(std::move(e));
+    });
     return true;
 }
 
 bool Controller::reset_closeCallback(Controller::CloseCallback event) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    ptr->set_closeCallback(std::move(event));
+    ptr->send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+        Shared data = weak.lock();
+        if (data)
+            data->set_closeCallback(std::move(e));
+    });
     return true;
 }
 
@@ -237,10 +253,10 @@ bool Controller::channel_write(bool turn_on) {
     return true;
 }
 
-bool Controller::wake_readCallback() {
+bool Controller::wake_readCallback(bool after) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    if (ptr->in_loop_thread()) {
+    if (ptr->in_loop_thread() && !after) {
         ptr->_readFun(ptr->_input, *ptr->FD);
     } else {
         ptr->send_to_loop([weak = _weak] {
@@ -253,10 +269,10 @@ bool Controller::wake_readCallback() {
     return true;
 }
 
-bool Controller::wake_writeCallback() {
+bool Controller::wake_writeCallback(bool after) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    if (ptr->in_loop_thread()) {
+    if (ptr->in_loop_thread() && !after) {
         ptr->_writeFun(ptr->_output, *ptr->FD);
     } else {
         ptr->send_to_loop([weak = _weak] {
@@ -269,10 +285,10 @@ bool Controller::wake_writeCallback() {
     return true;
 }
 
-bool Controller::wake_error(error_mark mark) {
+bool Controller::wake_error(error_mark mark, bool after) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    if (ptr->in_loop_thread()) {
+    if (ptr->in_loop_thread() && !after) {
         ptr->handle_error(mark);
     } else {
         ptr->send_to_loop([weak = _weak, mark] {
@@ -284,10 +300,10 @@ bool Controller::wake_error(error_mark mark) {
     return true;
 }
 
-bool Controller::wake_close() {
+bool Controller::wake_close(bool after) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return false;
-    if (ptr->in_loop_thread()) {
+    if (ptr->in_loop_thread() && !after) {
         ptr->handle_close();
     } else {
         ptr->send_to_loop([weak = _weak] {
