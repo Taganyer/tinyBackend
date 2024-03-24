@@ -2,12 +2,12 @@
 // Created by taganyer on 3/9/24.
 //
 
-#include "Socket.hpp"
-#include "functions/Interface.hpp"
-#include "../Base/Log/Log.hpp"
-#include "functions/errors.hpp"
-#include "InetAddress.hpp"
 #include <netinet/tcp.h>
+#include "Socket.hpp"
+#include "error/errors.hpp"
+#include "InetAddress.hpp"
+#include "../Base/Log/Log.hpp"
+#include "functions/Interface.hpp"
 
 using namespace Net;
 

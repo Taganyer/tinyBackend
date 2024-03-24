@@ -7,6 +7,79 @@
 
 namespace Net::ops {
 
+    const char *get_error(error_mark mark) {
+        const char *ret;
+        switch (mark.types) {
+            case error_types::Null:
+                ret = "no error.";
+                break;
+            case error_types::Socket:
+                ret = get_socket_error(mark.codes);
+                break;
+            case error_types::Close:
+                ret = get_close_error(mark.codes);
+                break;
+            case error_types::Read:
+                ret = get_read_error(mark.codes);
+                break;
+            case error_types::Write:
+                ret = get_write_error(mark.codes);
+                break;
+            case error_types::Connect:
+                ret = get_connect_error(mark.codes);
+                break;
+            case error_types::Bind:
+                ret = get_bind_error(mark.codes);
+                break;
+            case error_types::Listen:
+                ret = get_listen_error(mark.codes);
+                break;
+            case error_types::Accept:
+                ret = get_accept_error(mark.codes);
+                break;
+            case error_types::Shutdown:
+                ret = get_shutdown_error(mark.codes);
+                break;
+            case error_types::Sendfile:
+                ret = get_sendfile_error(mark.codes);
+                break;
+            case error_types::Encoding:
+                ret = get_encoding_error(mark.codes);
+                break;
+            case error_types::Select:
+                ret = get_select_error(mark.codes);
+                break;
+            case error_types::Poll:
+                ret = get_poll_error(mark.codes);
+                break;
+            case error_types::Epoll_create:
+                ret = get_epoll_create_error(mark.codes);
+                break;
+            case error_types::Epoll_wait:
+                ret = get_epoll_wait_error(mark.codes);
+                break;
+            case error_types::Epoll_ctl:
+                ret = get_epoll_ctl_error(mark.codes);
+                break;
+            case error_types::Socket_opt:
+                ret = get_socket_opt_error(mark.codes);
+                break;
+            case error_types::ErrorEvent:
+                ret = "ErrorEvent";
+                break;
+            case error_types::TimeoutEvent:
+                ret = "TimeoutEvent";
+                break;
+            case error_types::UnexpectedShutdown:
+                ret = "unexpectedShutdown";
+                break;
+            default:
+                ret = "";
+                break;
+        }
+        return ret;
+    }
+
     const char *get_socket_error(int error) {
         const char *ret;
         switch (error) {
@@ -370,6 +443,43 @@ namespace Net::ops {
         return ret;
     }
 
+    const char *get_sendfile_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EAGAIN:
+                ret = "Sendfile: Nonblocking I/O selected but cannot send all bytes at once.";
+                break;
+            case EBADE:
+                ret = "Sendfile: input file was not opened for reading or the output file was"
+                      " not opened for writing.";
+                break;
+            case EFAULT:
+                ret = "Sendfile: Bad address.";
+                break;
+            case EINVAL:
+                ret = "Sendfile: fd is not valid or locked, or an mmap(2)-like operation "
+                      "is not available for in_fd, or count is negative, or out_fd has "
+                      "the O_APPEND flag set but not supported.";
+                break;
+            case EIO:
+                ret = "Sendfile: unspecified error while reading from in_fd.";
+                break;
+            case ENOMEM:
+                ret = "Sendfile: insufficient memory to read from in_fd.";
+                break;
+            case EOVERFLOW:
+                ret = "Sendfile: count is too large.";
+                break;
+            case ESPIPE:
+                ret = "Sendfile: offset is not NULL but the input file is not seekable.";
+                break;
+            default:
+                ret = "Sendfile: unknown error.";
+                break;
+        }
+        return ret;
+    }
+
     const char *get_encoding_error(int error) {
         const char *ret;
         switch (error) {
@@ -385,6 +495,31 @@ namespace Net::ops {
                 break;
             default:
                 ret = "Encoding_conversion: unknown error.";
+        }
+        return ret;
+    }
+
+    const char *get_select_error(int error) {
+        const char *ret;
+        switch (error) {
+            case EBADF:
+                ret = "select: an invalid fd was given in one of the sets.(Perhaps "
+                      "fd was already closed, or an error has occurred.) or "
+                      "timeout is invalid.";
+                break;
+            case EINTR:
+                ret = "select: a signal was caught.";
+                break;
+            case EINVAL:
+                ret = "select: nfds is negative or exceeds "
+                      "the RLIMIT_NOFILE resource limit.";
+                break;
+            case ENOMEM:
+                ret = "select: Unable to allocate memory for internal tables.";
+                break;
+            default:
+                ret = "select: unknown error.";
+                break;
         }
         return ret;
     }
@@ -468,8 +603,8 @@ namespace Net::ops {
                 ret = "epoll_ctl: epfd is not an epoll fd; or fd is the same as epfd; "
                       "or the requested operation op not support; "
                       "or invalid event type is specified in the event; "
-                      "or EPOLL_CTL_MOD: events included EPOLLEXCLUSIVE or "
-                      "the EPOLLEXCLUSIVE flag has previously been applied to epfd; "
+                      "or EPOLL_CTL_MOD: events included EPOLLEXCLUSIVE "
+                      "or the EPOLLEXCLUSIVE flag has previously been applied to epfd; "
                       "or EPOLLEXCLUSIVE was specified in event and fd refers to an epoll instance.";
                 break;
             case ELOOP:

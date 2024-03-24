@@ -120,3 +120,28 @@ std::enable_shared_from_this 同时在 Channel & Controller 中拥有其弱引�
 ## 2024.3.19
 
 今天优化了 Controller 对 Channel 的控制逻辑，进一步增强了操作的灵活性，同时提升了控制的安全性。
+
+## 2024.3.24
+
+今天进行了大变动：
+
+* 删除了 Channel 类
+* 删除了 ChannelManger 类
+* 删除了 Poller、EpollPoller、PollPoller 类
+* 新增了 Monitor、Selector、Poller、EPoller 类
+* 新增了 FilePool 类
+* 修改了 Reactor 的功能（取代 ChannelManger）
+* 修改了 NetLink 的功能
+* 修改了 Controller 的功能
+* 优化了部分类的结构
+
+前几天在构思大文件发送功能时突然有了新的想法，决定放弃仿照 muduo 的项目结构。
+
+我按照自己的想法重新写了一个 Monitor，最终降低了类与类之间的耦合度，使得 Selector、Poller、EPoller 被分离出来，不依靠 Channel
+也能使用。
+
+关于 Channel 的跨线程优势，我用 NetLink + Reactor 进行了取代，同时还额外允许一个 NetLink 可以被多个 Reactor 拥有，增加了灵活性
+而不影响功能。
+
+关于大文件发送，我决定使用 独立文件发送线程 + 文件大小分片 的策略，将所有连接的大文件分布到一个或多个线程里同时分片发送（当然要控制
+每个线程的文件数量和每个文件的分片大小，它们都可以由用户设置），文件发送完毕或出错后会执行用户设置的回调函数，拥有极强的灵活性。

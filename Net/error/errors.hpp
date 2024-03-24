@@ -5,37 +5,12 @@
 #ifndef NET_ERRORS_HPP
 #define NET_ERRORS_HPP
 
-namespace Net {
-
-    enum class error_types {
-        Null,
-        Socket,
-        Close,
-        Read,
-        Write,
-        Connect,
-        Bind,
-        Listen,
-        Accept,
-        Shutdown,
-        Poll,
-        Epoll_create,
-        Epoll_wait,
-        Epoll_ctl,
-        Socket_opt,
-        Encoding,
-        Link_ErrorEvent,
-        Link_TimeoutEvent,
-        Link_UnexpectedShutdown
-    };
-
-    struct error_mark {
-        error_types types = error_types::Null;
-        int codes = -1;
-    };
+#include "error_mark.hpp"
 
 
-    namespace ops {
+namespace Net::ops {
+
+    const char *get_error(error_mark mark);
 
         const char *get_socket_error(int error);
 
@@ -55,7 +30,11 @@ namespace Net {
 
         const char *get_shutdown_error(int error);
 
+    const char *get_sendfile_error(int error);
+
         const char *get_encoding_error(int error);
+
+    const char *get_select_error(int error);
 
         const char *get_poll_error(int error);
 
@@ -68,8 +47,5 @@ namespace Net {
         const char *get_socket_opt_error(int error);
 
     }
-
-}
-
 
 #endif //NET_ERRORS_HPP

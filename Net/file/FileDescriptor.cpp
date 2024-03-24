@@ -3,9 +3,9 @@
 //
 
 #include "FileDescriptor.hpp"
-#include "functions/Interface.hpp"
-#include "../Base/Log/Log.hpp"
-#include "functions/errors.hpp"
+#include "../functions/Interface.hpp"
+#include "../../Base/Log/Log.hpp"
+#include "../error/errors.hpp"
 
 
 using namespace Net;

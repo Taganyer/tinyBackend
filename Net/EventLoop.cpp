@@ -46,6 +46,7 @@ void EventLoop::loop() {
 
 void EventLoop::shutdown() {
     quit = true;
+    _condition.notify_one();
 }
 
 void EventLoop::set_distributor(EventLoop::Event event) {

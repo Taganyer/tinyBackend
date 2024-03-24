@@ -5,8 +5,8 @@
 #ifndef NET_INETADDRESS_HPP
 #define NET_INETADDRESS_HPP
 
-#include <arpa/inet.h>
 #include <string>
+#include <arpa/inet.h>
 
 namespace Net {
 

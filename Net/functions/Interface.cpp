@@ -6,10 +6,17 @@
 #include "../../Base/Log/Log.hpp"
 
 #include <iconv.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
 
 using namespace Net;
 
 namespace Net::ops {
+
+    int64 sendfile(int target_socket, int file_fd, off_t *offset, size_t count) {
+        int64 ret = ::sendfile(target_socket, file_fd, offset, count);
+        return ret;
+    }
 
     void toIpPort(char *buf, uint32 size, const sockaddr *addr) {
         if (addr->sa_family == AF_INET6) {
@@ -103,6 +110,15 @@ namespace Net::ops {
         } else {
             return false;
         }
+    }
+
+    bool fd_isValid(int fd) {
+        int record = errno;
+        if (::fcntl(fd, F_GETFL) == -1) {
+            errno = record;
+            return false;
+        }
+        return true;
     }
 
     bool Encoding_conversion(const char *from, const char *to,

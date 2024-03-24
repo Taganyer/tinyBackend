@@ -3,7 +3,7 @@
 //
 
 #include "Acceptor.hpp"
-#include "functions/errors.hpp"
+#include "error/errors.hpp"
 #include "InetAddress.hpp"
 
 using namespace Net;

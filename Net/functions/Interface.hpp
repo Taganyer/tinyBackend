@@ -132,6 +132,8 @@ namespace Net {
             return ::getsockopt(fd, level, opt_name, opt_val, opt_len) == 0;
         }
 
+        int64 sendfile(int target_socket, int file_fd, off_t *offset, size_t count);
+
         void toIpPort(char *buf, uint32 size, const sockaddr *addr);
 
         void toIp(char *buf, uint32 size, const sockaddr *addr);
@@ -147,6 +149,8 @@ namespace Net {
         sockaddr_in6 getPeerAddr(int fd);
 
         bool isSelfConnect(int fd);
+
+        bool fd_isValid(int fd);
 
         bool Encoding_conversion(const char *from, const char *to,
                                  char *target, size_t input_len,

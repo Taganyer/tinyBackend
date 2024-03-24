@@ -7,8 +7,8 @@
 
 
 #include <functional>
-#include "../Base/Detail/config.hpp"
 #include "Socket.hpp"
+#include "../Base/Detail/config.hpp"
 
 namespace Net {
 
@@ -52,6 +52,5 @@ namespace Net {
     };
 
 }
-
 
 #endif //NET_ACCEPTOR_HPP
