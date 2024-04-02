@@ -8,6 +8,7 @@
 #include "config.hpp"
 #include "NoCopy.hpp"
 #include <cstdio>
+#include <unistd.h>
 
 
 namespace Base {
@@ -42,6 +43,10 @@ namespace Base {
         size_t write(const void *str, size_t len = -1);
 
         size_t put_line(const char *str, size_t len = -1);
+
+        void flush();
+
+        void flush_to_disk();
 
         template<typename ...Args>
         int formatPut(const char *f, Args ... args) {
@@ -132,7 +137,15 @@ namespace Base {
         return flag;
     }
 
-}
+    inline void oFile::flush() {
+        fflush(_file);
+    }
 
+    inline void oFile::flush_to_disk() {
+        fflush(_file);
+        fsync(get_fd());
+    }
+
+}
 
 #endif //BASE_OFILE_HPP

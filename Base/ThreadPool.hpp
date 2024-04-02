@@ -79,6 +79,7 @@ namespace Base {
             ThreadPool *ptr;
 
             struct Task {
+
                 Task *next = nullptr;
                 Fun fun;
 

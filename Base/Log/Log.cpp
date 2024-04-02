@@ -4,152 +4,81 @@
 
 #include "Log.hpp"
 #include "../Exception.hpp"
+#include "SendBuffer.hpp"
 
 namespace Base {
 
-    Log::Log(std::string dictionary_path, LogRank rank) :
-            path(std::move(dictionary_path)), outputRank(rank) {
-        if (path.back() != '/') path.push_back('/');
-        open_new_file();
-        Thread thread([this] {
-            Queue *target = nullptr;
-            while (!stop) {
-                {
-                    Lock l(IO_lock);
-                    clear_empty_buffer();
-                    put_to_empty_buffer(target);
-                    if (condition.wait_for(l, FLUSH_TIME)) {
-                        target = full_queue;
-                        full_queue = nullptr;
-                    } else {
-                        if (full_queue) {
-                            target = full_queue;
-                            full_queue = nullptr;
-                        } else {
-                            target = current_queue;
-                            current_queue = nullptr;
-                        }
-                    }
-                }
-                invoke(target);
-            }
-            put_to_empty_buffer(target);
-            if (full_queue) {
-                invoke(full_queue);
-                put_to_empty_buffer(full_queue);
-            }
-            if (current_queue) {
-                invoke(current_queue);
-                put_to_empty_buffer(current_queue);
-            }
-            stop = false;
-            condition.notify_one();
-        });
-        thread.start();
+    Log::Log(SendThread &thread, std::string dictionary_path,
+             LogRank rank, uint64 limit_size) :
+            logSender(std::make_shared<LogSender>(&thread, std::move(dictionary_path), limit_size)), outputRank(rank) {
+        logSender->_thread->add_sender(logSender->shared_from_this(), logSender->data);
+    }
+
+    Log::Log(Log &&other) : logSender(other.logSender), outputRank(other.outputRank) {
+        other.logSender.reset();
     }
 
     Log::~Log() {
-        stop = true;
-        condition.notify_all();
-        Lock l(IO_lock);
-        condition.wait(l, [this] { return !stop; });
-        clear_empty_buffer();
+        if (logSender)
+            logSender->_thread->remove_sender(logSender->data);
     }
 
-    void Log::get_new_buffer() {
-        if (empty_queue) {
-            current_queue = empty_queue;
-            empty_queue = empty_queue->next;
-            current_queue->next = nullptr;
-        } else {
-            current_queue = new Log::Queue();
-        }
-    }
-
-    void Log::put_full_buffer() {
-        auto target = full_queue;
-        current_queue->next = nullptr;
-        if (!target) {
-            full_queue = current_queue;
-        } else {
-            while (target->next) target = target->next;
-            target->next = current_queue;
-        }
-    }
-
-    void Log::put_to_empty_buffer(Queue *target) {
-        if (!target) return;
-        auto tail = target;
-        while (tail->next) tail = tail->next;
-        tail->next = empty_queue;
-        empty_queue = target;
-    }
-
-    void Log::clear_empty_buffer() {
-        while (empty_queue) {
-            auto temp = empty_queue;
-            empty_queue = empty_queue->next;
-            delete temp;
-        }
-    }
-
-    void Log::invoke(Log::Queue *target) {
-        while (target) {
-            auto size = target->buffer.size();
-            auto data = target->buffer.get();
-            while (size) {
-                if (file_current_size + size > FILE_RESTRICT) {
-                    auto i = FILE_RESTRICT - file_current_size;
-                    while (i && data[i] != '\n') --i;
-                    file_current_size = 0;
-                    if (i) {
-                        out.write(data, i);
-                        data += i;
-                        size -= i;
-                    }
-                    open_new_file();
-                } else {
-                    file_current_size += size;
-                    out.write(data, size);
-                    break;
-                }
-            }
-            target->buffer.flush();
-            target = target->next;
-        }
-    }
-
-    void Log::open_new_file() {
-        string file_name = path + to_string(get_time_now(), false) + ".log";
-        out.open(file_name.c_str(), false, true);
-        if (!out) throw Exception("open new file failed.\n");
-    }
-
-
-    void Log::push(int rank, const char *data, uint64 size) {
+    void Log::push(LogRank rank, const void *ptr, uint64 size) {
         if (rank < outputRank) return;
-        auto time = get_time_now();
-        Lock l(IO_lock);
-        if (!current_queue) {
-            get_new_buffer();
-            current_queue->buffer.append(rank, time, data, size);
-        } else if (!current_queue->buffer.append(rank, time, data, size)) {
-            put_full_buffer();
-            get_new_buffer();
-            if (!current_queue->buffer.append(rank, time, data, size))
-                throw Exception("Log::push() failed.\n");
-            condition.notify_one();
+        Lock l(logSender->IO_lock);
+        while (size) {
+            uint64 ret = logSender->data.buffer->append(rank, get_time_now(), ptr, size);
+            if (size > ret) {
+                logSender->_thread->put_buffer(logSender->data);
+                ptr = (char *) ptr + ret;
+            }
+            size -= ret;
         }
     }
 
-    LogStream Log::stream(int rank) {
+    LogStream Log::stream(LogRank rank) {
         return {*this, rank};
     }
 
+    void Log::LogSender::send(const void *buffer, uint64 size) {
+        while (size) {
+            uint64 rest = limit_size - current_size;
+            if (size > rest) {
+                _file.write(buffer, rest);
+                size -= rest;
+                buffer = (const char *) buffer + rest;
+                open_new_file();
+            } else {
+                current_size += _file.write(buffer, size);
+                break;
+            }
+        }
+        _file.flush_to_disk();
+    }
+
+    void Log::LogSender::force_flush() {
+        Lock l(IO_lock);
+        _thread->put_buffer(data);
+    }
+
+    void Log::LogSender::open_new_file() {
+        string path = _path + to_string(get_time_now(), true) + ".log";
+        if (unlikely(!_file.open(path.c_str(), false, true)))
+            throw Exception("fail to open: " + path);
+        current_size = 0;
+    }
+
+    Log::LogSender::LogSender(SendThread *thread, std::string dictionary_path, uint64 limit_size) :
+            _thread(thread), limit_size(limit_size), _path(std::move(dictionary_path)) {
+        if (_path.back() != '/' && _path.back() != '\\') _path.push_back('/');
+        open_new_file();
+    }
 }
 
 #ifdef GLOBAL_LOG
 
-Base::Log Global_Logger(GLOBAL_LOG_PATH, Base::LogRank::TRACE);
+Base::SendThread Global_LogThread;
+
+Base::Log Global_Logger(Global_LogThread, GLOBAL_LOG_PATH, Base::LogRank::TRACE);
 
 #endif

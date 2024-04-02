@@ -5,10 +5,9 @@
 #ifndef BASE_THREAD_HPP
 #define BASE_THREAD_HPP
 
+#include <functional>
 #include "Detail/CurrentThread.hpp"
 #include "Detail/NoCopy.hpp"
-#include <atomic>
-#include <functional>
 
 
 namespace Base {
@@ -34,9 +33,9 @@ namespace Base {
 
         void join();
 
-        [[nodiscard]] bool started() const { return state & 1; };
+        [[nodiscard]] bool started() const { return _started; };
 
-        [[nodiscard]] bool joined() const { return state & 2; };
+        [[nodiscard]] bool joined() const { return _joined; };
 
         [[nodiscard]] Id get_id() const { return pthread; };
 
@@ -44,7 +43,7 @@ namespace Base {
 
     private:
 
-        int8 state = 0;
+        bool _started = false, _joined = false;
 
         string name;
 
@@ -61,8 +60,6 @@ namespace Base {
             Data(string name, Thread_fun fun) : _name(std::move(name)), _fun(std::move(fun)) {};
 
         };
-
-        using Auint32 = std::atomic<uint32>;
 
         static void *invoke(void *self);
 

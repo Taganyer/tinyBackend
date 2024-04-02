@@ -3,6 +3,7 @@
 //
 
 #include "FilePool.hpp"
+#include "../../Base/Thread.hpp"
 #include "../../Base/Log/Log.hpp"
 #include "../functions/Interface.hpp"
 

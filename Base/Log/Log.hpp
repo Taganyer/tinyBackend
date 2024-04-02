@@ -5,39 +5,29 @@
 #ifndef BASE_LOG_HPP
 #define BASE_LOG_HPP
 
-#include "Log_buffer.hpp"
-#include "../Thread.hpp"
-#include "../Condition.hpp"
-#include "../Detail/oFile.hpp"
+
+#include "LogRank.hpp"
+#include "SendThread.hpp"
 
 namespace Base {
 
-    constexpr uint64 FILE_RESTRICT = 2 << 30;
-
-    constexpr int64 FLUSH_TIME = 2 * SEC_;
-
-    enum LogRank {
-        TRACE,
-        DEBUG,
-        INFO,
-        WARN,
-        ERROR,
-        FATAL
-    };
-
-
     class LogStream;
 
-    class Log : NoCopy {
+    constexpr uint64 FILE_LIMIT = 2 << 30;
+
+    class Log : private NoCopy {
     public:
 
-        Log(std::string dictionary_path, LogRank rank);
+        Log(SendThread &thread, std::string dictionary_path,
+            LogRank rank, uint64 limit_size = FILE_LIMIT);
 
-        void push(int rank, const char *data, uint64 size);
+        Log(Log &&other);
 
         ~Log();
 
-        LogStream stream(int rank);
+        void push(LogRank rank, const void *ptr, uint64 size);
+
+        LogStream stream(LogRank rank);
 
         void set_rank(LogRank rank) { outputRank = rank; };
 
@@ -45,40 +35,39 @@ namespace Base {
 
     private:
 
-        struct Queue {
-            Detail::Log_buffer buffer;
-            Queue *next = nullptr;
+        class LogSender : public Sender {
+        public:
 
-            Queue() = default;
+            Mutex IO_lock;
+
+            SendThread *_thread;
+
+            SendThread::Data data;
+
+            LogSender(SendThread *thread, std::string dictionary_path, uint64 limit_size);
+
+        private:
+
+            uint64 current_size = 0, limit_size;
+
+            oFile _file;
+
+            std::string _path;
+
+            void send(const void *buffer, uint64 size) override;
+
+            void force_flush() override;
+
+            void open_new_file();
+
+            friend class SendThread;
         };
 
-        Queue *empty_queue = nullptr;
-        Queue *full_queue = nullptr;
-        Queue *current_queue = nullptr;
-
-        Mutex IO_lock;
-        Condition condition;
-        bool stop = false;
-
-        std::string path;
-
-        oFile out;
-
-        size_t file_current_size = 0;
+        std::shared_ptr<LogSender> logSender;
 
         LogRank outputRank;
 
-        inline void get_new_buffer();
-
-        inline void put_full_buffer();
-
-        inline void put_to_empty_buffer(Queue *target);
-
-        inline void clear_empty_buffer();
-
-        inline void open_new_file();
-
-        void invoke(Queue *target);
+        friend class SendThread;
 
     };
 
@@ -86,7 +75,7 @@ namespace Base {
     class LogStream : NoCopy {
     public:
 
-        LogStream(Log &log, int rank) : _log(&log), _rank(rank) {};
+        LogStream(Log &log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
             _log->push(_rank, _message, _index);
@@ -138,7 +127,7 @@ namespace Base {
 
         Log *_log;
 
-        int _rank;
+        LogRank _rank;
 
         int _index = 0;
 
@@ -147,8 +136,6 @@ namespace Base {
     };
 
 }
-
-/// 注意这些宏定义可能会造成意外的 else 悬挂。
 
 #define TRACE(val) if (val.get_rank() <= Base::LogRank::TRACE) \
                         (val.stream(Base::LogRank::TRACE))
@@ -173,9 +160,11 @@ namespace Base {
 
 #ifdef GLOBAL_LOG
 
-constexpr char GLOBAL_LOG_PATH[] = "/home/taganyer/Codes/Clion_Project/test/logs";
+constexpr char GLOBAL_LOG_PATH[] = "";
 
 static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
+
+extern Base::SendThread Global_LogThread;
 
 extern Base::Log Global_Logger;
 

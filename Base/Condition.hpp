@@ -77,16 +77,16 @@ namespace Base {
             return true;
         }
 
-    private:
-
-        pthread_cond_t _cond;
-
         bool wait_until(Lock<Mutex> &lock, const timespec &time) {
             lock._lock.owner_thread = 0;
             int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &time);
             lock._lock.owner_thread = tid();
             return t == 0;
         }
+
+    private:
+
+        pthread_cond_t _cond;
 
     };
 
