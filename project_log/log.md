@@ -156,4 +156,4 @@ std::enable_shared_from_this 同时在 Channel & Controller 中拥有其弱引�
 * 增加了 Sender 虚基类（主要是为了增加扩展性）。
 * 增加了 SendThread 类（与 Log 分离，通过 Sender 中间件实现功能，提供定时刷新功能）。
 * 重构 Log_buffer 类为 SenderBuffer（由用户写入，SendThread 进行自动发送）。
-* 新加入了 List（双向队列）模板容器，主要是为了解决节点在同一个 List 对象中移动时不会出现指针、引用、迭代器失效的问题。
+* 新加入了 List（双向队列）模板容器（主要是为了解决节点在同一个 List 对象中移动时不会出现指针、引用、迭代器失效的问题）。
