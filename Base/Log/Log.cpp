@@ -75,10 +75,14 @@ namespace Base {
     }
 }
 
-#ifdef GLOBAL_LOG
+#ifdef GLOBAL_SENDTHREAD
 
 Base::SendThread Global_LogThread;
 
+#ifdef GLOBAL_LOG
+
 Base::Log Global_Logger(Global_LogThread, GLOBAL_LOG_PATH, Base::LogRank::TRACE);
+
+#endif
 
 #endif

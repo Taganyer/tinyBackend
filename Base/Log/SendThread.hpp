@@ -18,13 +18,17 @@ namespace Base {
     class SendThread : NoCopy {
     private:
 
-        struct SenderData {
+        class SenderData {
+        public:
+            SenderData(const Sender::SenderPtr sender) : _sender(sender) {};
+
+        private:
             Sender::SenderPtr _sender;
             int waiting_buffers = 0;
             bool need_flush = true;
             bool shutdown = false;
 
-            SenderData(const Sender::SenderPtr sender) : _sender(sender) {};
+            friend class SendThread;
         };
 
         using SenderQueue = List<SenderData>;

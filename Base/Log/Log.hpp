@@ -137,6 +137,7 @@ namespace Base {
 
 }
 
+/// FIXME 可能会存在 else 悬挂问题，使用时注意
 #define TRACE(val) if (val.get_rank() <= Base::LogRank::TRACE) \
                         (val.stream(Base::LogRank::TRACE))
 
@@ -156,18 +157,31 @@ namespace Base {
                         (val.stream(Base::LogRank::FATAL))
 
 
+/// 解除注释开启全局日志
+//#define GLOBAL_SENDTHREAD
+
+#ifdef GLOBAL_SENDTHREAD
+
+extern Base::SendThread Global_LogThread;
+
 #define GLOBAL_LOG
 
 #ifdef GLOBAL_LOG
 
+/// 设置全局日志文件夹路径
 constexpr char GLOBAL_LOG_PATH[] = "";
 
 static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
 
-extern Base::SendThread Global_LogThread;
-
 extern Base::Log Global_Logger;
 
+#endif
+
+#endif
+
+#ifdef GLOBAL_LOG
+
+/// FIXME 可能会存在 else 悬挂问题，使用时注意
 #define G_TRACE if (Global_Logger.get_rank() <= Base::LogRank::TRACE) \
                     (Global_Logger.stream(Base::LogRank::TRACE))
 
@@ -186,8 +200,54 @@ extern Base::Log Global_Logger;
 #define G_FATAL if (Global_Logger.get_rank() <= Base::LogRank::FATAL) \
                     (Global_Logger.stream(Base::LogRank::FATAL))
 
+#else
+
+class Empty {
+public:
+
+#define Empty_fun(type) Empty &operator<<(type) { \
+        return *this;                             \
+};
+
+    Empty_fun(const std::string &)
+
+    Empty_fun(const std::string_view &)
+
+    Empty_fun(char)
+
+    Empty_fun(const char *)
+
+    Empty_fun(int)
+
+    Empty_fun(long)
+
+    Empty_fun(long long)
+
+    Empty_fun(unsigned)
+
+    Empty_fun(unsigned long)
+
+    Empty_fun(unsigned long long)
+
+    Empty_fun(double)
+
+#undef Empty_fun
+
+};
+
+/// FIXME 可能会存在 else 悬挂问题，使用时注意
+#define G_TRACE if (false) (Empty())
+
+#define G_DEBUG if (false) (Empty())
+
+#define G_INFO if (false) (Empty())
+
+#define G_WARN if (false) (Empty())
+
+#define G_ERROR if (false) (Empty())
+
+#define G_FATAL if (false) (Empty())
 
 #endif
-
 
 #endif //BASE_LOG_HPP
