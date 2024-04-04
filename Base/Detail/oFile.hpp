@@ -64,7 +64,7 @@ namespace Base {
 
         FILE *get_fp() { return _file; };
 
-    private:
+    protected:
 
         FILE *_file = nullptr;
 

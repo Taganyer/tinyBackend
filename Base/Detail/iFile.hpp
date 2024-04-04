@@ -90,7 +90,7 @@ namespace Base {
 
         FILE *get_fp() { return _file; };
 
-    private:
+    protected:
 
         FILE *_file = nullptr;
 
@@ -191,10 +191,9 @@ namespace Base {
     }
 
     string iFile::getAll() {
-        string ans;
-        char arr[256];
-        while (auto len = fread(arr, 1, 256, _file))
-            ans.append(arr, len);
+        string ans(size(), '\0');
+        auto len = fread(ans.data(), 1, ans.size(), _file);
+        ans.resize(len);
         return ans;
     }
 

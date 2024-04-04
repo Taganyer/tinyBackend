@@ -16,9 +16,15 @@ namespace Base {
 
         List() = default;
 
+        List(const List<Data> &other);
+
+        List(List<Data> &&other) noexcept;
+
         ~List();
 
         class Iter;
+
+        class Val;
 
         Iter begin() { return {_head}; };
 
@@ -34,6 +40,8 @@ namespace Base {
         void erase(Iter target);
 
         void erase(Iter begin, Iter end);
+
+        Val release(Iter target);
 
         [[nodiscard]] uint64 size() const { return _size; };
 
@@ -96,7 +104,7 @@ namespace Base {
 
         Iter operator--(int) {
             Iter temp(*this);
-            _ptr = _ptr->_next;
+            _ptr = _ptr->_prev;
             return temp;
         };
 
@@ -111,6 +119,56 @@ namespace Base {
         friend class List<Data>;
 
     };
+
+    template<typename Data>
+    class List<Data>::Val {
+    public:
+
+        Val(const Val &) = delete;
+
+        Val(Val &&other) noexcept: _ptr(other._node) { other._node = nullptr; };
+
+        explicit Val(Node *node) : _ptr(node) {};
+
+        Data &operator*() { return _ptr->_data; };
+
+        const Data &operator*() const { return _ptr->_data; };
+
+        Data *operator->() { return &_ptr->_data; };
+
+        const Data &operator->() const { return _ptr->_data; };
+
+    private:
+
+        Node *_ptr = nullptr;
+
+    };
+
+
+    template<typename Data>
+    List<Data>::List(const List<Data> &other) : _size(other.size()) {
+        Iter iter = other.begin(), end = other.end();
+        Node *temp, *last = nullptr;
+        while (iter != end) {
+            temp = new Node(*iter);
+            if (!last) {
+                _head = temp;
+            } else {
+                temp->_prev = last;
+                last->_next = temp;
+            }
+            last = temp;
+            ++iter;
+        }
+        _tail = last;
+    }
+
+    template<typename Data>
+    List<Data>::List(List<Data> &&other) noexcept :
+            _head(other._head), _tail(other._tail), _size(other._size) {
+        other._head = other._tail = nullptr;
+        other._size = 0;
+    }
 
     template<typename Data>
     inline List<Data>::~List() {
@@ -180,8 +238,8 @@ namespace Base {
             if (_tail) _tail->_next = nullptr;
             else _head = nullptr;
         }
-        --_size;
         delete ptr;
+        --_size;
     }
 
     template<typename Data>
@@ -192,9 +250,26 @@ namespace Base {
         if (end._ptr) end._ptr->_prev = begin._ptr->_prev;
         else _tail = begin._ptr->_prev;
         while (begin != end) {
-            --_size;
             delete (begin++)._ptr;
+            --_size;
         }
+    }
+
+    template<typename Data>
+    typename List<Data>::Val List<Data>::release(List::Iter target) {
+        auto ptr = target._ptr;
+        if (!ptr) return List::Val(nullptr);
+        if (ptr->_next) {
+            ptr->_next->_prev = ptr->_prev;
+            if (ptr->_prev) ptr->_prev->_next = ptr->_next;
+            else _head = ptr->_next;
+        } else {
+            _tail = ptr->_prev;
+            if (_tail) _tail->_next = nullptr;
+            else _head = nullptr;
+        }
+        --_size;
+        return List::Val(ptr);
     }
 
 }
