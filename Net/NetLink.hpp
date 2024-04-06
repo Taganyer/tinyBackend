@@ -8,7 +8,7 @@
 #include <memory>
 #include <functional>
 #include "../Base/Detail/config.hpp"
-#include "../Base/RingBuffer.hpp"
+#include "../Base/Buffer/RingBuffer.hpp"
 #include "../Base/Time/Timer.hpp"
 #include "file/FileDescriptor.hpp"
 

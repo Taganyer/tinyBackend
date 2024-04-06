@@ -118,6 +118,8 @@ namespace Base {
 
         Val(Val &&other) noexcept: _ptr(other._node) { other._node = nullptr; };
 
+        ~Val() { delete _ptr; };
+
         explicit Val(Node *node) : _ptr(node) {};
 
         Data &operator*() { return _ptr->_data; };

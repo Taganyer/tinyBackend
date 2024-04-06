@@ -9,6 +9,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 add_executable(
         tinyBackend main.cpp
 
+        Base/Buffer/RingBuffer.cpp
+        Base/Buffer/RingBuffer.hpp
         Base/Detail/config.hpp
         Base/Detail/NoCopy.hpp
         Base/Detail/CurrentThread.cpp
@@ -26,8 +28,6 @@ add_executable(
         Base/Condition.hpp
         Base/BlockQueue.hpp
         Base/File.hpp
-        Base/RingBuffer.cpp
-        Base/RingBuffer.hpp
 
         Base/Time/Date.cpp
         Base/Time/Date.hpp
@@ -86,6 +86,8 @@ add_executable(
         Net/error/error_mark.hpp
         Net/error/errors.cpp
         Net/error/errors.hpp
+        Base/Buffer/BufferPool.cpp
+        Base/Buffer/BufferPool.hpp
 
 )
 
