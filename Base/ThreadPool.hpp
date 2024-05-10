@@ -5,130 +5,101 @@
 #ifndef BASE_THREADPOOL_HPP
 #define BASE_THREADPOOL_HPP
 
-#include "Detail/Pool.hpp"
-#include "Exception.hpp"
-#include <functional>
-#include <future>
+#ifdef BASE_THREADPOOL_HPP
+
+#include "Thread.hpp"
+#include "Condition.hpp"
+#include "Detail/AsyncFun.hpp"
+#include "Container/SingleList.hpp"
 
 namespace Base {
-    using std::future;
-    using std::promise;
-    using std::function;
 
-
-    class ThreadPool {
+    class ThreadPool : NoCopy {
     public:
 
-        using Fun = std::function<bool(bool)>;
-        using Size = Base::Detail::PoolData::Size;
+        ThreadPool(uint32 thread_size, uint32 max_task_size);
 
-        ThreadPool(Size thread_size, Size max_task_size) : max_tasks_size(max_task_size) {
-            pool->create_threads(thread_size);
-        };
-
-        ThreadPool(ThreadPool &&) = delete;
-
-        ~ThreadPool() { delete pool; };
+        ~ThreadPool();
 
         template<typename Fun_, typename ...Args>
-        inline auto submit(Fun_ &&fun, Args &&... args);
+        void submit_to_top(Fun_ &&fun, Args &&... args);
 
         template<typename Fun_, typename ...Args>
-        inline auto submit_to_top(Fun_ &&fun, Args &&... args);
+        auto submit_to_top_with_future(Fun_ &&fun, Args &&... args);
 
-        void stop() { pool->stop(); };
+        template<typename Fun_, typename ...Args>
+        void submit_to_back(Fun_ &&fun, Args &&... args);
 
-        void start() { pool->start(); };
+        template<typename Fun_, typename ...Args>
+        auto submit_to_back_with_future(Fun_ &&fun, Args &&... args);
 
-        void clear() { pool->clear(); };
+        void stop();
 
-        void shutdown() { pool->shutdown(); };
+        void start();
 
-        void resize_core_thread(Size size) {
-            if (size > data.core_threads) {
-                pool->create_threads(size - data.core_threads);
-            } else if (size < data.core_threads) {
-                pool->delete_threads(data.core_threads - size);
-            }
-        };
+        void clear_task();
 
-        void resize_max_queue(Size size) { max_tasks_size = size; };
+        void shutdown();
 
-        [[nodiscard]]  Size get_max_queues() const { return max_tasks_size; };
+        void resize_core_thread(uint32 size);
 
-        [[nodiscard]] Size get_core_threads() const { return pool->threads_size(); };
+        void resize_max_queue(uint32 size) { _max_tasks = size; };
 
-        [[nodiscard]] Size get_free_tasks() const { return pool->tasks_size(); };
+        [[nodiscard]]  uint32 get_max_queues() const { return _max_tasks; };
 
-        [[nodiscard]] bool stopping() const { return pool->stopping(); };
+        [[nodiscard]] uint32 get_core_threads() const { return _core_threads; };
+
+        [[nodiscard]] uint32 get_free_tasks() const { return _list.size(); };
+
+        [[nodiscard]] bool stopping() const { return _state.load() > RUNNING; };
 
         [[nodiscard]] bool joinable() const {
-            return data.state == Base::Detail::PoolData::RUNNING
-                   && data.waiting_tasks < max_tasks_size;
+            return _state == RUNNING && _list.size() < _max_tasks;
         };
 
 
     private:
 
-        using Data = Base::Detail::PoolData;
+        using Size = uint32;
+        using A_Size = std::atomic<uint32>;
+        using State = std::atomic<uint32>;
+        using Condition = Base::Condition;
+        using Fun = std::function<bool(bool)>;
+        using List = SingleList<Fun>;
 
-        struct ThreadPool_base {
+        enum { RUNNING = 0, RESUMING = 2, STOP = 4, SHUTTING = 8, TERMINATED = 16 };
 
-            using Fun = ThreadPool::Fun;
+        Mutex lock;
 
-            ThreadPool *ptr;
+        A_Size _core_threads = 0;
 
-            struct Task {
+        Size _max_tasks = 0;
 
-                Task *next = nullptr;
-                Fun fun;
+        State _state = TERMINATED;
 
-                explicit Task(Fun &&fun) : fun(std::move(fun)) {};
+        Condition _consume, _submit;
 
+        List _list;
+
+        void create_threads(Size size);
+
+        void delete_threads(Size size);
+
+        void end_thread();
+
+        auto joinable_fun() {
+            return [this] {
+                return stopping() || _list.size() < _max_tasks;
             };
-
-            explicit ThreadPool_base(ThreadPool *data) : ptr(data) {};
-
-            ThreadPool_base create_thread() { return ThreadPool_base(ptr); };
-
-            Task *close_thread() { return new Task([](bool) { return true; }); };
-
-            void thread_wait(Data::Lock &l, Data::Condition &con) {
-                con.wait(l, [this] {
-                    return ptr->data.state != Base::Detail::PoolData::STOP
-                           && ptr->pool->takeable();
-                });
-            };
-
-            bool invoke_task(Task *task) {
-                bool close = task->fun(false);
-                delete task;
-                return close;
-            };
-
-            Task *create_task(Fun &&fun) { return new Task(std::move(fun)); };
-
-            void delete_task(Task *task) {
-                task->fun(true);
-                delete task;
-            };
-
-            void task_wait(Data::Lock &l, Data::Condition &con) {
-                con.wait(l, [this] {
-                    return ptr->joinable();
-                });
-            };
-
         };
 
-        template<typename Result_Type>
-        auto create_fun(promise<Result_Type> *p, function<Result_Type()> &&fun);
+        bool waiting(Lock<Mutex> &l);
 
-        Data data;
+        template<typename Fun_, typename... Args>
+        inline void create_fun(List::Iter dest, Fun_ &&fun, Args &&... args);
 
-        Detail::Pool<ThreadPool_base> *pool = new Detail::Pool<ThreadPool_base>(ThreadPool_base(this), &data);
-
-        Size max_tasks_size;
+        template<typename Fun_, typename... Args>
+        inline auto create_fun_with_future(List::Iter dest, Fun_ &&fun, Args &&... args);
 
     };
 
@@ -137,47 +108,70 @@ namespace Base {
 namespace Base {
 
     template<typename Fun_, typename... Args>
-    auto ThreadPool::submit_to_top(Fun_ &&fun, Args &&... args) {
-        using Result_Type = std::result_of_t<Fun_(Args...)>;
-        auto *p = new promise<Result_Type>();
-        future<Result_Type> result = p->get_future();
-        pool->submit_to_top(create_fun<Result_Type>(p, function<Result_Type()>(
-                std::forward<Fun_>(fun), std::forward<Args>(args)...)));
-        return result;
+    void ThreadPool::submit_to_top(Fun_ &&fun, Args &&... args) {
+        Lock l(lock);
+        _submit.wait(l, joinable_fun());
+        if (stopping())
+            throw Exception("This Task have been interrupted");
+        _consume.notify_one();
+        return create_fun(_list.before_begin(), std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
     template<typename Fun_, typename... Args>
-    auto ThreadPool::submit(Fun_ &&fun, Args &&... args) {
-        using Result_Type = std::result_of_t<Fun_(Args...)>;
-        auto *p = new promise<Result_Type>();
-        future<Result_Type> result = p->get_future();
-        pool->submit_to_tail(create_fun<Result_Type>(p, function<Result_Type()>(
-                std::forward<Fun_>(fun), std::forward<Args>(args)...)));
-        return result;
+    auto ThreadPool::submit_to_top_with_future(Fun_ &&fun, Args &&... args) {
+        Lock l(lock);
+        _submit.wait(l, joinable_fun());
+        if (stopping())
+            throw Exception("This Task have been interrupted");
+        _consume.notify_one();
+        return create_fun_with_future(_list.before_begin(), std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template<typename Result_Type>
-    auto ThreadPool::create_fun(promise<Result_Type> *pro, function<Result_Type()> &&fun) {
-        return [pro, pack = std::move(fun)](bool interrupt) mutable {
-            if (interrupt) {
-                pro->set_exception(std::make_exception_ptr(Exception("This Task have been interrupted")));
-                return false;
-            }
-            try {
-                if constexpr (std::is_same_v<Result_Type, void>) {
-                    pack();
-                    pro->set_value();
-                } else {
-                    pro->set_value(pack());
-                }
-            } catch (...) {
-                pro->set_exception(std::current_exception());
-            }
-            delete pro;
+    template<typename Fun_, typename... Args>
+    void ThreadPool::submit_to_back(Fun_ &&fun, Args &&... args) {
+        Lock l(lock);
+        _submit.wait(l, joinable_fun());
+        if (stopping())
+            throw Exception("This Task have been interrupted");
+        _consume.notify_one();
+        return create_fun(_list.tail(), std::forward<Fun_>(fun), std::forward<Args>(args)...);
+    }
+
+    template<typename Fun_, typename... Args>
+    auto ThreadPool::submit_to_back_with_future(Fun_ &&fun, Args &&... args) {
+        Lock l(lock);
+        _submit.wait(l, joinable_fun());
+        if (stopping())
+            throw Exception("This Task have been interrupted");
+        _consume.notify_one();
+        return create_fun_with_future(_list.tail(), std::forward<Fun_>(fun), std::forward<Args>(args)...);
+    }
+
+    template<typename Fun_, typename... Args>
+    void ThreadPool::create_fun(ThreadPool::List::Iter dest, Fun_ &&fun, Args &&... args) {
+        _list.insert_after(dest, [f =
+        std::function<void()>(std::forward<Fun_>(fun), std::forward<Args>(args)...)](bool kill) {
+            if (!kill && f) f();
             return false;
-        };
+        });
+    }
+
+    template<typename Fun_, typename... Args>
+    auto ThreadPool::create_fun_with_future(ThreadPool::List::Iter dest, Fun_ &&fun, Args &&... args) {
+        using Result_Type = std::result_of_t<Fun_(Args...)>;
+        auto *ptr = new Detail::AsyncFun<Result_Type, Fun_, Args...>
+                (std::forward<Fun_>(fun), std::forward<Args>(args)...);
+        _list.insert_after(dest, [ptr](bool kill) {
+            if (kill) ptr->kill_task();
+            else (*ptr)();
+            delete ptr;
+            return false;
+        });
+        return ptr->get_future();
     }
 
 }
+
+#endif
 
 #endif //BASE_THREADPOOL_HPP

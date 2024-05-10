@@ -5,6 +5,8 @@
 #ifndef NET_POLL_INTERFACE_HPP
 #define NET_POLL_INTERFACE_HPP
 
+#ifdef NET_POLL_INTERFACE_HPP
+
 #include "../../Base/Detail/config.hpp"
 
 #include <poll.h>
@@ -47,5 +49,6 @@ namespace Net::ops {
 
 }
 
+#endif
 
 #endif //NET_POLL_INTERFACE_HPP

@@ -5,6 +5,8 @@
 #ifndef BASE_POOL_HPP
 #define BASE_POOL_HPP
 
+#ifdef BASE_POOL_HPP
+
 #include "../Thread.hpp"
 #include "../Condition.hpp"
 #include <atomic>
@@ -265,5 +267,7 @@ namespace Base::Detail {
     }
 
 }
+
+#endif
 
 #endif //BASE_POOL_HPP

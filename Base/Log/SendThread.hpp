@@ -5,6 +5,7 @@
 #ifndef BASE_SENDTHREAD_HPP
 #define BASE_SENDTHREAD_HPP
 
+#ifdef BASE_SENDTHREAD_HPP
 
 #include "Sender.hpp"
 #include "SendBuffer.hpp"
@@ -103,5 +104,7 @@ namespace Base {
     };
 
 }
+
+#endif
 
 #endif //BASE_SENDTHREAD_HPP

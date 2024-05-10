@@ -5,6 +5,7 @@
 #ifndef BASE_IOFILE_HPP
 #define BASE_IOFILE_HPP
 
+#ifdef BASE_IOFILE_HPP
 
 #include <cstdio>
 #include <unistd.h>
@@ -99,5 +100,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_IOFILE_HPP

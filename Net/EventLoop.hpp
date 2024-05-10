@@ -5,6 +5,8 @@
 #ifndef NET_EVENTLOOP_HPP
 #define NET_EVENTLOOP_HPP
 
+#ifdef NET_EVENTLOOP_HPP
+
 #include "../Base/Condition.hpp"
 #include "../Base/Log/Log.hpp"
 
@@ -77,5 +79,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_EVENTLOOP_HPP

@@ -88,6 +88,8 @@ add_executable(
         Net/error/errors.hpp
         Base/Buffer/BufferPool.cpp
         Base/Buffer/BufferPool.hpp
+        Base/Detail/AsyncFun.hpp
+        Base/ThreadPool.cpp
 
 )
 

@@ -5,6 +5,8 @@
 #ifndef BASE_OFILE_HPP
 #define BASE_OFILE_HPP
 
+#ifdef BASE_OFILE_HPP
+
 #include "config.hpp"
 #include "NoCopy.hpp"
 #include <cstdio>
@@ -147,5 +149,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_OFILE_HPP

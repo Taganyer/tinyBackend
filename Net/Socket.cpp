@@ -87,8 +87,13 @@ bool Socket::setReusePort(bool on) {
     return true;
 }
 
+void Socket::shutdown_TcpRead() {
+    if (!ops::shutdown(_fd, true, false))
+        G_ERROR << "Socket " << _fd << ops::get_shutdown_error(errno);
+}
+
 void Socket::shutdown_TcpWrite() {
-    if (!ops::shutdownWrite(_fd))
+    if (!ops::shutdown(_fd, false, true))
         G_ERROR << "Socket " << _fd << ops::get_shutdown_error(errno);
 }
 

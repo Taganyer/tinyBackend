@@ -5,6 +5,8 @@
 #ifndef BASE_BUFFERPOOL_HPP
 #define BASE_BUFFERPOOL_HPP
 
+#ifdef BASE_BUFFERPOOL_HPP
+
 #include <vector>
 #include <functional>
 #include "../Condition.hpp"
@@ -80,5 +82,7 @@ namespace Base {
     };
 
 }
+
+#endif
 
 #endif //BASE_BUFFERPOOL_HPP

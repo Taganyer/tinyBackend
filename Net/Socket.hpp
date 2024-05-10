@@ -5,6 +5,8 @@
 #ifndef NET_SOCKET_HPP
 #define NET_SOCKET_HPP
 
+#ifdef NET_SOCKET_HPP
+
 #include "file/FileDescriptor.hpp"
 
 struct tcp_info;
@@ -44,6 +46,8 @@ namespace Net {
         /// Enable/disable SO_REUSEPORT
         bool setReusePort(bool on);
 
+        void shutdown_TcpRead();
+
         void shutdown_TcpWrite();
 
         bool TcpInfo(struct tcp_info *info) const;
@@ -54,5 +58,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_SOCKET_HPP

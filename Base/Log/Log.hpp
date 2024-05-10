@@ -5,6 +5,7 @@
 #ifndef BASE_LOG_HPP
 #define BASE_LOG_HPP
 
+#ifdef BASE_LOG_HPP
 
 #include "LogRank.hpp"
 #include "SendThread.hpp"
@@ -247,6 +248,8 @@ public:
 #define G_ERROR if (false) (Empty())
 
 #define G_FATAL if (false) (Empty())
+
+#endif
 
 #endif
 

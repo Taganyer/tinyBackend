@@ -5,6 +5,8 @@
 #ifndef BASE_LOGRANK_HPP
 #define BASE_LOGRANK_HPP
 
+#ifdef BASE_LOGRANK_HPP
+
 #include <cstring>
 
 namespace Base {
@@ -34,5 +36,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_LOGRANK_HPP

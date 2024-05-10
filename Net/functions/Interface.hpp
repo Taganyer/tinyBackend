@@ -5,6 +5,8 @@
 #ifndef NET_INTERFACE_HPP
 #define NET_INTERFACE_HPP
 
+#ifdef NET_INTERFACE_HPP
+
 #include "../../Base/Detail/config.hpp"
 #include <sys/uio.h>
 #include <unistd.h>
@@ -117,8 +119,15 @@ namespace Net {
             return ret;
         }
 
-        inline bool shutdownWrite(int fd) {
-            int ret = ::shutdown(fd, SHUT_WR);
+        inline bool shutdown(int fd, bool read, bool write) {
+            int ret = 0;
+            if (read && write) {
+                ret = ::shutdown(fd, SHUT_RDWR);
+            } else if (read) {
+                ret = ::shutdown(fd, SHUT_RD);
+            } else if (write) {
+                ret = ::shutdown(fd, SHUT_WR);
+            }
             return ret == 0;
         }
 
@@ -160,5 +169,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_INTERFACE_HPP

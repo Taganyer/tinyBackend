@@ -5,6 +5,8 @@
 #ifndef NET_SELECTOR_HPP
 #define NET_SELECTOR_HPP
 
+#ifdef NET_SELECTOR_HPP
+
 #include "Monitor.hpp"
 
 namespace Net {
@@ -38,5 +40,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_SELECTOR_HPP

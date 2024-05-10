@@ -5,6 +5,8 @@
 #ifndef BASE_CONFIG_HPP
 #define BASE_CONFIG_HPP
 
+#ifdef BASE_CONFIG_HPP
+
 #if defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
 #define SIZEOF_LONG_ 4
 
@@ -88,6 +90,8 @@ constexpr double MIN_DOUBLE = -1.7976931348623157e+308;
 
 #define likely(x)      (x)
 #define unlikely(x)    (x)
+
+#endif
 
 #endif
 

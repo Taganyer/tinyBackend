@@ -5,6 +5,8 @@
 #ifndef BASE_SENDBUFFER_HPP
 #define BASE_SENDBUFFER_HPP
 
+#ifdef BASE_SENDBUFFER_HPP
+
 #include "LogRank.hpp"
 #include "../Detail/NoCopy.hpp"
 #include "../Time/TimeStamp.hpp"
@@ -22,7 +24,7 @@ namespace Base {
 
         SendBuffer(SendBuffer &&other) noexcept;
 
-        ~SendBuffer() { delete buffer; };
+        ~SendBuffer() { delete[] buffer; };
 
         uint64 append(const void *data, uint64 size);
 
@@ -43,5 +45,6 @@ namespace Base {
     };
 }
 
+#endif
 
 #endif //BASE_SENDBUFFER_HPP

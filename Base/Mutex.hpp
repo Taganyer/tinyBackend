@@ -5,6 +5,8 @@
 #ifndef BASE_MUTEX_HPP
 #define BASE_MUTEX_HPP
 
+#ifdef BASE_MUTEX_HPP
+
 #include <cassert>
 #include "Detail/CurrentThread.hpp"
 #include "Detail/NoCopy.hpp"
@@ -178,5 +180,6 @@ namespace Base {
 
 }
 
+#endif
 
 #endif //BASE_MUTEX_HPP

@@ -5,6 +5,7 @@
 #ifndef NET_FILEPOOL_HPP
 #define NET_FILEPOOL_HPP
 
+#ifdef NET_FILEPOOL_HPP
 
 #include <map>
 #include "../../Base/Detail/oFile.hpp"
@@ -67,7 +68,7 @@ namespace Net {
 
         std::vector<std::pair<int, Data>> _prepare;
 
-        bool run = false, shut = false;
+        volatile bool run = false, shut = false;
 
         void thread_start();
 
@@ -81,5 +82,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_FILEPOOL_HPP

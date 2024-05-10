@@ -5,6 +5,8 @@
 #ifndef NET_POLLER_HPP
 #define NET_POLLER_HPP
 
+#ifdef NET_POLLER_HPP
+
 #include <map>
 #include <sys/poll.h>
 #include "Monitor.hpp"
@@ -44,5 +46,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_POLLER_HPP

@@ -5,6 +5,8 @@
 #ifndef NET_ERRORS_HPP
 #define NET_ERRORS_HPP
 
+#ifdef NET_ERRORS_HPP
+
 #include "error_mark.hpp"
 
 
@@ -47,5 +49,7 @@ namespace Net::ops {
         const char *get_socket_opt_error(int error);
 
     }
+
+#endif
 
 #endif //NET_ERRORS_HPP

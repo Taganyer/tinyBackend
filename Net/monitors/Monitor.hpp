@@ -5,6 +5,8 @@
 #ifndef NET_MONITORS_HPP
 #define NET_MONITORS_HPP
 
+#ifdef NET_MONITORS_HPP
+
 #include <vector>
 #include <pthread.h>
 #include "Event.hpp"
@@ -55,5 +57,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_MONITORS_HPP

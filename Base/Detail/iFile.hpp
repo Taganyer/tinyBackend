@@ -5,6 +5,8 @@
 #ifndef BASE_IFILE_HPP
 #define BASE_IFILE_HPP
 
+#ifdef BASE_IFILE_HPP
+
 #include "config.hpp"
 #include "NoCopy.hpp"
 #include <cstdio>
@@ -217,5 +219,6 @@ namespace Base {
 
 }
 
+#endif
 
 #endif //BASE_IFILE_HPP

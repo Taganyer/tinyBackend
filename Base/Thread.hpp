@@ -5,6 +5,8 @@
 #ifndef BASE_THREAD_HPP
 #define BASE_THREAD_HPP
 
+#ifdef BASE_THREAD_HPP
+
 #include <functional>
 #include "Detail/CurrentThread.hpp"
 #include "Detail/NoCopy.hpp"
@@ -74,5 +76,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_THREAD_HPP

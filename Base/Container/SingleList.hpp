@@ -5,6 +5,8 @@
 #ifndef BASE_SINGLELIST_HPP
 #define BASE_SINGLELIST_HPP
 
+#ifdef BASE_SINGLELIST_HPP
+
 #include <utility>
 #include "../Detail/config.hpp"
 
@@ -269,5 +271,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_SINGLELIST_HPP

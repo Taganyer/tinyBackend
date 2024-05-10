@@ -5,6 +5,8 @@
 #ifndef NET_CONTROLLER_HPP
 #define NET_CONTROLLER_HPP
 
+#ifdef NET_CONTROLLER_HPP
+
 #include "NetLink.hpp"
 #include "monitors/Event.hpp"
 
@@ -71,5 +73,6 @@ namespace Net {
 
 }
 
+#endif
 
 #endif //NET_CONTROLLER_HPP

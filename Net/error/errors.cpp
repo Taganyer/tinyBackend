@@ -425,19 +425,19 @@ namespace Net::ops {
         const char *ret;
         switch (error) {
             case EBADF:
-                ret = "shutdownWrite: fd is invalid.";
+                ret = "shutdown: fd is invalid.";
                 break;
             case EINVAL:
-                ret = "shutdownWrite: An invalid value was specified in how.";
+                ret = "shutdown: An invalid value was specified in how.";
                 break;
             case ENOTCONN:
-                ret = "shutdownWrite: ops is not connected.";
+                ret = "shutdown: ops is not connected.";
                 break;
             case ENOTSOCK:
-                ret = "shutdownWrite: fd does not refer to a ops.";
+                ret = "shutdown: fd does not refer to a ops.";
                 break;
             default:
-                ret = "shutdownWrite: unknown error.";
+                ret = "shutdown: unknown error.";
                 break;
         }
         return ret;

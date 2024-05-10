@@ -5,6 +5,7 @@
 #include "Reactor.hpp"
 #include "EventLoop.hpp"
 #include "error/errors.hpp"
+#include "monitors/Selector.hpp"
 #include "monitors/Poller.hpp"
 #include "monitors/EPoller.hpp"
 
@@ -13,12 +14,18 @@ using namespace Net;
 using namespace Base;
 
 
-Reactor::Reactor(bool epoll, Base::Time_difference link_timeout) :
+Reactor::Reactor(MOD mod, Base::Time_difference link_timeout) :
         timeout(link_timeout) {
-    if (epoll) {
-        _monitor = new EPoller();
-    } else {
-        _monitor = new Poller();
+    switch (mod) {
+        case SELECT:
+            _monitor = new Selector();
+            break;
+        case POLL:
+            _monitor = new Poller();
+            break;
+        case EPOLL:
+            _monitor = new EPoller();
+            break;
     }
     G_DEBUG << "Reactor create.";
 }
@@ -35,7 +42,8 @@ void Reactor::add_NetLink(NetLink &netLink, Event event) {
         if (!ptr) return;
         _queue.emplace_back(Base::Unix_to_now(), event);
         if (_map.try_emplace(ptr->fd(), weak, --_queue.end()).second) {
-            _monitor->add_fd(event);
+            if (!_monitor->add_fd(event))
+                G_FATAL << "add NetLink " << ptr->fd() << " failed.";
         } else {
             _queue.pop_back();
         }

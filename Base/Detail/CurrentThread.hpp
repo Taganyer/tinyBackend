@@ -5,6 +5,8 @@
 #ifndef BASE_CURRENTTHREAD_HPP
 #define BASE_CURRENTTHREAD_HPP
 
+#ifdef BASE_CURRENTTHREAD_HPP
+
 #include "config.hpp"
 #include <string>
 
@@ -35,5 +37,7 @@ namespace Base {
     inline string &thread_name() { return Detail::this_thread_name; }
 
 }
+
+#endif
 
 #endif // BASE_CURRENTTHREAD_HPP

@@ -5,6 +5,8 @@
 #ifndef BASE_NOCOPY_HPP
 #define BASE_NOCOPY_HPP
 
+#ifdef BASE_NOCOPY_HPP
+
 namespace Base {
 
     class NoCopy {
@@ -23,5 +25,7 @@ namespace Base {
     };
 
 }
+
+#endif
 
 #endif //BASE_NOCOPY_HPP

@@ -5,6 +5,8 @@
 #ifndef NET_RECTOR_HPP
 #define NET_RECTOR_HPP
 
+#ifdef NET_RECTOR_HPP
+
 #include <map>
 #include <list>
 #include "NetLink.hpp"
@@ -27,7 +29,13 @@ namespace Net {
     class Reactor : Base::NoCopy {
     public:
 
-        Reactor(bool epoll, Base::Time_difference link_timeout);
+        enum MOD {
+            SELECT,
+            POLL,
+            EPOLL
+        };
+
+        Reactor(MOD mod, Base::Time_difference link_timeout);
 
         ~Reactor();
 
@@ -70,5 +78,7 @@ namespace Net {
     };
 
 }
+
+#endif
 
 #endif //NET_RECTOR_HPP

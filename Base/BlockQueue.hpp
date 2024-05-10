@@ -5,6 +5,8 @@
 #ifndef BASE_BLOCKQUEUE_HPP
 #define BASE_BLOCKQUEUE_HPP
 
+#ifdef BASE_BLOCKQUEUE_HPP
+
 #include "Condition.hpp"
 
 namespace Base {
@@ -58,7 +60,7 @@ namespace Base {
 
         uint32 _limit, _size = 0;
 
-        bool _run = true;
+        volatile bool _run = true;
 
         Mutex _mutex;
 
@@ -191,5 +193,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_BLOCKQUEUE_HPP

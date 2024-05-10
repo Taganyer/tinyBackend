@@ -5,6 +5,8 @@
 #ifndef BASE_SENDER_HPP
 #define BASE_SENDER_HPP
 
+#ifdef BASE_SENDER_HPP
+
 #include <memory>
 #include <functional>
 #include "../Mutex.hpp"
@@ -32,5 +34,7 @@ namespace Base {
     };
 
 }
+
+#endif
 
 #endif //BASE_SENDER_HPP

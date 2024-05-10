@@ -5,6 +5,8 @@
 #ifndef BASE_EXCEPTION_HPP
 #define BASE_EXCEPTION_HPP
 
+#ifdef BASE_EXCEPTION_HPP
+
 #include <exception>
 #include <string>
 
@@ -30,5 +32,7 @@ namespace Base {
     };
 
 }
+
+#endif
 
 #endif //BASE_EXCEPTION_HPP

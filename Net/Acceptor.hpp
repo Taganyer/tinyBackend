@@ -5,6 +5,7 @@
 #ifndef NET_ACCEPTOR_HPP
 #define NET_ACCEPTOR_HPP
 
+#ifdef NET_ACCEPTOR_HPP
 
 #include <functional>
 #include "Socket.hpp"
@@ -52,5 +53,7 @@ namespace Net {
     };
 
 }
+
+#endif
 
 #endif //NET_ACCEPTOR_HPP

@@ -5,6 +5,8 @@
 #ifndef NET_NETLINK_HPP
 #define NET_NETLINK_HPP
 
+#ifdef NET_NETLINK_HPP
+
 #include <memory>
 #include <functional>
 #include "../Base/Detail/config.hpp"
@@ -103,5 +105,7 @@ namespace Net {
     };
 
 }
+
+#endif
 
 #endif //NET_NETLINK_HPP

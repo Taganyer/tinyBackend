@@ -5,6 +5,8 @@
 #ifndef BASE_CONDITION_HPP
 #define BASE_CONDITION_HPP
 
+#ifdef BASE_CONDITION_HPP
+
 #include "Mutex.hpp"
 #include "Time/Timer.hpp"
 #include "Time/TimeStamp.hpp"
@@ -92,5 +94,6 @@ namespace Base {
 
 }
 
+#endif
 
 #endif //BASE_CONDITION_HPP

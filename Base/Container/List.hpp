@@ -5,6 +5,8 @@
 #ifndef BASE_LIST_HPP
 #define BASE_LIST_HPP
 
+#ifdef BASE_LIST_HPP
+
 #include <utility>
 #include "../Detail/config.hpp"
 
@@ -275,5 +277,7 @@ namespace Base {
     }
 
 }
+
+#endif
 
 #endif //BASE_LIST_HPP

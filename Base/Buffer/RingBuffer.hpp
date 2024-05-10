@@ -5,6 +5,8 @@
 #ifndef BASE_RINGBUFFER_HPP
 #define BASE_RINGBUFFER_HPP
 
+#ifdef BASE_RINGBUFFER_HPP
+
 #include "../Detail/config.hpp"
 #include "../Detail/NoCopy.hpp"
 #include <string_view>
@@ -109,5 +111,6 @@ namespace Base {
 
 }
 
+#endif
 
 #endif //BASE_RINGBUFFER_HPP
