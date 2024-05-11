@@ -10,9 +10,7 @@
 #include <map>
 #include <list>
 #include "NetLink.hpp"
-#include "../Base/Detail/config.hpp"
-#include "../Base/Detail/NoCopy.hpp"
-#include "../Base/Time/Timer.hpp"
+#include "../Base/Loop/EventLoop.hpp"
 
 namespace Net {
 
@@ -21,10 +19,6 @@ namespace Net {
     class Event;
 
     class Monitor;
-
-    class Poller;
-
-    class EventLoop;
 
     class Reactor : Base::NoCopy {
     public:
@@ -45,7 +39,7 @@ namespace Net {
 
         void close();
 
-        EventLoop *get_loop() { return _loop; };
+        Base::EventLoop *get_loop() { return _loop; };
 
         Monitor *get_monitor() { return _monitor; };
 
@@ -63,7 +57,7 @@ namespace Net {
 
         Monitor *_monitor;
 
-        EventLoop *_loop = nullptr;
+        Base::EventLoop *_loop = nullptr;
 
         LinkMap _map;
 

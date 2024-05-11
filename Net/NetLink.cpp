@@ -3,10 +3,10 @@
 //
 
 #include "NetLink.hpp"
-#include "EventLoop.hpp"
 #include "error/errors.hpp"
 #include "monitors/Monitor.hpp"
 #include "functions/Interface.hpp"
+#include "../Base/Loop/EventLoop.hpp"
 
 using namespace Net;
 

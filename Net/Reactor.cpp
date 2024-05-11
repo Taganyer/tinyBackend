@@ -3,7 +3,6 @@
 //
 
 #include "Reactor.hpp"
-#include "EventLoop.hpp"
 #include "error/errors.hpp"
 #include "monitors/Selector.hpp"
 #include "monitors/Poller.hpp"

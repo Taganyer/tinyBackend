@@ -8,6 +8,7 @@
 #ifdef NET_FILEPOOL_HPP
 
 #include <map>
+#include <functional>
 #include "../../Base/Detail/oFile.hpp"
 #include "../../Base/Condition.hpp"
 #include "../monitors/Selector.hpp"

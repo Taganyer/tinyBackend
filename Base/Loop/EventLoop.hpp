@@ -7,11 +7,10 @@
 
 #ifdef NET_EVENTLOOP_HPP
 
-#include "../Base/Condition.hpp"
-#include "../Base/Log/Log.hpp"
+#include "../Condition.hpp"
+#include "../Log/Log.hpp"
 
-
-namespace Net {
+namespace Base {
 
     class EventLoop {
     public:
@@ -54,9 +53,9 @@ namespace Net {
 
         EventsQueue _queue, _waiting;
 
-        Base::Mutex _mutex;
+        Mutex _mutex;
 
-        Base::Condition _condition;
+        Condition _condition;
 
         void loop_begin();
 
@@ -67,7 +66,7 @@ namespace Net {
     template<typename Fun>
     void EventLoop::put_events(int32 size, Fun fun) {
         assert(size >= 0 && !quit);
-        Base::Lock l(_mutex);
+        Lock l(_mutex);
         _waiting.reserve(size + _waiting.size());
         for (int32 i = 0; i < size; ++i) {
             _waiting.push_back(fun());

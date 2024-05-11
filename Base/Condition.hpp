@@ -8,8 +8,8 @@
 #ifdef BASE_CONDITION_HPP
 
 #include "Mutex.hpp"
-#include "Time/Timer.hpp"
 #include "Time/TimeStamp.hpp"
+#include "Time/Time_difference.hpp"
 
 namespace Base {
 

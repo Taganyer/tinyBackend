@@ -44,7 +44,6 @@ void FilePool::thread_start() {
         std::vector<Event> events;
         while (run) {
             begin();
-            /// FIXME 可能被编译器优化
             if (!run) break;
             _sel.get_aliveEvent(Default_timeWait, events);
             for (auto const &e: events) {

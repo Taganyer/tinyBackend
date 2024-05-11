@@ -67,7 +67,7 @@ namespace Base {
         using Fun = std::function<bool(bool)>;
         using List = SingleList<Fun>;
 
-        enum { RUNNING = 0, RESUMING = 2, STOP = 4, SHUTTING = 8, TERMINATED = 16 };
+        enum { RUNNING, STOP, SHUTTING, TERMINATED };
 
         Mutex lock;
 

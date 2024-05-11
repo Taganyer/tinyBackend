@@ -9,14 +9,11 @@
 
 #include <memory>
 #include <functional>
-#include "../Base/Detail/config.hpp"
-#include "../Base/Buffer/RingBuffer.hpp"
-#include "../Base/Time/Timer.hpp"
 #include "file/FileDescriptor.hpp"
+#include "../Base/Buffer/RingBuffer.hpp"
+#include "../Base/Time/Time_difference.hpp"
 
 namespace Net {
-
-    class EventLoop;
 
     struct error_mark;
 

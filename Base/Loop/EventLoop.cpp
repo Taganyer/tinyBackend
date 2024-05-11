@@ -6,8 +6,6 @@
 
 using namespace Base;
 
-using namespace Net;
-
 namespace {
 
     thread_local bool this_thread_have_object = false;
@@ -28,6 +26,7 @@ EventLoop::~EventLoop() {
     assert_in_thread();
     shutdown();
     G_TRACE << "EventLoop " << _tid << "has been destroyed";
+    this_thread_have_object = false;
 }
 
 void EventLoop::loop() {
@@ -55,7 +54,7 @@ void EventLoop::set_distributor(EventLoop::Event event) {
 }
 
 void EventLoop::put_event(EventLoop::Event event) {
-    Base::Lock l(_mutex);
+    Lock l(_mutex);
     _waiting.push_back(std::move(event));
     G_TRACE << "put 1 " << "event in EventLoop "
             << _tid << " at " << Base::thread_name();

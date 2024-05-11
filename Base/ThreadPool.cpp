@@ -70,7 +70,7 @@ void ThreadPool::resize_core_thread(uint32 size) {
 }
 
 void ThreadPool::create_threads(ThreadPool::Size size) {
-    // FIXME
+    // FIXME 并发调用时，函数可能会返回时间过早。
     Size record = _core_threads.load() + size;
     for (Size i = 0; i < size; ++i) {
         Thread thread([this] {
