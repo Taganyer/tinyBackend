@@ -10,9 +10,9 @@
 #include <vector>
 #include <pthread.h>
 #include "Event.hpp"
-#include "../error/error_mark.hpp"
-#include "../../Base/Detail/config.hpp"
-#include "../../Base/Detail/NoCopy.hpp"
+#include "Base/Detail/config.hpp"
+#include "Base/Detail/NoCopy.hpp"
+#include "Net/error/error_mark.hpp"
 
 
 namespace Net {

@@ -5,10 +5,10 @@
 #ifndef BASE_TIMESTAMP_HPP
 #define BASE_TIMESTAMP_HPP
 
-#include "../Detail/config.hpp"
 #include <ctime>
 #include <string>
 #include <cstring>
+#include "Base/Detail/config.hpp"
 
 namespace Base {
 

@@ -8,8 +8,8 @@
 #ifdef BASE_SENDBUFFER_HPP
 
 #include "LogRank.hpp"
-#include "../Detail/NoCopy.hpp"
-#include "../Time/TimeStamp.hpp"
+#include "Base/Detail/NoCopy.hpp"
+#include "Base/Time/TimeStamp.hpp"
 
 namespace Base {
 

@@ -1,100 +1,33 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.26)
 
+# 项目名
 project(tinyBackend)
 
+# C++ 语言标准
 set(CMAKE_CXX_STANDARD 17)
 
+# 设置编译器优化级别
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 
-add_executable(
-        tinyBackend main.cpp
 
-        Base/Buffer/RingBuffer.cpp
-        Base/Buffer/RingBuffer.hpp
-        Base/Detail/config.hpp
-        Base/Detail/NoCopy.hpp
-        Base/Detail/CurrentThread.cpp
-        Base/Detail/CurrentThread.hpp
-        Base/Detail/Pool.hpp
-        Base/Detail/iFile.hpp
-        Base/Detail/oFile.hpp
-        Base/Detail/ioFile.hpp
-        Base/Exception.cpp
-        Base/Exception.hpp
-        Base/Thread.cpp
-        Base/Thread.hpp
-        Base/ThreadPool.hpp
-        Base/Mutex.hpp
-        Base/Condition.hpp
-        Base/BlockQueue.hpp
-        Base/File.hpp
+# 获取当前项目的绝对路径
+get_filename_component(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} ABSOLUTE)
 
-        Base/Time/Date.cpp
-        Base/Time/Date.hpp
-        Base/Time/Timer.cpp
-        Base/Time/Timer.hpp
-        Base/Time/TimeStamp.cpp
-        Base/Time/TimeStamp.hpp
+# 将项目路径传递给配置头文件
+set(PROJECT_ROOT_DIR ${PROJECT_ROOT_DIR} CACHE INTERNAL "Project root directory")
 
-        Base/Container/List.hpp
-        Base/Container/SingleList.hpp
+# 生成配置头文件
+configure_file(CMake_config.h.in "$CACHE{PROJECT_ROOT_DIR}/CMake_config.h")
 
-        Base/Log/SendThread.cpp
-        Base/Log/SendThread.hpp
-        Base/Log/Sender.hpp
-        Base/Log/SendBuffer.cpp
-        Base/Log/SendBuffer.hpp
-        Base/Log/LogRank.hpp
-        Base/Log/Log.cpp
-        Base/Log/Log.hpp
 
-        Base/Loop/EventLoop.cpp
-        Base/Loop/EventLoop.hpp
-        Net/NetLink.cpp
-        Net/NetLink.hpp
-        Net/Socket.cpp
-        Net/Socket.hpp
-        Net/InetAddress.cpp
-        Net/InetAddress.hpp
-        Net/Reactor.cpp
-        Net/Reactor.hpp
-        Net/Acceptor.cpp
-        Net/Acceptor.hpp
-        Net/Controller.cpp
-        Net/Controller.hpp
+# 添加 Base 子库
+add_subdirectory(Base)
 
-        Net/functions/Interface.cpp
-        Net/functions/Interface.hpp
-        Net/functions/poll_interface.hpp
+# 添加 Net 子库
+add_subdirectory(Net)
 
-        Net/file/FileDescriptor.cpp
-        Net/file/FileDescriptor.hpp
-        Net/file/FilePool.cpp
-        Net/file/FilePool.hpp
+# 生成可执行文件
+add_executable(${PROJECT_NAME} main.cpp CMake_config.h)
 
-        Net/monitors/Monitor.cpp
-        Net/monitors/Monitor.hpp
-        Net/monitors/Selector.cpp
-        Net/monitors/Selector.hpp
-        Net/monitors/Poller.cpp
-        Net/monitors/Poller.hpp
-        Net/monitors/EPoller.cpp
-        Net/monitors/EPoller.hpp
-        Net/monitors/Event.cpp
-        Net/monitors/Event.hpp
-
-        Net/error/error_mark.hpp
-        Net/error/errors.cpp
-        Net/error/errors.hpp
-        Base/Buffer/BufferPool.cpp
-        Base/Buffer/BufferPool.hpp
-        Base/Detail/AsyncFun.hpp
-        Base/ThreadPool.cpp
-        Base/Time/Time_difference.cpp
-        Base/Time/Time_difference.hpp
-
-)
-
-target_link_libraries(tinyBackend mysqlclient)
-
-target_link_libraries(tinyBackend hiredis)
+# 链接 Base Net 子库
+target_link_libraries(${PROJECT_NAME} Base Net)

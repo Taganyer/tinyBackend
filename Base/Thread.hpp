@@ -8,9 +8,8 @@
 #ifdef BASE_THREAD_HPP
 
 #include <functional>
-#include "Detail/CurrentThread.hpp"
 #include "Detail/NoCopy.hpp"
-
+#include "Detail/CurrentThread.hpp"
 
 namespace Base {
 

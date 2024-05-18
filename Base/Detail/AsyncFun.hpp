@@ -6,7 +6,7 @@
 #define BASE_ASYNCFUN_HPP
 
 #include <future>
-#include "../Exception.hpp"
+#include "Base/Exception.hpp"
 
 namespace Base::Detail {
 

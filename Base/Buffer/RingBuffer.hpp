@@ -7,9 +7,9 @@
 
 #ifdef BASE_RINGBUFFER_HPP
 
-#include "../Detail/config.hpp"
-#include "../Detail/NoCopy.hpp"
 #include <string_view>
+#include "Base/Detail/config.hpp"
+#include "Base/Detail/NoCopy.hpp"
 
 namespace Base {
 

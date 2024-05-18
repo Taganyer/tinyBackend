@@ -9,8 +9,8 @@
 
 #include <memory>
 #include <functional>
-#include "../Mutex.hpp"
-#include "../Detail/oFile.hpp"
+#include "Base/Mutex.hpp"
+#include "Base/Detail/oFile.hpp"
 
 namespace Base {
 

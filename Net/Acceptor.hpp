@@ -9,7 +9,7 @@
 
 #include <functional>
 #include "Socket.hpp"
-#include "../Base/Detail/config.hpp"
+#include "Base/Detail/config.hpp"
 
 namespace Net {
 

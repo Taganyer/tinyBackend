@@ -7,10 +7,10 @@
 
 #ifdef NET_INTERFACE_HPP
 
-#include "../../Base/Detail/config.hpp"
-#include <sys/uio.h>
 #include <unistd.h>
+#include <sys/uio.h>
 #include <arpa/inet.h>
+#include "Base/Detail/config.hpp"
 
 struct sockaddr;
 struct sockaddr_in;

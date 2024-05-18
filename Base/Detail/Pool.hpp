@@ -7,9 +7,9 @@
 
 #ifdef BASE_POOL_HPP
 
-#include "../Thread.hpp"
-#include "../Condition.hpp"
 #include <atomic>
+#include "Net/Thread.hpp"
+#include "Net/Condition.hpp"
 
 namespace Base::Detail {
 

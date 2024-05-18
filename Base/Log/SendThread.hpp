@@ -9,8 +9,8 @@
 
 #include "Sender.hpp"
 #include "SendBuffer.hpp"
-#include "../Condition.hpp"
-#include "../Container/List.hpp"
+#include "Base/Condition.hpp"
+#include "Base/Container/List.hpp"
 
 namespace Base {
 

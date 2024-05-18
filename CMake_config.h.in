@@ -1,0 +1,13 @@
+#ifndef CMAKE_CONFIG_H
+
+#define CMAKE_CONFIG_H
+
+#ifdef CMAKE_CONFIG_H
+
+#define PROJECT_ROOT_DIR "@PROJECT_ROOT_DIR@"
+
+#define PROJECT_GLOBAL_LOG_PATH PROJECT_ROOT_DIR "/global_logs"
+
+#endif
+
+#endif

@@ -7,7 +7,6 @@
 
 #ifdef BASE_EXCEPTION_HPP
 
-#include <exception>
 #include <string>
 
 namespace Base {

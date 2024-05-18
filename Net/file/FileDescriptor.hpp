@@ -7,7 +7,7 @@
 
 #ifdef NET_FILEDESCRIPTOR_HPP
 
-#include "../../Base/Detail/NoCopy.hpp"
+#include "Base/Detail/NoCopy.hpp"
 
 namespace Net {
 

@@ -9,9 +9,9 @@
 
 #include <vector>
 #include <functional>
-#include "../Condition.hpp"
-#include "../Container/List.hpp"
-#include "../Detail/NoCopy.hpp"
+#include "Base/Condition.hpp"
+#include "Base/Container/List.hpp"
+#include "Base/Detail/NoCopy.hpp"
 
 namespace Base {
 

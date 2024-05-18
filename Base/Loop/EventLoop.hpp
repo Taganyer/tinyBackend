@@ -2,13 +2,13 @@
 // Created by taganyer on 24-2-29.
 //
 
-#ifndef NET_EVENTLOOP_HPP
-#define NET_EVENTLOOP_HPP
+#ifndef BASE_EVENTLOOP_HPP
+#define BASE_EVENTLOOP_HPP
 
-#ifdef NET_EVENTLOOP_HPP
+#ifdef BASE_EVENTLOOP_HPP
 
-#include "../Condition.hpp"
-#include "../Log/Log.hpp"
+#include "Base/Condition.hpp"
+#include "Base/Log/Log.hpp"
 
 namespace Base {
 
@@ -39,13 +39,11 @@ namespace Base {
 
         [[nodiscard]] bool object_in_thread() const { return Base::tid() == _tid; };
 
-        [[nodiscard]] bool running() const { return run; };
+        [[nodiscard]] bool looping() const { return _run; };
 
     private:
 
-        bool run = false;
-
-        bool quit = false;
+        volatile bool _run = false, _quit = false;
 
         pthread_t _tid = Base::tid();
 
@@ -65,14 +63,14 @@ namespace Base {
 
     template<typename Fun>
     void EventLoop::put_events(int32 size, Fun fun) {
-        assert(size >= 0 && !quit);
+        assert(size >= 0 && !_quit);
         Lock l(_mutex);
         _waiting.reserve(size + _waiting.size());
         for (int32 i = 0; i < size; ++i) {
             _waiting.push_back(fun());
         }
-        G_TRACE << "put" << size << "event in EventLoop "
-                << _tid << " at " << Base::thread_name();
+        G_TRACE << "put " << size << " events in EventLoop "
+                << thread_name();
         _condition.notify_one();
     }
 
@@ -80,4 +78,4 @@ namespace Base {
 
 #endif
 
-#endif //NET_EVENTLOOP_HPP
+#endif //BASE_EVENTLOOP_HPP

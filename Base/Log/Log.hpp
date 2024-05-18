@@ -22,8 +22,6 @@ namespace Base {
         Log(SendThread &thread, std::string dictionary_path,
             LogRank rank, uint64 limit_size = FILE_LIMIT);
 
-        Log(Log &&other);
-
         ~Log();
 
         void push(LogRank rank, const void *ptr, uint64 size);
@@ -158,19 +156,22 @@ namespace Base {
                         (val.stream(Base::LogRank::FATAL))
 
 
-/// 解除注释开启全局日志
+/// 解除注释开启全局 SendThread 对象
 //#define GLOBAL_SENDTHREAD
 
 #ifdef GLOBAL_SENDTHREAD
 
 extern Base::SendThread Global_LogThread;
 
-#define GLOBAL_LOG
+/// 解除注释开启全局日志
+//#define GLOBAL_LOG
 
 #ifdef GLOBAL_LOG
 
+#include "CMake_config.h"
+
 /// 设置全局日志文件夹路径
-constexpr char GLOBAL_LOG_PATH[] = "";
+constexpr char GLOBAL_LOG_PATH[] = PROJECT_GLOBAL_LOG_PATH;
 
 static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
 

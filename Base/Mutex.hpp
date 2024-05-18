@@ -8,8 +8,8 @@
 #ifdef BASE_MUTEX_HPP
 
 #include <cassert>
-#include "Detail/CurrentThread.hpp"
 #include "Detail/NoCopy.hpp"
+#include "Detail/CurrentThread.hpp"
 
 
 #ifdef NDEBUG

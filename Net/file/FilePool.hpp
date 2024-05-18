@@ -9,9 +9,9 @@
 
 #include <map>
 #include <functional>
-#include "../../Base/Detail/oFile.hpp"
-#include "../../Base/Condition.hpp"
-#include "../monitors/Selector.hpp"
+#include "Base/Condition.hpp"
+#include "Base/Detail/oFile.hpp"
+#include "Net/monitors/Selector.hpp"
 
 
 namespace Net {

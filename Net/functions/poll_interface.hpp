@@ -7,11 +7,10 @@
 
 #ifdef NET_POLL_INTERFACE_HPP
 
-#include "../../Base/Detail/config.hpp"
-
 #include <poll.h>
-#include <sys/epoll.h>
 #include <unistd.h>
+#include <sys/epoll.h>
+#include "Base/Detail/config.hpp"
 
 struct pollfd;
 

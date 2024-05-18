@@ -7,10 +7,10 @@
 
 #ifdef BASE_IFILE_HPP
 
-#include "config.hpp"
-#include "NoCopy.hpp"
 #include <cstdio>
 #include <string>
+#include "config.hpp"
+#include "NoCopy.hpp"
 
 
 namespace Base {

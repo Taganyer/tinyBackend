@@ -10,7 +10,7 @@
 #include <map>
 #include <list>
 #include "NetLink.hpp"
-#include "../Base/Loop/EventLoop.hpp"
+#include "Base/Loop/EventLoop.hpp"
 
 namespace Net {
 

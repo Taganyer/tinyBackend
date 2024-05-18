@@ -63,25 +63,19 @@ namespace Base {
             return true;
         }
 
-        template<typename Mutex>
-        bool wait_until(Lock<Mutex> &lock, TimeStamp endTime) {
-            auto time = endTime.to_timespec();
-            return wait_until(lock, time);
-        };
-
         template<typename Mutex, typename Fun>
-        bool wait_until(Lock<Mutex> &lock, TimeStamp endTime, Fun fun) {
-            auto time = endTime.to_timespec();
+        bool wait_until(Lock<Mutex> &lock, const timespec &endTime, Fun fun) {
             while (!fun()) {
-                if (!wait_until(lock, time))
+                if (!wait_until(lock, endTime))
                     return fun();
             }
             return true;
         }
 
-        bool wait_until(Lock<Mutex> &lock, const timespec &time) {
+        /// 未超时返回 true
+        bool wait_until(Lock<Mutex> &lock, const timespec &endTime) {
             lock._lock.owner_thread = 0;
-            int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &time);
+            int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &endTime);
             lock._lock.owner_thread = tid();
             return t == 0;
         }

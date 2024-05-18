@@ -7,8 +7,8 @@
 
 #ifdef BASE_CURRENTTHREAD_HPP
 
-#include "config.hpp"
 #include <string>
+#include "config.hpp"
 
 namespace Base::Detail {
 
