@@ -2,66 +2,46 @@
 // Created by taganyer on 3/14/24.
 //
 
+#include "Base/Log/Log.hpp"
 #include "../Acceptor.hpp"
 #include "Net/InetAddress.hpp"
 #include "Net/error/errors.hpp"
 
 using namespace Net;
 
+using namespace Base;
+
 int Acceptor::ListenMax = 8192;
 
-const int Acceptor::Accepting = -1;
-
-const int Acceptor::Ready = 0;
-
-
-Acceptor::Acceptor(Socket &&socket) : _socket(std::move(socket)) {}
-
-bool Acceptor::start_listen() {
-    if (_socket.tcpListen(ListenMax))
-        return true;
-    _state = -errno;
-    return false;
-}
-
-int64 Acceptor::accept_connections(int64 times) {
-    _state = Accepting;
-    if (times < 0) {
-        while (accepting()) {
-            if (!accept())
-                return -1;
-        }
-        _state = Ready;
-        return 0;
+Acceptor::Acceptor(Socket &&socket) : _socket(std::move(socket)) {
+    if (!_socket.tcpListen(ListenMax)) {
+        G_FATAL << _socket.fd() << " listen failed: " << ops::get_listen_error(errno);
     } else {
-        int64 connections = 0;
-        while (accepting() && connections < times) {
-            if (!accept()) return connections;
-            ++connections;
-        }
-        _state = Ready;
-        return connections;
+        G_TRACE << "Acceptor " << _socket.fd() << " created.";
     }
 }
 
-void Acceptor::Async_stop_accept() {
-    _state = Ready;
+Acceptor::~Acceptor() {
+    G_TRACE << "Acceptor " << _socket.fd() << " close.";
+    if (_links.size() > 0)
+        G_WARN << "Acceptor will force close " << _links.size() << " linkes.";
 }
 
-error_mark Acceptor::get_error() const {
-    if (_state == Accepting || _state == Ready)
-        return {error_types::Null, 0};
-    if (_state < 0) return {error_types::Listen, -_state};
-    else return {error_types::Accept, _state};
+Acceptor::Message Acceptor::accept_connection(bool NoDelay) {
+    InetAddress address {};
+    int fd = _socket.tcpAccept(address);
+    if (fd < 0) return { {}, address };
+    Lock l(_mutex);
+    auto ptr = std::make_unique<Socket>(fd);
+    ptr->setTcpNoDelay(NoDelay);
+    auto link = NetLink::create_NetLinkPtr(std::move(ptr));
+    assert(_links.emplace(fd, link).second && link->fileDescriptor());
+    G_INFO << "Acceptor add NetLink " << fd;
+    return { link, address };
 }
 
-bool Acceptor::accept() {
-    InetAddress inetAddress{};
-    int fd = _socket.tcpAccept(inetAddress);
-    if (fd < 0) {
-        _state = errno;
-        return false;
-    }
-    _accept(fd, inetAddress);
-    return true;
+void Acceptor::remove_Link(int fd) {
+    Lock l(_mutex);
+    if (_links.erase(fd))
+        G_INFO << "Acceptor remove NetLink " << fd;
 }

@@ -13,9 +13,23 @@ using namespace Net;
 
 
 Socket::Socket(int domain, int type, int protocol) :
-        FileDescriptor(ops::socket(domain, type, protocol)) {
-    if (!valid())
+    FileDescriptor(ops::socket(domain, type, protocol)) {
+    if (!valid()) {
         G_ERROR << "Socket create " << ops::get_socket_error(errno);
+    } else {
+        G_INFO << "Socket " << _fd << " created.";
+    }
+}
+
+Socket::~Socket() {
+    if (_fd > 0) {
+        if (ops::close(_fd)) {
+            G_INFO << "socket close " << _fd;
+        } else {
+            G_FATAL << "socket " << _fd << ' ' << ops::get_close_error(errno);
+        }
+        _fd = -1;
+    }
 }
 
 bool Socket::Bind(InetAddress &address) {
@@ -97,34 +111,34 @@ void Socket::shutdown_TcpWrite() {
         G_ERROR << "Socket " << _fd << ops::get_shutdown_error(errno);
 }
 
-bool Socket::TcpInfo(tcp_info *info) const {
+bool Socket::TcpInfo(tcp_info* info) const {
     socklen_t len = sizeof(tcp_info);
     memset(info, 0, len);
     return ::getsockopt(_fd, SOL_TCP, TCP_INFO, info, &len) == 0;
 }
 
-bool Socket::TcpInfo(char *buf, int len) const {
-    tcp_info info{};
+bool Socket::TcpInfo(char* buf, int len) const {
+    tcp_info info {};
     if (!TcpInfo(&info)) {
         G_ERROR << "Socket " << _fd << ' ' << ops::get_socket_opt_error(errno);
         return false;
     }
     /// FIXME 进一步扩充
-    sprintf(buf, buf, len, "unrecovered = %u "
-                           "rto = %u ato = %u snd_mss = %u rcv_mss = %u "
-                           "lost = %u retrans = %u rtt = %u rttvar = %u "
-                           "sshthresh = %u cwnd = %u total_retrans = %u",
-            info.tcpi_retransmits,  // Number of unrecovered [RTO] timeouts
-            info.tcpi_rto,          // Retransmit timeout in usec
-            info.tcpi_ato,          // Predicted tick of soft clock in usec
-            info.tcpi_snd_mss,
-            info.tcpi_rcv_mss,
-            info.tcpi_lost,         // Lost packets
-            info.tcpi_retrans,      // Retransmitted packets out
-            info.tcpi_rtt,          // Smoothed round trip time in usec
-            info.tcpi_rttvar,       // Medium deviation
-            info.tcpi_snd_ssthresh,
-            info.tcpi_snd_cwnd,
-            info.tcpi_total_retrans);  // Total retransmits for entire connection
+    snprintf(buf, len, "unrecovered = %u "
+             "rto = %u ato = %u snd_mss = %u rcv_mss = %u "
+             "lost = %u retrans = %u rtt = %u rttvar = %u "
+             "sshthresh = %u cwnd = %u total_retrans = %u",
+             info.tcpi_retransmits, // Number of unrecovered [RTO] timeouts
+             info.tcpi_rto,         // Retransmit timeout in usec
+             info.tcpi_ato,         // Predicted tick of soft clock in usec
+             info.tcpi_snd_mss,
+             info.tcpi_rcv_mss,
+             info.tcpi_lost,    // Lost packets
+             info.tcpi_retrans, // Retransmitted packets out
+             info.tcpi_rtt,     // Smoothed round trip time in usec
+             info.tcpi_rttvar,  // Medium deviation
+             info.tcpi_snd_ssthresh,
+             info.tcpi_snd_cwnd,
+             info.tcpi_total_retrans); // Total retransmits for entire connection
     return true;
 }

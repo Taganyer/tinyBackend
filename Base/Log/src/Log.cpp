@@ -9,7 +9,7 @@ namespace Base {
 
     Log::Log(SendThread &thread, std::string dictionary_path,
              LogRank rank, uint64 limit_size) :
-            logSender(std::make_shared<LogSender>(&thread, std::move(dictionary_path), limit_size)), outputRank(rank) {
+        logSender(std::make_shared<LogSender>(&thread, std::move(dictionary_path), limit_size)), outputRank(rank) {
         logSender->_thread->add_sender(logSender->shared_from_this(), logSender->data);
     }
 
@@ -18,7 +18,7 @@ namespace Base {
             logSender->_thread->remove_sender(logSender->data);
     }
 
-    void Log::push(LogRank rank, const void *ptr, uint64 size) {
+    void Log::push(LogRank rank, const void* ptr, uint64 size) {
         if (rank < outputRank) return;
         Lock l(logSender->IO_lock);
         while (size) {
@@ -32,10 +32,10 @@ namespace Base {
     }
 
     LogStream Log::stream(LogRank rank) {
-        return {*this, rank};
+        return { *this, rank };
     }
 
-    void Log::LogSender::send(const void *buffer, uint64 size) {
+    void Log::LogSender::send(const void* buffer, uint64 size) {
         while (size) {
             uint64 rest = limit_size - current_size;
             if (size > rest) {
@@ -63,8 +63,8 @@ namespace Base {
         current_size = 0;
     }
 
-    Log::LogSender::LogSender(SendThread *thread, std::string dictionary_path, uint64 limit_size) :
-            _thread(thread), limit_size(limit_size), _path(std::move(dictionary_path)) {
+    Log::LogSender::LogSender(SendThread* thread, std::string dictionary_path, uint64 limit_size) :
+        _thread(thread), limit_size(limit_size), _path(std::move(dictionary_path)) {
         if (_path.back() != '/' && _path.back() != '\\') _path.push_back('/');
         open_new_file();
     }

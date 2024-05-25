@@ -19,16 +19,15 @@ namespace Base {
 
     class iFile : NoCopy {
     public:
-
         iFile() = default;
 
-        iFile(const char *path, bool binary = false);
+        iFile(const char* path, bool binary = false);
 
         iFile(iFile &&other) noexcept;
 
         ~iFile();
 
-        bool open(const char *path, bool binary = false);
+        bool open(const char* path, bool binary = false);
 
         bool close();
 
@@ -46,15 +45,15 @@ namespace Base {
 
         string read(uint64 size);
 
-        uint64 read(uint64 size, void *dest);
+        uint64 read(uint64 size, void* dest);
 
         string getline();
 
-        int64 getline(char *dest, size_t size);
+        int64 getline(char* dest, size_t size);
 
         string get_until(int target);
 
-        int64 get_until(char target, char *dest, size_t size = 256);
+        int64 get_until(char target, char* dest, size_t size = 256);
 
         string getAll();
 
@@ -90,18 +89,17 @@ namespace Base {
             return fileno(_file);
         };
 
-        FILE *get_fp() { return _file; };
+        FILE* get_fp() { return _file; };
 
     protected:
-
-        FILE *_file = nullptr;
+        FILE* _file = nullptr;
 
     };
 
 }
 
 namespace Base {
-    inline iFile::iFile(const char *path, bool binary) {
+    inline iFile::iFile(const char* path, bool binary) {
         open(path, binary);
     }
 
@@ -113,7 +111,7 @@ namespace Base {
         close();
     }
 
-    inline bool iFile::open(const char *path, bool binary) {
+    inline bool iFile::open(const char* path, bool binary) {
         close();
         _file = fopen(path, binary ? "rb" : "r");
         return _file;
@@ -166,7 +164,7 @@ namespace Base {
         return ans;
     }
 
-    inline uint64 iFile::read(uint64 size, void *dest) {
+    inline uint64 iFile::read(uint64 size, void* dest) {
         return fread(dest, 1, size, _file);
     }
 
@@ -174,12 +172,12 @@ namespace Base {
         return get_until('\n');
     }
 
-    inline int64 iFile::getline(char *dest, size_t size) {
+    inline int64 iFile::getline(char* dest, size_t size) {
         return getdelim(&dest, &size, '\n', _file);
     }
 
     inline string iFile::get_until(int target) {
-        char *ptr = nullptr;
+        char* ptr = nullptr;
         size_t t = getdelim(&ptr, &t, target, _file);
         if (t && ptr[t - 1] == target) --t;
         if (t == -1) t = 0;
@@ -188,7 +186,7 @@ namespace Base {
         return ans;
     }
 
-    inline int64 iFile::get_until(char target, char *dest, size_t size) {
+    inline int64 iFile::get_until(char target, char* dest, size_t size) {
         return getdelim(&dest, &size, target, _file);
     }
 

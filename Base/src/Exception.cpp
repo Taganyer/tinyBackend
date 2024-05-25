@@ -10,5 +10,5 @@ namespace Base {
 
 
     Exception::Exception(std::string what) : message_(std::move(what)),
-                                             stack_(Detail::stackTrace(false)) {}
+        stack_(Detail::stackTrace(false)) {}
 }

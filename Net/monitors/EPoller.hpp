@@ -17,7 +17,7 @@ namespace Net {
     class EPoller : public Monitor {
     public:
 
-        using ActiveEvents = std::vector<struct epoll_event>;
+        using ActiveEvents = std::vector<epoll_event>;
 
         EPoller();
 

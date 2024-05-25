@@ -37,9 +37,11 @@ void EventLoop::loop() {
         if (_distributor)
             _distributor();
         loop_begin();
-        for (auto const &event: _queue)
-            if (event) event();
-        G_TRACE << "invoke " << _queue.size() << " events";
+        if (_queue.size() > 0) {
+            for (const auto &event : _queue)
+                if (event) event();
+            G_TRACE << "EventLoop " << _tid << " invoke " << _queue.size() << " events";
+        }
         loop_end();
     }
     _run = false;
@@ -51,16 +53,22 @@ void EventLoop::shutdown() {
     _condition.notify_one();
 }
 
-void EventLoop::set_distributor(EventLoop::Event event) {
+void EventLoop::set_distributor(Event event) {
     assert_in_thread();
     _distributor = std::move(event);
 }
 
-void EventLoop::put_event(EventLoop::Event event) {
+void EventLoop::put_event(Event event) {
     Lock l(_mutex);
     _waiting.push_back(std::move(event));
     G_TRACE << "put a event in EventLoop "
-            << _tid << " at " << thread_name();
+        << _tid << " at " << thread_name();
+    _condition.notify_one();
+}
+
+void EventLoop::weak_up() {
+    Lock l(_mutex);
+    _weak = true;
     _condition.notify_one();
 }
 
@@ -72,8 +80,9 @@ void EventLoop::assert_in_thread() const {
 
 void EventLoop::loop_begin() {
     Lock l(_mutex);
-    _condition.wait(l, [this] { return !_waiting.empty(); });
+    _condition.wait(l, [this] { return !_waiting.empty() || _weak; });
     _queue.swap(_waiting);
+    _weak = false;
 }
 
 void EventLoop::loop_end() {

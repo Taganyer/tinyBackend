@@ -26,6 +26,8 @@ namespace Net {
             other._fd = -1;
         };
 
+        ~Socket() override;
+
         bool Bind(InetAddress &address);
 
         bool tcpListen(int max_size);

@@ -15,7 +15,6 @@ namespace Base {
 
     class RingBuffer : NoCopy {
     public:
-
         using View = std::string_view;
 
         using ViewPair = std::pair<View, View>;
@@ -28,19 +27,19 @@ namespace Base {
 
         void reposition();
 
-        uint32 write(const void *target, uint32 size);
+        uint32 write(const void* target, uint32 size);
 
-        char *write_data() { return _write; };
+        char* write_data() { return _write; };
 
         void write_advance(uint32 step);
 
-        uint32 read_to(void *dest, uint32 size);
+        uint32 read_to(void* dest, uint32 size);
 
-        [[nodiscard]] char *read_data() const { return _read; };
+        [[nodiscard]] char* read_data() const { return _read; };
 
         void read_advance(uint32 step);
 
-        [[nodiscard]] char *data_begin() const { return _buffer; };
+        [[nodiscard]] char* data_begin() const { return _buffer; };
 
         inline char peek();
 
@@ -66,12 +65,11 @@ namespace Base {
         [[nodiscard]] bool empty() const { return _read == _write && _readable == 0; };
 
     private:
+        char* _buffer = nullptr;
 
-        char *_buffer = nullptr;
+        char* _read = _buffer;
 
-        char *_read = _buffer;
-
-        char *_write = _buffer;
+        char* _write = _buffer;
 
         uint32 _readable = 0, _size = 0;
 
@@ -79,7 +77,7 @@ namespace Base {
 
         inline void write_move(uint32 step);
 
-        [[nodiscard]] const char *end() const { return _buffer + _size; };
+        [[nodiscard]] const char* end() const { return _buffer + _size; };
 
     };
 
@@ -107,6 +105,7 @@ namespace Base {
         _write += step;
         if (_write >= end())
             _write -= _size;
+        _readable += step;
     }
 
 }

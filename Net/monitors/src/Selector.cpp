@@ -3,56 +3,37 @@
 //
 
 #include "../Selector.hpp"
-#include "Base/Log/Log.hpp"
 #include "Net/error/errors.hpp"
+#include "Base/Log/Log.hpp"
 
 using namespace Net;
 
 Selector::~Selector() {
-    G_WARN << "Selector force clear " << _fds.size();
-    _fds.clear();
-    read_size = write_size = error_size = 0;
+    if (_fds.size() > 0)
+        G_WARN << "Selector force close " << _fds.size();
 }
 
 int Selector::get_aliveEvent(int timeoutMS, EventList &list) {
-    assert_in_right_thread("Selector::fet_aliveEvent ");
-    fd_set read;
-    fd_set write;
-    fd_set error;
+    assert_in_right_thread("Selector::get_aliveEvent ");
 
-    FD_ZERO(&read);
-    FD_ZERO(&write);
-    FD_ZERO(&error);
-    for (auto event: _fds) {
-        if (event.canRead()) FD_SET(event.fd, &read);
-        if (event.canWrite()) FD_SET(event.fd, &write);
-        if (event.hasError()) FD_SET(event.fd, &error);
-    }
-
-    timeval timeout{timeoutMS / 1000, timeoutMS % 1000};
-
+    init_fd_set();
+    timeval timeout { timeoutMS / 1000, timeoutMS % 1000 };
     int ret = ::select((int) _fds.size(),
-                       read_size > 0 ? &read : nullptr,
-                       write_size > 0 ? &write : nullptr,
-                       error_size > 0 ? &error : nullptr,
+                       read_size > 0 ? &_read : nullptr,
+                       write_size > 0 ? &_write : nullptr,
+                       error_size > 0 ? &_error : nullptr,
                        timeoutMS > 0 ? &timeout : nullptr);
-    if (likely(ret >= 0)) {
+    if (ret > 0) {
+        G_TRACE << "Selector::select " << _tid << " get " << ret << " events";
         list.reserve(list.size() + ret);
-        G_TRACE << "Selector get " << ret << " events.";
+        fill_events(list);
+    } else if (ret == 0) {
+        G_INFO << "Selector::select " << _tid << " timeout " << timeoutMS << " ms";
     } else {
-        error_ = {error_types::Select, errno};
-        G_ERROR << "Selector: " << ops::get_select_error(errno);
+        error_ = { error_types::Select, errno };
+        G_ERROR << "Selector::select " << ops::get_select_error(errno);
     }
-    for (auto const &event: _fds) {
-        Event val{event.fd, Event::NoEvent};
-        if (event.canRead() && FD_ISSET(event.fd, &read))
-            val.set_read();
-        if (event.canWrite() && FD_ISSET(event.fd, &write))
-            val.set_write();
-        if (event.hasError() && FD_ISSET(event.fd, &error))
-            val.set_error();
-        if (!val.is_NoEvent()) list.push_back(val);
-    }
+
     return ret;
 }
 
@@ -64,7 +45,7 @@ bool Selector::add_fd(Event event) {
     if (event.canRead()) ++read_size;
     if (event.canWrite()) ++write_size;
     if (event.hasError()) ++error_size;
-    G_TRACE << "Selector add " << event.fd;
+    G_INFO << "Selector add " << event.fd;
     return true;
 }
 
@@ -80,12 +61,13 @@ void Selector::remove_fd(int fd) {
     if (iter->hasError()) --error_size;
     *iter = _fds.back();
     _fds.pop_back();
-    G_TRACE << "Selector remove " << fd;
+    G_INFO << "Selector remove fd " << fd;
 }
 
 void Selector::remove_all() {
     assert_in_right_thread("Selector::remove_all ");
-    G_WARN << "Selector force clear " << _fds.size();
+    if (_fds.size() > 0)
+        G_WARN << "Selector force remove " << _fds.size() << " fds.";
     _fds.clear();
     read_size = write_size = error_size = 0;
 }
@@ -104,5 +86,32 @@ void Selector::update_fd(Event event) {
     if (iter->canRead()) ++read_size;
     if (iter->canWrite()) ++write_size;
     if (iter->hasError()) ++error_size;
-    G_TRACE << "Selector update " << event.fd << " events to " << event.event;
+    G_INFO << "Selector update " << event.fd << " events to " << event.event;
+}
+
+void Selector::init_fd_set() {
+    FD_ZERO(&_read);
+    FD_ZERO(&_write);
+    FD_ZERO(&_error);
+    for (const auto event : _fds) {
+        if (event.canRead())
+            FD_SET(event.fd, &_read);
+        if (event.canWrite())
+            FD_SET(event.fd, &_write);
+        if (event.hasError())
+            FD_SET(event.fd, &_error);
+    }
+}
+
+void Selector::fill_events(EventList &list) {
+    for (const auto &event : _fds) {
+        Event val { event.fd, Event::NoEvent };
+        if (event.canRead() && FD_ISSET(event.fd, &_read))
+            val.set_read();
+        if (event.canWrite() && FD_ISSET(event.fd, &_write))
+            val.set_write();
+        if (event.hasError() && FD_ISSET(event.fd, &_error))
+            val.set_error();
+        if (!val.is_NoEvent()) list.push_back(val);
+    }
 }

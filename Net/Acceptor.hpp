@@ -7,48 +7,40 @@
 
 #ifdef NET_ACCEPTOR_HPP
 
-#include <functional>
+#include <map>
+
 #include "Socket.hpp"
-#include "Base/Detail/config.hpp"
+#include "NetLink.hpp"
+#include "Base/Mutex.hpp"
 
 namespace Net {
 
     struct error_mark;
 
-    class Acceptor {
+    class Acceptor : private Base::NoCopy {
     public:
 
         static int ListenMax;
 
-        using AcceptCallback = std::function<void(int, InetAddress)>;
+        using Message = std::pair<NetLink::LinkPtr, InetAddress>;
 
         explicit Acceptor(Socket &&socket);
 
-        void set_acceptCallback(AcceptCallback callback) { _accept = std::move(callback); };
+        ~Acceptor();
 
-        bool start_listen();
+        Message accept_connection(bool NoDelay);
 
-        int64 accept_connections(int64 times);
-
-        void Async_stop_accept();
-
-        [[nodiscard]] error_mark get_error() const;
-
-        [[nodiscard]] bool accepting() const { return _state == Accepting; };
+        void remove_Link(int fd);
 
     private:
 
-        static const int Accepting;
-
-        static const int Ready;
-
-        AcceptCallback _accept;
+        using Links = std::map<int, NetLink::LinkPtr>;
 
         Socket _socket;
 
-        int _state = Ready;
+        Base::Mutex _mutex;
 
-        bool accept();
+        Links _links;
 
     };
 

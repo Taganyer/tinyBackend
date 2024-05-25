@@ -8,7 +8,7 @@
 using namespace Net;
 
 
-InetAddress::InetAddress(bool IPv4, short port, const char *IP,
+InetAddress::InetAddress(bool IPv4, short port, const char* IP,
                          unsigned short family) {
     if (IPv4) {
         _addr.sin_port = port;

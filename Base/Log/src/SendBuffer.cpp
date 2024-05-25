@@ -9,12 +9,12 @@ using namespace Base;
 const uint64 SendBuffer::BUF_SIZE = 2 << 20;
 
 SendBuffer::SendBuffer(SendBuffer &&other) noexcept:
-        buffer(other.buffer), index(other.index) {
+    buffer(other.buffer), index(other.index) {
     other.buffer = nullptr;
     other.index = 0;
 }
 
-uint64 SendBuffer::append(const void *data, uint64 size) {
+uint64 SendBuffer::append(const void* data, uint64 size) {
     if (BUF_SIZE - index < size)
         size = BUF_SIZE - index;
     std::memcpy(buffer + index, data, size);
@@ -22,7 +22,7 @@ uint64 SendBuffer::append(const void *data, uint64 size) {
     return size;
 }
 
-uint64 SendBuffer::append(LogRank rank, const Time &time, const void *data, uint64 size) {
+uint64 SendBuffer::append(LogRank rank, const Time &time, const void* data, uint64 size) {
     if (BUF_SIZE - index < size + TimeStamp::Time_us_format_len + 8)
         return 0;
     format(buffer + index, time);

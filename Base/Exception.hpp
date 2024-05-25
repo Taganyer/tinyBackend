@@ -17,11 +17,11 @@ namespace Base {
 
         ~Exception() noexcept override = default;
 
-        [[nodiscard]] const char *what() const noexcept override {
+        [[nodiscard]] const char* what() const noexcept override {
             return message_.c_str();
         }
 
-        [[nodiscard]] const char *stackTrace() const noexcept {
+        [[nodiscard]] const char* stackTrace() const noexcept {
             return stack_.c_str();
         }
 

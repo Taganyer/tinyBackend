@@ -40,12 +40,6 @@ namespace Net::ops {
         return ::epoll_ctl(epfd, operation, fd, event);
     }
 
-    inline int epoll_ctl(int epfd, int operation, int fd, int events) {
-        struct epoll_event e{};
-        e.events = events;
-        return ::epoll_ctl(epfd, operation, fd, &e);
-    }
-
 }
 
 #endif

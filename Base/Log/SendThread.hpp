@@ -18,7 +18,6 @@ namespace Base {
 
     class SendThread : NoCopy {
     private:
-
         class SenderData {
         public:
             SenderData(const Sender::SenderPtr sender) : _sender(sender) {};
@@ -39,7 +38,6 @@ namespace Base {
         using BufferPtr = BufferQueue::Iter;
 
     public:
-
         using SenderIter = SenderQueue::Iter;
 
         struct Data;
@@ -58,7 +56,6 @@ namespace Base {
         void put_buffer(Data &data);
 
     private:
-
         volatile bool shutdown = false;
         volatile bool running = false;
 
@@ -95,7 +92,6 @@ namespace Base {
         void closing();
 
     public:
-
         struct Data {
             SenderIter sender;
             BufferPtr buffer;

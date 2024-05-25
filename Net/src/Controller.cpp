@@ -9,17 +9,17 @@
 
 using namespace Net;
 
-Controller::Controller(const Controller::Shared &ptr, Reactor *reactor) :
-        _weak(ptr), _reactor(reactor) {}
+Controller::Controller(const Shared &ptr, Reactor* reactor) :
+    _weak(ptr), _reactor(reactor) {}
 
-uint32 Controller::send(const void *target, uint32 size) {
+uint32 Controller::send(const void* target, uint32 size) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return -1;
     int64 writen = 0;
     if (in_loop_thread() && ptr->_output.empty()) {
         writen = ops::write(ptr->fd(), target, size);
         if (writen < 0) {
-            ptr->handle_error({error_types::Write, errno}, nullptr);
+            ptr->handle_error({ error_types::Write, errno }, nullptr);
             return -1;
         } else {
             G_TRACE << "write " << writen << " byte in " << ptr->fd();
@@ -31,150 +31,65 @@ uint32 Controller::send(const void *target, uint32 size) {
     return writen;
 }
 
-bool Controller::reset_readCallback(Controller::ReadCallback event) {
+void Controller::reset_readCallback(ReadCallback event) {
     Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
+    if (!ptr || !ptr->valid()) return;
     send_to_loop([weak = _weak, e = std::move(event)]() mutable {
         Shared data = weak.lock();
-        if (data)
+        if (data && data->valid())
             data->set_readCallback(std::move(e));
     });
-    return true;
 }
 
-bool Controller::reset_writeCallback(Controller::WriteCallback event) {
+void Controller::reset_writeCallback(WriteCallback event) {
     Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
+    if (!ptr || !ptr->valid()) return;
     send_to_loop([weak = _weak, e = std::move(event)]() mutable {
         Shared data = weak.lock();
-        if (data)
+        if (data && data->valid())
             data->set_writeCallback(std::move(e));
     });
-    return true;
 }
 
-bool Controller::reset_errorCallback(Controller::ErrorCallback event) {
+void Controller::reset_errorCallback(ErrorCallback event) {
     Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
+    if (!ptr || !ptr->valid()) return;
     send_to_loop([weak = _weak, e = std::move(event)]() mutable {
         Shared data = weak.lock();
-        if (data)
-            data->set_errorCallback(std::move(e));
+        if (data) data->set_errorCallback(std::move(e));
     });
-    return true;
 }
 
-bool Controller::reset_closeCallback(Controller::CloseCallback event) {
+void Controller::reset_closeCallback(CloseCallback event) {
     Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
+    if (!ptr || !ptr->valid()) return;
     send_to_loop([weak = _weak, e = std::move(event)]() mutable {
         Shared data = weak.lock();
-        if (data)
-            data->set_closeCallback(std::move(e));
+        if (data) data->set_closeCallback(std::move(e));
     });
-    return true;
 }
 
-bool Controller::set_read(bool turn_on) {
+void Controller::update_event(Event event) {
     Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
-    send_to_loop([this, turn_on] {
-        Shared data = _weak.lock();
-        if (data && data->valid()) {
-            auto iter = _reactor->_map.find(data->fd());
-            if (iter == _reactor->_map.end()) return;
-            auto e = iter->second.second;
-            if (turn_on && !e->second.canRead()) {
-                e->second.set_read();
-                _reactor->_monitor->update_fd(e->second);
-            } else if (!turn_on && e->second.canRead()) {
-                e->second.unset_read();
-                _reactor->_monitor->update_fd(e->second);
+    if (!ptr || !ptr->valid()) return;
+    if (in_loop_thread()) {
+        auto iter = _reactor->_map.find(ptr->fd());
+        if (iter == _reactor->_map.end()) return;
+        auto e = iter->second.second;
+        e->second = event;
+        _reactor->_monitor->update_fd(event);
+    } else {
+        send_to_loop([weak = _weak, reactor = _reactor, event] {
+            Shared data = weak.lock();
+            if (data && data->valid()) {
+                auto iter = reactor->_map.find(data->fd());
+                if (iter == reactor->_map.end()) return;
+                auto e = iter->second.second;
+                e->second = event;
+                reactor->_monitor->update_fd(event);
             }
-        }
-    });
-    return true;
-}
-
-bool Controller::set_write(bool turn_on) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
-    send_to_loop([this, turn_on] {
-        Shared data = _weak.lock();
-        if (data && data->valid()) {
-            auto iter = _reactor->_map.find(data->fd());
-            if (iter == _reactor->_map.end()) return;
-            auto e = iter->second.second;
-            if (turn_on && !e->second.canWrite()) {
-                e->second.set_write();
-                _reactor->_monitor->update_fd(e->second);
-            } else if (!turn_on && e->second.canWrite()) {
-                e->second.unset_write();
-                _reactor->_monitor->update_fd(e->second);
-            }
-        }
-    });
-    return true;
-}
-
-bool Controller::wake_readCallback(bool after) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
-    if (in_loop_thread() && !after) {
-        ptr->_readFun(ptr->_input, *ptr->FD);
-    } else {
-        send_to_loop([weak = _weak] {
-            auto data = weak.lock();
-            if (data && data->valid())
-                data->_readFun(data->_input, *data->FD);
         });
     }
-    return true;
-}
-
-bool Controller::wake_writeCallback(bool after) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
-    if (in_loop_thread() && !after) {
-        ptr->_writeFun(ptr->_output, *ptr->FD);
-    } else {
-        send_to_loop([weak = _weak] {
-            auto data = weak.lock();
-            if (data && data->valid())
-                data->_writeFun(data->_output, *data->FD);
-        });
-    }
-    return true;
-}
-
-bool Controller::wake_error(error_mark mark, bool after) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
-    if (in_loop_thread() && !after) {
-        ptr->handle_error(mark, nullptr);
-    } else {
-        send_to_loop([weak = _weak, mark] {
-            auto data = weak.lock();
-            if (data && data->valid())
-                data->handle_error(mark, nullptr);
-        });
-    }
-    return true;
-}
-
-bool Controller::wake_close(bool after) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return false;
-    if (in_loop_thread() && !after) {
-        ptr->handle_close(nullptr);
-    } else {
-        send_to_loop([weak = _weak] {
-            auto data = weak.lock();
-            if (data && data->valid())
-                data->handle_close(nullptr);
-        });
-    }
-    return true;
 }
 
 void Controller::close_fd() {
@@ -183,7 +98,7 @@ void Controller::close_fd() {
     ptr->close_fd();
 }
 
-void Controller::send_to_loop(Controller::EventFun fun) {
+void Controller::send_to_loop(EventFun fun) {
     _reactor->_loop->put_event(std::move(fun));
 }
 

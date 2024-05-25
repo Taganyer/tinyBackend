@@ -7,7 +7,6 @@
 
 #include <ctime>
 #include <string>
-#include <cstring>
 #include "Base/Detail/config.hpp"
 
 namespace Base {

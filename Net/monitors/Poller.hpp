@@ -18,7 +18,7 @@ namespace Net {
     class Poller : public Monitor {
     public:
 
-        using ActiveEvents = std::vector<struct pollfd>;
+        using ActiveEvents = std::vector<pollfd>;
 
         ~Poller() override;
 

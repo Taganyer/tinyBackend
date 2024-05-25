@@ -11,7 +11,6 @@
 #include <functional>
 #include "file/FileDescriptor.hpp"
 #include "Base/Buffer/RingBuffer.hpp"
-#include "Base/Time/Time_difference.hpp"
 
 namespace Net {
 
@@ -21,7 +20,6 @@ namespace Net {
 
     class NetLink : public std::enable_shared_from_this<NetLink>, private Base::NoCopy {
     public:
-
         using ReadCallback = std::function<void(Base::RingBuffer &, FileDescriptor &)>;
 
         using WriteCallback = std::function<void(Base::RingBuffer &, FileDescriptor &)>;
@@ -53,7 +51,7 @@ namespace Net {
         /// 强行关闭文件描述符，多次调用不会出现问题。
         void close_fd();
 
-        FileDescriptor &fileDescriptor() { return *FD; };
+        FileDescriptor& fileDescriptor() { return *FD; };
 
         void set_readCallback(ReadCallback event) { _readFun = std::move(event); };
 
@@ -68,7 +66,6 @@ namespace Net {
         [[nodiscard]] int fd() const { return FD->fd(); };
 
     private:
-
         std::unique_ptr<FileDescriptor> FD;
 
         ReadCallback _readFun;
@@ -87,13 +84,13 @@ namespace Net {
 
         friend class Reactor;
 
-        void handle_read(Event *event);
+        void handle_read(Event* event);
 
-        void handle_write(Event *event);
+        void handle_write(Event* event);
 
-        void handle_error(error_mark mark, Event *event);
+        void handle_error(error_mark mark, Event* event);
 
-        void handle_close(Event *event);
+        void handle_close();
 
         bool handle_timeout();
 

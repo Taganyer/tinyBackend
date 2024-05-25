@@ -18,7 +18,7 @@ namespace Net {
 
         FileDescriptor(FileDescriptor &&other) noexcept: _fd(other._fd) {};
 
-        ~FileDescriptor();
+        virtual ~FileDescriptor();
 
         operator bool() const { return _fd > 0; };
 

@@ -8,9 +8,10 @@
 #ifdef NET_RECTOR_HPP
 
 #include <map>
-#include <list>
 #include "NetLink.hpp"
 #include "Base/Loop/EventLoop.hpp"
+#include "Base/Container/List.hpp"
+#include "Base/Time/Time_difference.hpp"
 
 namespace Net {
 
@@ -22,7 +23,6 @@ namespace Net {
 
     class Reactor : Base::NoCopy {
     public:
-
         enum MOD {
             SELECT,
             POLL,
@@ -33,35 +33,36 @@ namespace Net {
 
         ~Reactor();
 
-        void add_NetLink(NetLink &netLink, Event event);
+        void add_NetLink(NetLink::LinkPtr &netLink, Event event);
 
         void start(int monitor_timeoutMS);
 
         void close();
 
-        Base::EventLoop *get_loop() { return _loop; };
+        Base::EventLoop* get_loop() { return _loop; };
 
-        Monitor *get_monitor() { return _monitor; };
+        Monitor* get_monitor() { return _monitor; };
 
-        [[nodiscard]] bool running() const { return _loop; };
+        [[nodiscard]] bool running() const { return _running; };
 
     private:
+        using TimerQueue = Base::List<std::pair<Base::Time_difference, Event>>;
 
-        using TimerQueue = std::list<std::pair<Base::Time_difference, Event>>;
-
-        using MapData = std::pair<NetLink::WeakPtr, TimerQueue::iterator>;
+        using MapData = std::pair<NetLink::WeakPtr, TimerQueue::Iter>;
 
         using LinkMap = std::map<int, MapData>;
 
         Base::Time_difference timeout;
 
-        Monitor *_monitor;
+        Monitor* _monitor;
 
-        Base::EventLoop *_loop = nullptr;
+        Base::EventLoop* _loop = nullptr;
 
         LinkMap _map;
 
         TimerQueue _queue;
+
+        volatile bool _running = false;
 
         void remove_timeouts();
 

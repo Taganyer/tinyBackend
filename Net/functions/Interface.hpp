@@ -58,7 +58,7 @@ namespace Net {
         }
 
         inline bool close(int fd) {
-            int ret = ::close(fd) == 0;
+            int ret = ::close(fd);
             return ret == 0;
         }
 

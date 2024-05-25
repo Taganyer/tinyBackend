@@ -18,14 +18,13 @@ namespace Base {
 
     class Sender : public std::enable_shared_from_this<Sender> {
     public:
-
         using SenderPtr = std::shared_ptr<Sender>;
 
         using SenderWeak = std::weak_ptr<Sender>;
 
         virtual ~Sender() = default;
 
-        virtual void send(const void *buffer, uint64 size) = 0;
+        virtual void send(const void* buffer, uint64 size) = 0;
 
         virtual void force_flush() = 0;
 

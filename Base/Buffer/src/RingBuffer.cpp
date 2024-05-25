@@ -8,7 +8,7 @@
 
 void Base::RingBuffer::resize(uint32 size) {
     if (size < _readable) size = _readable;
-    auto *t = new char[size];
+    auto* t = new char[size];
     if (_read + _readable <= end()) {
         std::memcpy(t, _read, _readable);
     } else {
@@ -30,13 +30,13 @@ void Base::RingBuffer::reposition() {
     } else {
         auto len = end() - _read, another = _readable - len;
         if (len < another) {
-            auto *t = new char[len];
+            auto* t = new char[len];
             std::memcpy(t, _read, len);
             std::memcpy(_buffer + len, _buffer, another);
             std::memcpy(_buffer, t, len);
             delete[] t;
         } else {
-            auto *t = new char[another];
+            auto* t = new char[another];
             std::memcpy(t, _buffer, another);
             std::memcpy(_buffer, _read, len);
             std::memcpy(_buffer + len, t, another);
@@ -47,7 +47,7 @@ void Base::RingBuffer::reposition() {
     _write = _read + _readable;
 }
 
-uint32 Base::RingBuffer::write(const void *target, uint32 size) {
+uint32 Base::RingBuffer::write(const void* target, uint32 size) {
     uint32 writable = writable_len();
     if (size > writable) size = writable;
     if (_write + writable <= end()) {
@@ -62,7 +62,7 @@ uint32 Base::RingBuffer::write(const void *target, uint32 size) {
     return size;
 }
 
-uint32 Base::RingBuffer::read_to(void *dest, uint32 size) {
+uint32 Base::RingBuffer::read_to(void* dest, uint32 size) {
     if (size > _readable) size = _readable;
     if (auto len = end() - _read; len >= size) {
         std::memcpy(dest, _read, size);
@@ -77,7 +77,7 @@ uint32 Base::RingBuffer::read_to(void *dest, uint32 size) {
 
 Base::RingBuffer::ViewPair Base::RingBuffer::get_view() const {
     auto dis = end() - _read;
-    const char *ps = nullptr;
+    const char* ps = nullptr;
     uint32 sf, ss = 0;
     if (dis >= _readable) {
         sf = _readable;
@@ -86,7 +86,7 @@ Base::RingBuffer::ViewPair Base::RingBuffer::get_view() const {
         ss = _readable - sf;
         ps = _buffer;
     }
-    return {View(_read, sf), View(ps, ss)};
+    return { View(_read, sf), View(ps, ss) };
 }
 
 void Base::RingBuffer::read_advance(uint32 step) {

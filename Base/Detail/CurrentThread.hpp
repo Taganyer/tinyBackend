@@ -34,7 +34,7 @@ namespace Base {
 
     inline pthread_t tid() { return Detail::thread_tid; }
 
-    inline string &thread_name() { return Detail::this_thread_name; }
+    inline string& thread_name() { return Detail::this_thread_name; }
 
 }
 

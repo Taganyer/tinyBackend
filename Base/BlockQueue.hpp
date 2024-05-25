@@ -11,10 +11,9 @@
 
 namespace Base {
 
-    template<typename Type>
+    template <typename Type>
     class BlockQueue : NoCopy {
     public:
-
         explicit BlockQueue(uint32 max_size) : _limit(max_size) {};
 
         BlockQueue(BlockQueue<Type> &&other) = delete;
@@ -46,9 +45,8 @@ namespace Base {
         [[nodiscard]] bool stopping() const { return !_run; };
 
     private:
-
         struct Node {
-            Node *next = nullptr;
+            Node* next = nullptr;
             Type val;
 
             explicit Node(Type &&val) : val(std::move(val)) {};
@@ -74,8 +72,8 @@ namespace Base {
             return [this] { return !_run || _size < _limit; };
         };
 
-        Type *take_node() {
-            Node *t = head;
+        Type* take_node() {
+            Node* t = head;
             head = head->next;
             if (!head) tail = nullptr;
             Type val = std::move(t->val);
@@ -84,14 +82,14 @@ namespace Base {
             return val;
         };
 
-        void to_top(Node *target) {
+        void to_top(Node* target) {
             if (head) target->next = head;
             else tail = target;
             head = target;
             ++_size;
         };
 
-        void to_tail(Node *target) {
+        void to_tail(Node* target) {
             if (tail) tail->next = target;
             else head = target;
             tail = target;
@@ -104,13 +102,13 @@ namespace Base {
 
 namespace Base {
 
-    template<typename Type>
+    template <typename Type>
     BlockQueue<Type>::~BlockQueue() {
         stop();
         clear();
     }
 
-    template<typename Type>
+    template <typename Type>
     Type BlockQueue<Type>::take() {
         Lock l(_mutex);
         _put.notify_one();
@@ -118,7 +116,7 @@ namespace Base {
         return take_node();
     }
 
-    template<typename Type>
+    template <typename Type>
     bool BlockQueue<Type>::put(Type &&val) {
         if (!_run) return false;
         Lock l(_mutex);
@@ -129,7 +127,7 @@ namespace Base {
         return true;
     }
 
-    template<typename Type>
+    template <typename Type>
     bool BlockQueue<Type>::put(const Type &val) {
         if (!_run) return false;
         Lock l(_mutex);
@@ -140,7 +138,7 @@ namespace Base {
         return true;
     }
 
-    template<typename Type>
+    template <typename Type>
     bool BlockQueue<Type>::put_to_top(Type &&val) {
         if (!_run) return false;
         Lock l(_mutex);
@@ -151,7 +149,7 @@ namespace Base {
         return true;
     }
 
-    template<typename Type>
+    template <typename Type>
     bool BlockQueue<Type>::put_to_top(const Type &val) {
         if (!_run) return false;
         Lock l(_mutex);
@@ -162,11 +160,11 @@ namespace Base {
         return true;
     }
 
-    template<typename Type>
+    template <typename Type>
     void BlockQueue<Type>::clear() {
         Lock l(_mutex);
         while (head) {
-            Node *t = head;
+            Node* t = head;
             head = head->next;
             delete t;
         }
@@ -174,19 +172,19 @@ namespace Base {
         tail = nullptr;
     }
 
-    template<typename Type>
+    template <typename Type>
     void BlockQueue<Type>::start() {
         Lock l(_mutex);
         _run = true;
     }
 
-    template<typename Type>
+    template <typename Type>
     void BlockQueue<Type>::stop() {
         Lock l(_mutex);
         _run = false;
     }
 
-    template<typename Type>
+    template <typename Type>
     void BlockQueue<Type>::reset_limit(uint32 max_size) {
         Lock l(_mutex);
         _limit = max_size;

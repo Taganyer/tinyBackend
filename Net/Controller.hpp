@@ -8,13 +8,16 @@
 #ifdef NET_CONTROLLER_HPP
 
 #include "NetLink.hpp"
-#include "monitors/Event.hpp"
 
 namespace Net {
 
     class Reactor;
 
-    /// 安全的控制 NetLink,可自由复制，不会出现循环引用的问题。
+    /*
+     * 对相应的 NetLink 进行控制，所有操作均线程安全（不安全的操作进行了标记）。
+     * 可以在任何时候调用，不会影响到对应 Reactor 的正常运行。
+     * 可自由复制，并且不会出现循环引用的问题。
+    */
     class Controller {
     public:
         using Weak = std::weak_ptr<NetLink>;
@@ -31,31 +34,24 @@ namespace Net {
 
         using EventFun = std::function<void()>;
 
-        Controller(const Shared &ptr, Reactor *reactor);
+        Controller(const Shared &ptr, Reactor* reactor);
 
-        /// NOTE 在 EventLoop 的线程中并且发送缓冲区无数据时会直接发送，多线程不安全，失败返回 -1。
-        uint32 send(const void *target, uint32 size);
+        /// 在 EventLoop 的线程中并且发送缓冲区无数据时会直接发送，否则写入缓冲区中，失败返回 -1。
+        uint32 send(const void* target, uint32 size);
 
-        /// 以下四个函数不会立即生效并且线程不安全，合理使用。
-        bool reset_readCallback(ReadCallback event);
+        /// 以下四个函数事件将被发送到 EventLoop 中等待生效。
+        /// 后两个函数即使 NetLink 中的 FD 已经释放也会生效。
+        /// 当 NetLink 被注册到多个 Reactor 时线程不安全。
+        void reset_readCallback(ReadCallback event);
 
-        bool reset_writeCallback(WriteCallback event);
+        void reset_writeCallback(WriteCallback event);
 
-        bool reset_errorCallback(ErrorCallback event);
+        void reset_errorCallback(ErrorCallback event);
 
-        bool reset_closeCallback(CloseCallback event);
+        void reset_closeCallback(CloseCallback event);
 
-        bool set_read(bool turn_on);
-
-        bool set_write(bool turn_on);
-
-        bool wake_readCallback(bool after = true);
-
-        bool wake_writeCallback(bool after = true);
-
-        bool wake_error(error_mark mark, bool after = true);
-
-        bool wake_close(bool after = true);
+        /// 如果在 EventLoop 线程中就立即生效，否则事件将被发送到 EventLoop 中等待生效。
+        void update_event(Event event);
 
         void close_fd();
 
@@ -64,10 +60,9 @@ namespace Net {
         [[nodiscard]] bool in_loop_thread() const;
 
     private:
-
         Weak _weak;
 
-        Reactor *_reactor;
+        Reactor* _reactor;
 
     };
 

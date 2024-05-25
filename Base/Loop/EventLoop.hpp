@@ -14,7 +14,6 @@ namespace Base {
 
     class EventLoop {
     public:
-
         using Event = std::function<void()>;
 
         using EventsQueue = std::vector<Event>;
@@ -32,8 +31,10 @@ namespace Base {
 
         void put_event(Event event);
 
-        template<typename Fun>
+        template <typename Fun>
         void put_events(int32 size, Fun fun);
+
+        void weak_up();
 
         void assert_in_thread() const;
 
@@ -42,8 +43,9 @@ namespace Base {
         [[nodiscard]] bool looping() const { return _run; };
 
     private:
-
         volatile bool _run = false, _quit = false;
+
+        bool _weak = false;
 
         pthread_t _tid = Base::tid();
 
@@ -61,7 +63,7 @@ namespace Base {
 
     };
 
-    template<typename Fun>
+    template <typename Fun>
     void EventLoop::put_events(int32 size, Fun fun) {
         assert(size >= 0 && !_quit);
         Lock l(_mutex);

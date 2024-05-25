@@ -16,22 +16,21 @@ namespace Base {
 
     class ioFile : NoCopy {
     public:
-
         ioFile() = default;
 
-        ioFile(const char *path, bool append, bool binary);
+        ioFile(const char* path, bool append, bool binary);
 
         ioFile(ioFile &&other) noexcept;
 
         ~ioFile();
 
-        bool open(const char *path, bool append, bool binary);
+        bool open(const char* path, bool append, bool binary);
 
         bool close();
 
-        uint64 read(uint64 size, void *dest);
+        uint64 read(uint64 size, void* dest);
 
-        size_t write(const void *str, size_t len = -1);
+        size_t write(const void* str, size_t len = -1);
 
         bool seek_cur(int64 step) { return fseek(_file, step, SEEK_CUR) == 0; };
 
@@ -52,15 +51,14 @@ namespace Base {
             return fileno(_file);
         };
 
-        FILE *get_fp() { return _file; };
+        FILE* get_fp() { return _file; };
 
     protected:
-
-        FILE *_file = nullptr;
+        FILE* _file = nullptr;
 
     };
 
-    ioFile::ioFile(const char *path, bool append, bool binary) {
+    ioFile::ioFile(const char* path, bool append, bool binary) {
         open(path, append, binary);
     }
 
@@ -72,9 +70,9 @@ namespace Base {
         close();
     }
 
-    bool ioFile::open(const char *path, bool append, bool binary) {
+    bool ioFile::open(const char* path, bool append, bool binary) {
         close();
-        char mod[4]{'w', 'b', '+', '\0'};
+        char mod[4] { 'w', 'b', '+', '\0' };
         if (append) mod[0] = 'a';
         if (!binary) {
             mod[1] = '+';
@@ -90,11 +88,11 @@ namespace Base {
         return !_file;
     }
 
-    uint64 ioFile::read(uint64 size, void *dest) {
+    uint64 ioFile::read(uint64 size, void* dest) {
         return fread(dest, 1, size, _file);
     }
 
-    size_t ioFile::write(const void *str, size_t len) {
+    size_t ioFile::write(const void* str, size_t len) {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }

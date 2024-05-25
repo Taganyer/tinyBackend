@@ -12,10 +12,9 @@
 
 namespace Base {
 
-    template<typename Data>
+    template <typename Data>
     class List {
     public:
-
         List() = default;
 
         List(const List<Data> &other);
@@ -28,13 +27,13 @@ namespace Base {
 
         class Val;
 
-        Iter begin() { return {_head}; };
+        Iter begin() { return { _head }; };
 
-        Iter tail() { return {_tail}; };
+        Iter tail() { return { _tail }; };
 
-        Iter end() { return {nullptr}; };
+        Iter end() { return { nullptr }; };
 
-        template<typename ...Args>
+        template <typename...Args>
         Iter insert(Iter dest, Args &&...args);
 
         void move_to(Iter dest, Iter target);
@@ -48,47 +47,45 @@ namespace Base {
         [[nodiscard]] uint64 size() const { return _size; };
 
     private:
-
         struct Node;
 
-        Node *_head = nullptr;
-        Node *_tail = nullptr;
+        Node* _head = nullptr;
+        Node* _tail = nullptr;
 
         uint64 _size = 0;
 
     };
 
 
-    template<typename Data>
+    template <typename Data>
     struct List<Data>::Node {
 
-        template<typename ...Args>
-        Node(Args... args) : _data(std::forward<Args>(args)...) {};
+        template <typename...Args>
+        Node(Args...args) : _data(std::forward<Args>(args)...) {};
 
         Data _data;
 
-        Node *_prev = nullptr;
-        Node *_next = nullptr;
+        Node* _prev = nullptr;
+        Node* _next = nullptr;
 
     };
 
-    template<typename Data>
+    template <typename Data>
     class List<Data>::Iter {
     public:
-
         Iter() = default;
 
-        Iter(Node *node) : _ptr(node) {};
+        Iter(Node* node) : _ptr(node) {};
 
-        Data &operator*() { return _ptr->_data; };
+        Data& operator*() { return _ptr->_data; };
 
-        const Data &operator*() const { return _ptr->_data; };
+        const Data& operator*() const { return _ptr->_data; };
 
-        Data *operator->() { return &_ptr->_data; };
+        Data* operator->() { return &_ptr->_data; };
 
-        const Data &operator->() const { return _ptr->_data; };
+        const Data& operator->() const { return _ptr->_data; };
 
-        Iter &operator++() {
+        Iter& operator++() {
             _ptr = _ptr->_next;
             return *this;
         };
@@ -99,7 +96,7 @@ namespace Base {
             return temp;
         };
 
-        Iter &operator--() {
+        Iter& operator--() {
             _ptr = _ptr->_prev;
             return *this;
         };
@@ -115,41 +112,38 @@ namespace Base {
         bool operator!=(const Iter &other) const { return _ptr != other._ptr; };
 
     private:
-
-        List<Data>::Node *_ptr = nullptr;
+        List<Data>::Node* _ptr = nullptr;
 
         friend class List<Data>;
 
     };
 
-    template<typename Data>
+    template <typename Data>
     class List<Data>::Val {
     public:
-
         Val(const Val &) = delete;
 
-        Val(Val &&other) noexcept: _ptr(other._node) { other._node = nullptr; };
+        Val(Val &&other) noexcept: _ptr(other._ptr) { other._ptr = nullptr; };
 
         ~Val() { delete _ptr; };
 
-        explicit Val(Node *node) : _ptr(node) {};
+        explicit Val(Node* node) : _ptr(node) {};
 
-        Data &operator*() { return _ptr->_data; };
+        Data& operator*() { return _ptr->_data; };
 
-        const Data &operator*() const { return _ptr->_data; };
+        const Data& operator*() const { return _ptr->_data; };
 
-        Data *operator->() { return &_ptr->_data; };
+        Data* operator->() { return &_ptr->_data; };
 
-        const Data &operator->() const { return _ptr->_data; };
+        const Data& operator->() const { return _ptr->_data; };
 
     private:
-
-        Node *_ptr = nullptr;
+        Node* _ptr = nullptr;
 
     };
 
 
-    template<typename Data>
+    template <typename Data>
     List<Data>::List(const List<Data> &other) : _size(other.size()) {
         Iter iter = other.begin(), end = other.end();
         Node *temp, *last = nullptr;
@@ -167,32 +161,33 @@ namespace Base {
         _tail = last;
     }
 
-    template<typename Data>
+    template <typename Data>
     List<Data>::List(List<Data> &&other) noexcept :
-            _head(other._head), _tail(other._tail), _size(other._size) {
+        _head(other._head), _tail(other._tail), _size(other._size) {
         other._head = other._tail = nullptr;
         other._size = 0;
     }
 
-    template<typename Data>
+    template <typename Data>
     inline List<Data>::~List() {
         while (_head) {
-            Node *temp = _head;
+            Node* temp = _head;
             _head = _head->_next;
             delete temp;
         }
     }
 
-    template<typename Data>
-    template<typename... Args>
+    template <typename Data>
+    template <typename...Args>
     inline typename List<Data>::Iter
-    List<Data>::insert(List::Iter dest, Args &&... args) {
+    List<Data>::insert(List::Iter dest, Args &&...args) {
         auto ptr = new Node(std::forward<Args>(args)...);
         if (dest._ptr) {
             ptr->_prev = dest._ptr->_prev;
             ptr->_next = dest._ptr;
             dest._ptr->_prev = ptr;
             if (dest == _head) _head = ptr;
+            else ptr->_prev->_next = ptr;
         } else {
             ptr->_prev = _tail;
             if (_tail) _tail->_next = ptr;
@@ -203,7 +198,7 @@ namespace Base {
         return List::Iter(ptr);
     }
 
-    template<typename Data>
+    template <typename Data>
     inline void List<Data>::move_to(List::Iter dest, List::Iter target) {
         auto ptr = target._ptr;
         if (!ptr || ptr->_next == dest._ptr) return;
@@ -221,15 +216,17 @@ namespace Base {
             ptr->_next = dest._ptr;
             dest._ptr->_prev = ptr;
             if (dest == _head) _head = ptr;
+            else ptr->_prev->_next = ptr;
         } else {
             ptr->_prev = _tail;
+            ptr->_next = nullptr;
             if (_tail) _tail->_next = ptr;
             else _head = ptr;
             _tail = ptr;
         }
     }
 
-    template<typename Data>
+    template <typename Data>
     inline void List<Data>::erase(List::Iter target) {
         auto ptr = target._ptr;
         if (!ptr) return;
@@ -246,7 +243,7 @@ namespace Base {
         --_size;
     }
 
-    template<typename Data>
+    template <typename Data>
     inline void List<Data>::erase(List::Iter begin, List::Iter end) {
         if (!begin._ptr) return;
         if (begin._ptr->_prev) begin._ptr->_prev->_next = end._ptr;
@@ -259,7 +256,7 @@ namespace Base {
         }
     }
 
-    template<typename Data>
+    template <typename Data>
     typename List<Data>::Val List<Data>::release(List::Iter target) {
         auto ptr = target._ptr;
         if (!ptr) return List::Val(nullptr);

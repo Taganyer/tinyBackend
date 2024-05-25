@@ -39,10 +39,9 @@ namespace Base {
 
     class Condition;
 
-    template<typename Mutex>
+    template <typename Mutex>
     class Lock : Base::NoCopy {
     public:
-
         Lock(Mutex &lock) : _lock(lock) {
             _lock.lock();
         };
@@ -52,7 +51,6 @@ namespace Base {
         };
 
     private:
-
         Mutex &_lock;
 
         friend class Condition;
@@ -62,14 +60,13 @@ namespace Base {
 
     class Mutex : NoCopy {
     public:
-
         Mutex() {
             check(pthread_mutex_init(&_lock, nullptr))
         };
 
         Mutex(Mutex &&other) noexcept: _lock(other._lock),
-                                       owner_thread(other.owner_thread) {
-            other._lock = {0};
+            owner_thread(other.owner_thread) {
+            other._lock = { 0 };
             other.owner_thread = 0;
         };
 
@@ -107,7 +104,6 @@ namespace Base {
         };
 
     private:
-
         pthread_mutex_t _lock;
 
         pthread_t owner_thread = 0;
@@ -121,14 +117,13 @@ namespace Base {
 
     class SpinMutex : NoCopy {
     public:
-
         SpinMutex() {
             check(pthread_spin_init(&_lock, PTHREAD_PROCESS_PRIVATE))
         };
 
         SpinMutex(SpinMutex &&other) noexcept: _lock(other._lock),
-                                               owner_thread(other.owner_thread) {
-            other._lock = {0};
+            owner_thread(other.owner_thread) {
+            other._lock = { 0 };
             other.owner_thread = 0;
         };
 
@@ -166,7 +161,6 @@ namespace Base {
         };
 
     private:
-
         pthread_spinlock_t _lock;
 
         pthread_t owner_thread = 0;

@@ -40,7 +40,7 @@ namespace Base {
         [[nodiscard]] double to_us() const { return (double) nanoseconds / US_; };
 
         [[nodiscard]] timespec to_timespec() const {
-            struct timespec time{};
+            struct timespec time {};
             time.tv_sec = nanoseconds / SEC_;
             time.tv_nsec = nanoseconds % SEC_;
             return time;
@@ -49,11 +49,11 @@ namespace Base {
     };
 
     inline Time_difference operator+(const Time_difference &left, const Time_difference &right) {
-        return {left.nanoseconds + right.nanoseconds};
+        return { left.nanoseconds + right.nanoseconds };
     }
 
     inline Time_difference operator-(const Time_difference &left, const Time_difference &right) {
-        return {left.nanoseconds - right.nanoseconds};
+        return { left.nanoseconds - right.nanoseconds };
     }
 
     inline int64 operator ""ns(uint64 ns) {
@@ -84,16 +84,16 @@ namespace Base {
 
     void sleep(Time_difference time);
 
-    template<typename Fun, typename ...Args>
+    template <typename Fun, typename...Args>
     Time_difference chronograph(Fun &&fun, Args &&...args) {
-        struct timespec startTime{}, endTime{};
+        struct timespec startTime {}, endTime {};
         clock_gettime(CLOCK_REALTIME, &startTime);
         fun(std::forward<Args>(args)...);
         clock_gettime(CLOCK_REALTIME, &endTime);
         int64 ns = SEC_;
         ns *= (endTime.tv_sec - startTime.tv_sec);
         ns += (endTime.tv_nsec - startTime.tv_nsec);
-        return {ns};
+        return { ns };
     }
 
 }

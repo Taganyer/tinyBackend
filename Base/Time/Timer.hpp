@@ -12,7 +12,6 @@ namespace Base {
 
     class Timer {
     public:
-
         using Fun = std::function<void()>;
 
         Timer() = default;
@@ -42,7 +41,6 @@ namespace Base {
         [[nodiscard]] int32 get_fd() const { return fd; };
 
     private:
-
         Time_difference _time;
 
         Fun _fun;

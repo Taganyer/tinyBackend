@@ -9,7 +9,7 @@ using namespace Base;
 
 
 BufferPool::BufferPool(uint64 block_size, uint64 block_number) :
-        _buf(new char[block_size * block_number]), _block_size(block_size) {
+    _buf(new char[block_size * block_number]), _block_size(block_size) {
     if (!_buf) {
         G_FATAL << "BufferPool creat failed: " << errno;
         assert(_buf);
@@ -17,7 +17,7 @@ BufferPool::BufferPool(uint64 block_size, uint64 block_number) :
         G_TRACE << "BufferPool created, size: " << block_size * block_number;
     }
     _buffers.reserve(block_number);
-    char *ptr = _buf;
+    char* ptr = _buf;
     for (; block_number; ptr += block_size, --block_number)
         _buffers.push_back(ptr);
 }
@@ -36,7 +36,7 @@ BufferPool::Buffer BufferPool::get() {
     _condition.wait(l, [this] {
         return !_buffers.empty();
     });
-    void *ptr = _buffers.back();
+    void* ptr = _buffers.back();
     _buffers.pop_back();
     return _running.insert(_running.end(), ptr, _block_size);
 }

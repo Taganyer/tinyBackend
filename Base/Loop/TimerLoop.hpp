@@ -22,7 +22,6 @@ namespace Base {
 
     class TimerLoop : NoCopy {
     public:
-
         using Event = std::function<void()>;
 
         class EventID;
@@ -44,7 +43,6 @@ namespace Base {
         [[nodiscard]] bool looping() const { return _run; };
 
     private:
-
         using List = std::priority_queue<Node>;
 
         Mutex _mutex;
@@ -60,10 +58,8 @@ namespace Base {
         void invoke_event();
 
     public:
-
         class Node {
         public:
-
             using Pair = std::pair<Time_difference, Event>;
 
             using Ptr = std::shared_ptr<Pair>;
@@ -73,7 +69,6 @@ namespace Base {
             };
 
         private:
-
             Time_difference _now = Unix_to_now();
 
             Ptr _ptr;
@@ -92,7 +87,6 @@ namespace Base {
 
         class EventID {
         public:
-
             EventID(const EventID &) = default;
 
             ~EventID() = default;
@@ -107,15 +101,14 @@ namespace Base {
             [[nodiscard]] bool expired() const;
 
         private:
-
             using Ptr = std::weak_ptr<Node::Pair>;
 
-            TimerLoop *_loop;
+            TimerLoop* _loop;
 
             Ptr _ptr;
 
-            EventID(TimerLoop *loop, const Node::Ptr &ptr) :
-                    _loop(loop), _ptr(ptr) {};
+            EventID(TimerLoop* loop, const Node::Ptr &ptr) :
+                _loop(loop), _ptr(ptr) {};
 
             friend class TimerLoop;
 

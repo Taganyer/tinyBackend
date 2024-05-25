@@ -10,7 +10,7 @@
 
 namespace Base::Detail {
 
-    template<typename Result, typename Target_fun, typename ...Args>
+    template <typename Result, typename Target_fun, typename...Args>
     class AsyncFun {
     private:
         std::promise<Result> _promise;
@@ -19,7 +19,7 @@ namespace Base::Detail {
 
     public:
         AsyncFun(Target_fun &&fun, Args &&...args) :
-                fun(fun), args(std::tuple<Args...>(std::forward<Args>(args)...)) {};
+            fun(fun), args(std::tuple<Args...>(std::forward<Args>(args)...)) {};
 
         auto get_future() { return _promise.get_future(); };
 

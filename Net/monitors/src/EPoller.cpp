@@ -16,25 +16,21 @@ static_assert(EPOLLHUP == POLLHUP, "epoll uses same flag values as poll");
 
 Net::EPoller::EPoller() {
     if ((_epfd = ops::epoll_create()) < 0) {
-        error_ = {error_types::Epoll_create, errno};
+        error_ = { error_types::Epoll_create, errno };
         G_FATAL << "EPoller create failed in " << _tid;
     }
 }
 
 Net::EPoller::~EPoller() {
-    G_WARN << "Poller force close " << _fds.size();
-    for (auto fd: _fds) {
-        if (fd > 0)
-            operate(EPOLL_CTL_DEL, fd, 0);
-    }
-    _fds.clear();
-    if (ops::epoll_close(_epfd) < 0) {
+    if (_fds.size() > 0)
+        G_WARN << "EPoller force remove " << _fds.size();
+    if (ops::epoll_close(_epfd) < 0)
         G_FATAL << "EPoller " << _epfd << ' ' << ops::get_close_error(errno);
-    }
 }
 
-int Net::EPoller::get_aliveEvent(int timeoutMS, Net::Monitor::EventList &list) {
+int Net::EPoller::get_aliveEvent(int timeoutMS, EventList &list) {
     assert_in_right_thread("EPoller::poll ");
+
     int active = ops::epoll_wait(_epfd, activeEvents.data(),
                                  (int) activeEvents.capacity(), timeoutMS);
     if (active > 0) {
@@ -43,13 +39,14 @@ int Net::EPoller::get_aliveEvent(int timeoutMS, Net::Monitor::EventList &list) {
     } else if (active == 0) {
         G_INFO << "EPoller::poll " << _tid << " timeout " << timeoutMS << " ms";
     } else {
-        error_ = {error_types::Epoll_wait, errno};
+        error_ = { error_types::Epoll_wait, errno };
         G_FATAL << "EPoller::poll " << _tid << ' ' << ops::get_epoll_wait_error(errno);
     }
+
     return active;
 }
 
-bool Net::EPoller::add_fd(Net::Event event) {
+bool Net::EPoller::add_fd(Event event) {
     assert_in_right_thread("EPoller::add_fd ");
     if (_fds.find(event.fd) != _fds.end())
         return false;
@@ -60,7 +57,7 @@ bool Net::EPoller::add_fd(Net::Event event) {
     else
         _fds.insert(event.fd);
     activeEvents.emplace_back();
-    G_TRACE << "EPoller add " << event.fd;
+    G_INFO << "EPoller add " << event.fd;
     return true;
 }
 
@@ -71,21 +68,21 @@ void Net::EPoller::remove_fd(int fd) {
     operate(EPOLL_CTL_DEL, fd, 0);
     _fds.erase(iter);
     activeEvents.pop_back();
-    G_TRACE << "EPoller remove " << fd;
+    G_INFO << "EPoller remove fd " << fd;
 }
 
 void Net::EPoller::remove_all() {
     assert_in_right_thread("EPoller::remove_all ");
-    G_WARN << "Poller force close " << _fds.size();
-    for (auto fd: _fds) {
-        if (fd > 0)
-            operate(EPOLL_CTL_DEL, fd, 0);
+    if (_fds.size() > 0)
+        G_WARN << "EPoller force remove " << _fds.size() << " fds.";
+    for (auto fd : _fds) {
+        if (fd > 0) operate(EPOLL_CTL_DEL, fd, 0);
     }
     _fds.clear();
     activeEvents.clear();
 }
 
-void Net::EPoller::update_fd(Net::Event event) {
+void Net::EPoller::update_fd(Event event) {
     assert_in_right_thread("EPoller::update_channel ");
     auto iter = _fds.find(event.fd);
     if (iter == _fds.end()) {
@@ -106,12 +103,15 @@ void Net::EPoller::update_fd(Net::Event event) {
 void Net::EPoller::get_events(EventList &list, int size) {
     list.reserve(size + list.size());
     for (int i = 0; i < size; ++i)
-        list.push_back({activeEvents[i].data.fd, (int) activeEvents[i].events});
+        list.push_back({ activeEvents[i].data.fd, (int) activeEvents[i].events });
 }
 
 bool Net::EPoller::operate(int mod, int fd, int events) {
-    if (unlikely(ops::epoll_ctl(_epfd, mod, fd, events) < 0)) {
-        error_ = {error_types::Epoll_ctl, errno};
+    epoll_event event {};
+    event.events = events;
+    event.data.fd = fd;
+    if (unlikely(ops::epoll_ctl(_epfd, mod, fd, &event) < 0)) {
+        error_ = { error_types::Epoll_ctl, errno };
         if (mod == EPOLL_CTL_DEL) {
             G_ERROR << "EPoller DEL " << fd << ' ' << ops::get_epoll_ctl_error(errno);
         } else if (mod == EPOLL_CTL_ADD) {

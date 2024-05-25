@@ -106,7 +106,7 @@ void SendThread::get_need_flush(std::vector<SenderIter> &need_flush) {
 }
 
 void SendThread::flush_need(std::vector<SenderIter> &need_flush) {
-    for (auto iter: need_flush) {
+    for (auto iter : need_flush) {
         iter->_sender->force_flush();
         get_readyQueue();
         send();
@@ -127,7 +127,7 @@ void SendThread::flush_need(std::vector<SenderIter> &need_flush) {
 }
 
 void SendThread::send() {
-    for (auto [sender, buffer]: _invoking) {
+    for (auto [sender, buffer] : _invoking) {
         sender->_sender->send(buffer->data(), buffer->size());
         buffer->flush();
         Lock l(_mutex);
@@ -148,6 +148,6 @@ void SendThread::closing() {
         ++iter;
     }
     Lock l(_mutex);
-    for (auto [sender, buffer]: _ready)
+    for (auto [sender, buffer] : _ready)
         sender->_sender->send(buffer->data(), buffer->size());
 }

@@ -11,13 +11,11 @@ namespace Base {
 
     class NoCopy {
     public:
-
         NoCopy(const NoCopy &) = delete;
 
-        NoCopy &operator=(const NoCopy &) = delete;
+        NoCopy& operator=(const NoCopy &) = delete;
 
     protected:
-
         NoCopy() = default;
 
         ~NoCopy() = default;

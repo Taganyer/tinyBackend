@@ -18,13 +18,12 @@ namespace Base {
 
     class Log : private NoCopy {
     public:
-
         Log(SendThread &thread, std::string dictionary_path,
             LogRank rank, uint64 limit_size = FILE_LIMIT);
 
         ~Log();
 
-        void push(LogRank rank, const void *ptr, uint64 size);
+        void push(LogRank rank, const void* ptr, uint64 size);
 
         LogStream stream(LogRank rank);
 
@@ -33,27 +32,24 @@ namespace Base {
         [[nodiscard]] LogRank get_rank() const { return outputRank; };
 
     private:
-
         class LogSender : public Sender {
         public:
-
             Mutex IO_lock;
 
-            SendThread *_thread;
+            SendThread* _thread;
 
             SendThread::Data data;
 
-            LogSender(SendThread *thread, std::string dictionary_path, uint64 limit_size);
+            LogSender(SendThread* thread, std::string dictionary_path, uint64 limit_size);
 
         private:
-
             uint64 current_size = 0, limit_size;
 
             oFile _file;
 
             std::string _path;
 
-            void send(const void *buffer, uint64 size) override;
+            void send(const void* buffer, uint64 size) override;
 
             void force_flush() override;
 
@@ -73,14 +69,13 @@ namespace Base {
 
     class LogStream : NoCopy {
     public:
-
         LogStream(Log &log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
             _log->push(_rank, _message, _index);
         };
 
-        LogStream &operator<<(const std::string &val) {
+        LogStream& operator<<(const std::string &val) {
             if (_log->get_rank() > _rank) return *this;
             int temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
@@ -88,7 +83,7 @@ namespace Base {
             return *this;
         };
 
-        LogStream &operator<<(const std::string_view &val) {
+        LogStream& operator<<(const std::string_view &val) {
             if (_log->get_rank() > _rank) return *this;
             auto temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
@@ -123,8 +118,7 @@ namespace Base {
 #undef StreamOperator
 
     private:
-
-        Log *_log;
+        Log* _log;
 
         LogRank _rank;
 
@@ -206,7 +200,6 @@ extern Base::Log Global_Logger;
 
 class Empty {
 public:
-
 #define Empty_fun(type) Empty &operator<<(type) { \
         return *this;                             \
 };

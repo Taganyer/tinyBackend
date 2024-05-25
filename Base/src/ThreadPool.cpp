@@ -8,7 +8,7 @@ using namespace Base;
 
 
 ThreadPool::ThreadPool(uint32 thread_size, uint32 max_task_size) :
-        _max_tasks(max_task_size) {
+    _max_tasks(max_task_size) {
     create_threads(thread_size);
 }
 
@@ -38,7 +38,7 @@ void ThreadPool::start() {
 
 void ThreadPool::clear_task() {
     Lock l(lock);
-    for (const auto &fun: _list)
+    for (const auto &fun : _list)
         fun(true);
     _list.erase_after(_list.before_begin(), _list.end());
 }
@@ -49,12 +49,12 @@ void ThreadPool::shutdown() {
     if (_state.load() > STOP) return;
     _state.store(SHUTTING);
 
-    for (const auto &fun: _list)
+    for (const auto &fun : _list)
         fun(true);
     _list.erase_after(_list.before_begin(), _list.end());
 
     for (Size i = 0; i < _core_threads; ++i) {
-        _list.insert_after(_list.before_begin(), [](bool) {
+        _list.insert_after(_list.before_begin(), [] (bool) {
             return true;
         });
     }
@@ -104,7 +104,7 @@ void ThreadPool::create_threads(ThreadPool::Size size) {
 void ThreadPool::delete_threads(ThreadPool::Size size) {
     Lock l(lock);
     for (Size i = 0; i < size; ++i) {
-        _list.insert_after(_list.before_begin(), [](bool) {
+        _list.insert_after(_list.before_begin(), [] (bool) {
             return true;
         });
     }
