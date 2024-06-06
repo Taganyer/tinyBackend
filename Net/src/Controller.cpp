@@ -2,8 +2,8 @@
 // Created by taganyer on 3/24/24.
 //
 
-#include "../Reactor.hpp"
-#include "Net/Controller.hpp"
+#include "../Controller.hpp"
+#include "Net/Reactor.hpp"
 #include "Net/monitors/Monitor.hpp"
 #include "Net/functions/Interface.hpp"
 

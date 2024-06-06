@@ -29,22 +29,25 @@ namespace Net {
         [[nodiscard]] uint64 fd_size() const override { return _fds.size(); };
 
     private:
-        std::vector<Event> _fds;
+
+        EventList _fds;
 
         fd_set _read {}, _write {}, _error {};
 
         short read_size = 0;
         short write_size = 0;
         short error_size = 0;
+        short ndfs = 0;
 
         void init_fd_set();
 
         void fill_events(EventList &list);
 
+        EventList::iterator find_fd(int fd);
+
     };
 
 }
-
 
 #endif
 

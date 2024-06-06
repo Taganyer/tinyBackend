@@ -7,10 +7,11 @@
 
 #include <functional>
 #include "Time_difference.hpp"
+#include "Base/Detail/NoCopy.hpp"
 
 namespace Base {
 
-    class Timer {
+    class Timer : private NoCopy {
     public:
         using Fun = std::function<void()>;
 

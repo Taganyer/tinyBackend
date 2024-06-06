@@ -20,12 +20,11 @@ namespace Base {
 
     class TimeStamp {
     public:
-
-        static const char *Time_format;
+        static const char* Time_format;
 
         static const int32 Time_format_len;
 
-        static const char *Time_us_format;
+        static const char* Time_us_format;
 
         static const int32 Time_us_format_len;
 
@@ -45,18 +44,17 @@ namespace Base {
 
         std::string to_string(bool UTC = false, bool show_us = true);
 
-        void format(char *dest, bool UTC = false, bool show_us = true);
+        void format(char* dest, bool UTC = false, bool show_us = true);
 
         [[nodiscard]] Time get_time(bool UTC = false) const;
 
         [[nodiscard]] int64 us_since_epoch() const { return _us_SE; };
 
         [[nodiscard]] timespec to_timespec() const {
-            return {_us_SE / coefficient, _us_SE % coefficient};
+            return { _us_SE / coefficient, _us_SE % coefficient };
         };
 
     private:
-
         int64 _us_SE = 0;
 
         static int64 expand_tv(const timeval &tv) {
@@ -100,7 +98,7 @@ namespace Base {
 
     std::string to_string(const Time &time, bool show_us = true);
 
-    void format(char *dest, const Time &time, bool show_us = true);
+    void format(char* dest, const Time &time, bool show_us = true);
 
     Time get_time_now(bool UTC = false);
 

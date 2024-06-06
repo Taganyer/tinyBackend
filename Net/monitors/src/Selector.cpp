@@ -18,7 +18,7 @@ int Selector::get_aliveEvent(int timeoutMS, EventList &list) {
 
     init_fd_set();
     timeval timeout { timeoutMS / 1000, timeoutMS % 1000 };
-    int ret = ::select((int) _fds.size(),
+    int ret = ::select(ndfs + 1,
                        read_size > 0 ? &_read : nullptr,
                        write_size > 0 ? &_write : nullptr,
                        error_size > 0 ? &_error : nullptr,
@@ -39,8 +39,11 @@ int Selector::get_aliveEvent(int timeoutMS, EventList &list) {
 
 bool Selector::add_fd(Event event) {
     assert_in_right_thread("Selector::add_fd ");
-    if (fd_size() == FD_SETSIZE)
+    if (event.fd >= FD_SETSIZE || find_fd(event.fd) != _fds.end()) {
+        G_INFO << "Selector add " << event.fd << " failed.";
         return false;
+    }
+    ndfs = ndfs < event.fd ? event.fd : ndfs;
     _fds.push_back(event);
     if (event.canRead()) ++read_size;
     if (event.canWrite()) ++write_size;
@@ -51,11 +54,8 @@ bool Selector::add_fd(Event event) {
 
 void Selector::remove_fd(int fd) {
     assert_in_right_thread("Selector::remove_fd ");
-    auto iter = _fds.begin();
-    auto end = _fds.end();
-    while (iter != end && iter->fd != fd)
-        ++iter;
-    if (iter == end) return;
+    auto iter = find_fd(fd);
+    if (iter == _fds.end()) return;
     if (iter->canRead()) --read_size;
     if (iter->canWrite()) --write_size;
     if (iter->hasError()) --error_size;
@@ -74,11 +74,8 @@ void Selector::remove_all() {
 
 void Selector::update_fd(Event event) {
     assert_in_right_thread("Selector::update_fd ");
-    auto iter = _fds.begin();
-    auto end = _fds.end();
-    while (iter != end && iter->fd != event.fd)
-        ++iter;
-    if (iter == end) return;
+    auto iter = find_fd(event.fd);
+    if (iter == _fds.end()) return;
     if (iter->canRead()) --read_size;
     if (iter->canWrite()) --write_size;
     if (iter->hasError()) --error_size;
@@ -93,7 +90,7 @@ void Selector::init_fd_set() {
     FD_ZERO(&_read);
     FD_ZERO(&_write);
     FD_ZERO(&_error);
-    for (const auto event : _fds) {
+    for (const auto &event : _fds) {
         if (event.canRead())
             FD_SET(event.fd, &_read);
         if (event.canWrite())
@@ -114,4 +111,11 @@ void Selector::fill_events(EventList &list) {
             val.set_error();
         if (!val.is_NoEvent()) list.push_back(val);
     }
+}
+
+std::vector<Event>::iterator Selector::find_fd(int fd) {
+    auto iter = _fds.begin(), end = _fds.end();
+    while (iter != end && iter->fd != fd)
+        ++iter;
+    return iter;
 }
