@@ -3,10 +3,10 @@
 //
 
 #include "../Reactor.hpp"
-#include "Net/monitors/Selector.hpp"
-#include "Net/monitors/Poller.hpp"
-#include "Net/monitors/EPoller.hpp"
 #include "Base/Thread.hpp"
+#include "Net/monitors/EPoller.hpp"
+#include "Net/monitors/Poller.hpp"
+#include "Net/monitors/Selector.hpp"
 
 using namespace Net;
 
@@ -30,10 +30,13 @@ Reactor::Reactor(MOD mod, Time_difference link_timeout) :
 }
 
 Reactor::~Reactor() {
-    close();
-    while (_running);
-    delete _monitor;
-    G_TRACE << "Reactor close.";
+    if (running()) {
+        _loop->put_event([this] {
+            _loop->shutdown();
+        });
+    }
+    while (_running) Base::yield_this_thread();
+    G_TRACE << "Reactor has been destroyed.";
 }
 
 void Reactor::add_NetLink(NetLink::LinkPtr &netLink, Event event) {
@@ -56,38 +59,29 @@ void Reactor::add_NetLink(NetLink::LinkPtr &netLink, Event event) {
 
 void Reactor::start(int monitor_timeoutMS) {
     assert(!running() && _monitor);
+    G_TRACE << "Reactor start.";
     Thread thread([this, monitor_timeoutMS] {
-        EventLoop loop;
         std::vector<Event> active;
-
-        _loop = &loop;
+        _loop = new EventLoop();
         _monitor->set_tid(Base::tid());
         _running = true;
 
-        loop.set_distributor([this, monitor_timeoutMS, &active] {
+        _loop->set_distributor([this, monitor_timeoutMS, &active] {
             remove_timeouts();
             if (_queue.size() > 0) {
                 invoke(monitor_timeoutMS, active);
                 _loop->weak_up();
             }
         });
+        _loop->loop();
 
-        loop.loop();
-
-        _monitor->remove_all();
+        close_alive();
         _loop = nullptr;
         _running = false;
     });
-    thread.start();
-    while (!_running);
-}
 
-void Reactor::close() {
-    if (running()) {
-        _loop->put_event([this] {
-            _loop->shutdown();
-        });
-    }
+    thread.start();
+    while (!_running) Base::yield_this_thread();
 }
 
 void Reactor::remove_timeouts() {
@@ -143,4 +137,20 @@ void Reactor::invoke(int timeoutMS, std::vector<Event> &list) {
 
     list.clear();
 
+}
+
+void Reactor::close_alive() {
+    if (!_map.empty()) {
+        G_WARN << "Reactor force remove " << _map.size() << " NetLink.";
+        for (const auto &[fd, data] : _map) {
+            auto ptr = data.first.lock();
+            if (!ptr) continue;
+            Event event { fd, 0 };
+            ptr->handle_error({ error_types::UnexpectedShutdown, 0 }, &event);
+            if (event.hasHangUp()) ptr->handle_close();
+        }
+        _map.clear();
+    }
+    delete _monitor;
+    delete _loop;
 }

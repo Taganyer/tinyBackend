@@ -26,7 +26,7 @@ EventLoop::EventLoop() {
 EventLoop::~EventLoop() {
     assert_in_thread();
     shutdown();
-    G_TRACE << "EventLoop in " << thread_name() << " has been destroyed";
+    G_TRACE << "EventLoop in " << thread_name() << " has been destroyed.";
     this_thread_have_object = false;
 }
 

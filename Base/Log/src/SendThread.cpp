@@ -132,7 +132,7 @@ void SendThread::send() {
         buffer->flush();
         Lock l(_mutex);
         --sender->waiting_buffers;
-        if (_empty.size() >= _senders.size() * 3 / 2)
+        if (_empty.size() > _senders.size() * 3 / 2)
             _buffers.erase(buffer);
         else
             _empty.push_back(buffer);

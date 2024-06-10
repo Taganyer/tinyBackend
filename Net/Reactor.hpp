@@ -5,8 +5,6 @@
 #ifndef NET_RECTOR_HPP
 #define NET_RECTOR_HPP
 
-#ifdef NET_RECTOR_HPP
-
 #include <map>
 #include "NetLink.hpp"
 #include "Base/Loop/EventLoop.hpp"
@@ -37,8 +35,6 @@ namespace Net {
 
         void start(int monitor_timeoutMS);
 
-        void close();
-
         Base::EventLoop* get_loop() { return _loop; };
 
         Monitor* get_monitor() { return _monitor; };
@@ -68,12 +64,12 @@ namespace Net {
 
         void invoke(int timeoutMS, std::vector<Event> &list);
 
+        void close_alive();
+
         friend class Controller;
 
     };
 
 }
-
-#endif
 
 #endif //NET_RECTOR_HPP

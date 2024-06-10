@@ -29,7 +29,6 @@ namespace Net {
         [[nodiscard]] uint64 fd_size() const override { return _fds.size(); };
 
     private:
-
         EventList _fds;
 
         fd_set _read {}, _write {}, _error {};

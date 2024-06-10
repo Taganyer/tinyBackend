@@ -74,3 +74,7 @@ namespace Base::Detail {
         return stack;
     }
 }
+
+void Base::yield_this_thread() {
+    sched_yield();
+}

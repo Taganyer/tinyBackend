@@ -22,9 +22,10 @@ Acceptor::Acceptor(Socket &&socket) : _socket(std::move(socket)) {
 }
 
 Acceptor::~Acceptor() {
-    G_TRACE << "Acceptor " << _socket.fd() << " close.";
     if (_links.size() > 0)
         G_WARN << "Acceptor will force close " << _links.size() << " linkes.";
+    _links.clear();
+    G_TRACE << "Acceptor " << _socket.fd() << " close.";
 }
 
 Acceptor::Message Acceptor::accept_connection(bool NoDelay) {

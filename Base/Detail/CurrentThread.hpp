@@ -36,6 +36,8 @@ namespace Base {
 
     inline string& thread_name() { return Detail::this_thread_name; }
 
+    void yield_this_thread();
+
 }
 
 #endif
