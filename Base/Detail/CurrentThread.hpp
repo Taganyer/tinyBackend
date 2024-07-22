@@ -53,14 +53,14 @@ namespace Base {
         static void set_loacl_terminal_function(TerminalFun fun);
 
         /// 设置错误信息输出文件并把该文件设置为无缓冲模式，默认为 stderr，为 nullptr 不输出错误信息。
-        static void set_error_message_file(FILE *file);
+        static void set_error_message_file(FILE* file);
 
     private:
         static TerminalFun global_terminal_function;
 
         static thread_local TerminalFun local_terminal_function;
 
-        static FILE *error_message_file;
+        static FILE* error_message_file;
 
         static const pthread_t main_thread_id;
 
