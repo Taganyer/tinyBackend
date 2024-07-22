@@ -55,7 +55,8 @@ namespace Base {
 
         void put_buffer(Data &data);
 
-        /// 会阻塞直到强制刷新结束（刷新注册到线程中的所有 Sender 调用此函数前的所有内容）。
+        /// 会阻塞直到强制刷新结束（刷新注册到线程中的所有 Sender 调用此函数前的所有内容），
+        /// 之后无法进行发送并且无法恢复。
         void shutdown_thread();
 
         [[nodiscard]] bool closed() const { return shutdown; };
