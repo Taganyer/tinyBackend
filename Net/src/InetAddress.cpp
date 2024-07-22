@@ -21,7 +21,7 @@ InetAddress::InetAddress(bool IPv4, short port, const char* IP,
 }
 
 std::string InetAddress::toIp() const {
-    char buf[64];
+    char buf[INET6_ADDRSTRLEN];
     ops::toIp(buf, sizeof buf, ops::sockaddr_cast(addr_in_cast()));
     return buf;
 }

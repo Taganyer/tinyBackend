@@ -9,9 +9,9 @@
 namespace Base {
 
     Thread::Thread(Thread &&other) noexcept:
-        _started(other._started), _joined(other._joined),
-        name(std::move(other.name)),
-        fun(std::move(other.fun)), pthread(other.pthread) {
+            _started(other._started), _joined(other._joined),
+            name(std::move(other.name)),
+            fun(std::move(other.fun)), pthread(other.pthread) {
         other._started = other._joined = false;
         other.pthread = -1;
     }
@@ -37,26 +37,15 @@ namespace Base {
         _joined = true;
     }
 
-    void* Thread::invoke(void* self) {
-        auto* data = static_cast<Data *>(self);
+    void *Thread::invoke(void *self) {
+        auto *data = static_cast<Data *>(self);
         if (!data->_name.empty())
-            Detail::this_thread_name = std::move(data->_name);
+            CurrentThread::thread_name() = std::move(data->_name);
         try {
             data->_fun();
             delete data;
-        } catch (const Exception &ex) {
-            fprintf(stderr, "exception caught in Thread %s\n", thread_name().c_str());
-            fprintf(stderr, "reason: %s\n", ex.what());
-            fprintf(stderr, "stack trace: %s\n", ex.stackTrace());
-            delete data;
-            abort();
-        } catch (const std::exception &ex) {
-            fprintf(stderr, "exception caught in Thread %s\n", thread_name().c_str());
-            fprintf(stderr, "reason: %s\n", ex.what());
-            delete data;
-            abort();
         } catch (...) {
-            fprintf(stderr, "unknown exception caught in Thread %s\n", thread_name().c_str());
+            delete data;
             throw; // rethrow
         }
         return nullptr;

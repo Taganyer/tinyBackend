@@ -9,9 +9,11 @@
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
 #define SIZEOF_LONG_ 4
+#define IS_WIN
 
 #elif defined(__linux__) || defined(__gnu_linux__) || defined(__APPLE__) || defined(__MACH__)
 #define SIZEOF_LONG_ 8
+#define IS_LINUX
 
 #else
 #error "Unknown platform"

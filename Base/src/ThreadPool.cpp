@@ -75,7 +75,7 @@ void ThreadPool::create_threads(ThreadPool::Size size) {
     for (Size i = 0; i < size; ++i) {
         Thread thread([this] {
             _core_threads.fetch_add(1);
-            Detail::this_thread_name.append("(pool)");
+            CurrentThread::thread_name().append("(pool)");
             while (true) {
                 Fun fun;
                 {

@@ -14,13 +14,14 @@ namespace Net {
 
     class InetAddress {
     public:
+
         InetAddress() = default;
 
         InetAddress(const sockaddr_in &addr) : _addr(addr) {};
 
         InetAddress(const sockaddr_in6 &addr6) : _addr6(addr6) {};
 
-        InetAddress(bool IPv4, short port, const char* IP, unsigned short family = -1);
+        InetAddress(bool IPv4, short port, const char *IP, unsigned short family = -1);
 
         void set_port(bool IPv4, short port) {
             if (IPv4) {
@@ -38,7 +39,7 @@ namespace Net {
             }
         };
 
-        bool set_IP(bool Ipv4, const char* IP) {
+        bool set_IP(bool Ipv4, const char *IP) {
             if (Ipv4) {
                 return inet_pton(AF_INET, IP, &_addr.sin_addr) > 0;
             } else {
@@ -50,23 +51,40 @@ namespace Net {
             _addr6.sin6_scope_id = id;
         };
 
+        sockaddr_in *addr_in_cast() { return &_addr; };
+
+        sockaddr_in6 *addr6_in_cast() { return &_addr6; };
+
+        [[nodiscard]] bool is_IPv4() const {
+            return _addr.sin_family == AF_INET;
+        };
+
+        [[nodiscard]] bool is_IPv6() const {
+            return _addr6.sin6_family == AF_INET6;
+        };
+
+        [[nodiscard]] in_addr get_net_IP4() const{
+            return _addr.sin_addr;
+        };
+
+        [[nodiscard]] in6_addr get_net_IP6() const{
+            return _addr6.sin6_addr;
+        };
+
         [[nodiscard]] std::string toIp() const;
 
         [[nodiscard]] std::string toIpPort() const;
-
-        sockaddr_in* addr_in_cast() { return &_addr; };
-
-        sockaddr_in6* addr6_in_cast() { return &_addr6; };
 
         [[nodiscard]] sa_family_t family() const { return _addr.sin_family; };
 
         [[nodiscard]] unsigned short port() const { return _addr.sin_port; };
 
-        [[nodiscard]] const sockaddr_in* addr_in_cast() const { return &_addr; };
+        [[nodiscard]] const sockaddr_in *addr_in_cast() const { return &_addr; };
 
-        [[nodiscard]] const sockaddr_in6* addr6_in_cast() const { return &_addr6; };
+        [[nodiscard]] const sockaddr_in6 *addr6_in_cast() const { return &_addr6; };
 
     private:
+
         union {
             sockaddr_in _addr;
 

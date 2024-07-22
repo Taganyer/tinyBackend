@@ -23,7 +23,7 @@ uint32 Controller::send(const void* target, uint32 size) {
             return -1;
         } else {
             G_TRACE << "write " << writen << " byte in " << ptr->fd();
-            if (ptr->_writeFun) ptr->_writeFun(ptr->_output, *ptr->FD);
+            if (ptr->_writeFun) ptr->_writeFun(ptr->_output, *ptr->_socket);
         }
     }
     if (writen < size)

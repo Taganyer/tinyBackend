@@ -16,9 +16,9 @@ namespace {
 EventLoop::EventLoop() {
     if (!this_thread_have_object) {
         this_thread_have_object = true;
-        G_TRACE << "EventLoop create in " << thread_name();
+        G_TRACE << "EventLoop create in " << CurrentThread::thread_name();
     } else {
-        G_FATAL << "Define an EventLoop multiple times within " << thread_name();
+        G_FATAL << "Define an EventLoop multiple times within " << CurrentThread::thread_name();
         abort();
     }
 }
@@ -26,7 +26,7 @@ EventLoop::EventLoop() {
 EventLoop::~EventLoop() {
     assert_in_thread();
     shutdown();
-    G_TRACE << "EventLoop in " << thread_name() << " has been destroyed.";
+    G_TRACE << "EventLoop in " << CurrentThread::thread_name() << " has been destroyed.";
     this_thread_have_object = false;
 }
 
@@ -62,7 +62,7 @@ void EventLoop::put_event(Event event) {
     Lock l(_mutex);
     _waiting.push_back(std::move(event));
     G_TRACE << "put a event in EventLoop "
-        << _tid << " at " << thread_name();
+        << _tid << " at " << CurrentThread::thread_name();
     _condition.notify_one();
 }
 
@@ -74,7 +74,7 @@ void EventLoop::weak_up() {
 
 void EventLoop::assert_in_thread() const {
     if (!object_in_thread()) {
-        G_ERROR << "EventLoop " << _tid << " assert in " << tid();
+        G_ERROR << "EventLoop " << _tid << " assert in " << CurrentThread::tid();
     }
 }
 

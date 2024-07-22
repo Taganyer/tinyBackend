@@ -16,7 +16,7 @@ void TimerLoop::loop() {
     Lock l(_mutex);
     if (_run) return;
     _quit = false;
-    G_TRACE << "TimerLoop begin " << tid();
+    G_TRACE << "TimerLoop begin " << CurrentThread::tid();
     Thread thread(string("TimerLoop thread"), [this] {
         _run = true;
         while (!_quit)
@@ -32,7 +32,7 @@ void TimerLoop::shutdown() {
     _con.notify_all();
     _con.wait(l, [this] { return !_run; });
     _list = {};
-    G_TRACE << "TimerLoop end " << tid();
+    G_TRACE << "TimerLoop end " << CurrentThread::tid();
 }
 
 TimerLoop::EventID TimerLoop::put_event(TimerLoop::Event fun, Time_difference interval) {

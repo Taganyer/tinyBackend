@@ -61,6 +61,11 @@ void Selector::remove_fd(int fd) {
     if (iter->hasError()) --error_size;
     *iter = _fds.back();
     _fds.pop_back();
+    if (fd == ndfs) {
+        ndfs = 0;
+        for (auto [f, _] : _fds)
+            if (f > ndfs) ndfs = f;
+    }
     G_INFO << "Selector remove fd " << fd;
 }
 
@@ -69,7 +74,7 @@ void Selector::remove_all() {
     if (_fds.size() > 0)
         G_WARN << "Selector force remove " << _fds.size() << " fds.";
     _fds.clear();
-    read_size = write_size = error_size = 0;
+    read_size = write_size = error_size = ndfs = 0;
 }
 
 void Selector::update_fd(Event event) {

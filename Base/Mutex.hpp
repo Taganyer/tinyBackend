@@ -8,7 +8,7 @@
 #ifdef BASE_MUTEX_HPP
 
 #include <cassert>
-#include "Detail/NoCopy.hpp"
+#include "Detail/config.hpp"
 #include "Detail/CurrentThread.hpp"
 
 
@@ -80,12 +80,12 @@ namespace Base {
             if (unlikely(is_owner()))
                 __assert_fail("Has been locked", __FILE__, __LINE__, __func__);
             check(pthread_mutex_lock(&_lock))
-            owner_thread = tid();
+            owner_thread = CurrentThread::tid();
         };
 
         bool try_lock() {
             int flag = pthread_mutex_trylock(&_lock);
-            if (flag == 0) owner_thread = tid();
+            if (flag == 0) owner_thread = CurrentThread::tid();
             return flag == 0;
         };
 
@@ -96,7 +96,7 @@ namespace Base {
         };
 
         [[nodiscard]] bool is_owner() const {
-            return tid() == owner_thread;
+            return CurrentThread::tid() == owner_thread;
         };
 
         [[nodiscard]] pthread_t owner() const {
@@ -137,12 +137,12 @@ namespace Base {
             if (unlikely(is_owner()))
                 __assert_fail("Has been locked", __FILE__, __LINE__, __func__);
             check(pthread_spin_lock(&_lock))
-            owner_thread = tid();
+            owner_thread = CurrentThread::tid();
         };
 
         bool try_lock() {
             int flag = pthread_spin_trylock(&_lock);
-            if (flag == 0) owner_thread = tid();
+            if (flag == 0) owner_thread = CurrentThread::tid();
             return flag == 0;
         };
 
@@ -153,7 +153,7 @@ namespace Base {
         };
 
         [[nodiscard]] bool is_owner() const {
-            return tid() == owner_thread;
+            return CurrentThread::tid() == owner_thread;
         };
 
         [[nodiscard]] pthread_t owner() const {

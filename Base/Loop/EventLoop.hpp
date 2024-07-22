@@ -38,7 +38,7 @@ namespace Base {
 
         void assert_in_thread() const;
 
-        [[nodiscard]] bool object_in_thread() const { return Base::tid() == _tid; };
+        [[nodiscard]] bool object_in_thread() const { return CurrentThread::tid() == _tid; };
 
         [[nodiscard]] bool looping() const { return _run; };
 
@@ -47,7 +47,7 @@ namespace Base {
 
         bool _weak = false;
 
-        pthread_t _tid = Base::tid();
+        pthread_t _tid = CurrentThread::tid();
 
         Event _distributor;
 
@@ -72,7 +72,7 @@ namespace Base {
             _waiting.push_back(fun());
         }
         G_TRACE << "put " << size << " events in EventLoop "
-                << thread_name();
+                << CurrentThread::thread_name();
         _condition.notify_one();
     }
 

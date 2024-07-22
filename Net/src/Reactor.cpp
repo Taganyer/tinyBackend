@@ -35,7 +35,7 @@ Reactor::~Reactor() {
             _loop->shutdown();
         });
     }
-    while (_running) Base::yield_this_thread();
+    while (_running) CurrentThread::yield_this_thread();
     G_TRACE << "Reactor has been destroyed.";
 }
 
@@ -63,7 +63,7 @@ void Reactor::start(int monitor_timeoutMS) {
     Thread thread([this, monitor_timeoutMS] {
         std::vector<Event> active;
         _loop = new EventLoop();
-        _monitor->set_tid(Base::tid());
+        _monitor->set_tid(CurrentThread::tid());
         _running = true;
 
         _loop->set_distributor([this, monitor_timeoutMS, &active] {
@@ -81,7 +81,7 @@ void Reactor::start(int monitor_timeoutMS) {
     });
 
     thread.start();
-    while (!_running) Base::yield_this_thread();
+    while (!_running) CurrentThread::yield_this_thread();
 }
 
 void Reactor::remove_timeouts() {

@@ -3,6 +3,7 @@
 //
 
 #include "../Date.hpp"
+#include <bits/types/struct_tm.h>
 
 namespace Base {
 

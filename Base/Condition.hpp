@@ -39,7 +39,7 @@ namespace Base {
         void wait(Lock<Mutex> &lock) {
             lock._lock.owner_thread = 0;
             check(pthread_cond_wait(&_cond, &lock._lock._lock))
-            lock._lock.owner_thread = tid();
+            lock._lock.owner_thread = CurrentThread::tid();
         };
 
         template <typename Mutex, typename Fun>
@@ -76,7 +76,7 @@ namespace Base {
         bool wait_until(Lock<Mutex> &lock, const timespec &endTime) {
             lock._lock.owner_thread = 0;
             int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &endTime);
-            lock._lock.owner_thread = tid();
+            lock._lock.owner_thread = CurrentThread::tid();
             return t == 0;
         }
 

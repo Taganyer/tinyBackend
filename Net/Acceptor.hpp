@@ -8,6 +8,7 @@
 #ifdef NET_ACCEPTOR_HPP
 
 #include <map>
+#include <memory>
 
 #include "Socket.hpp"
 #include "NetLink.hpp"
@@ -17,18 +18,28 @@ namespace Net {
 
     struct error_mark;
 
-    class Acceptor : private Base::NoCopy {
+    class NetLink;
+
+    class Acceptor : public std::enable_shared_from_this<Acceptor>, private Base::NoCopy {
     public:
 
         static int ListenMax;
 
         using Message = std::pair<NetLink::LinkPtr, InetAddress>;
 
-        explicit Acceptor(Socket &&socket);
+        using AcceptorPtr = std::shared_ptr<Acceptor>;
+
+        using WeakPtr = std::weak_ptr<Acceptor>;
+
+        static AcceptorPtr create_AcceptorPtr(Socket &&socket);
 
         ~Acceptor();
 
         Message accept_connection(bool NoDelay);
+
+        bool add_LinkPtr(NetLink::LinkPtr link_ptr);
+
+        NetLink::LinkPtr get_LinkPtr(int fd);
 
         void remove_Link(int fd);
 
@@ -41,6 +52,8 @@ namespace Net {
         Base::Mutex _mutex;
 
         Links _links;
+
+        explicit Acceptor(Socket &&socket);
 
     };
 
