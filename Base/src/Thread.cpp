@@ -37,7 +37,7 @@ namespace Base {
         _joined = true;
     }
 
-    void *Thread::invoke(void* self) {
+    void* Thread::invoke(void* self) {
         auto* data = static_cast<Data *>(self);
         if (!data->_name.empty())
             CurrentThread::thread_name() = std::move(data->_name);
