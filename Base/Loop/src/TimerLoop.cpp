@@ -4,7 +4,7 @@
 
 #include "../TimerLoop.hpp"
 #include "Base/Thread.hpp"
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 
 using namespace Base;
 

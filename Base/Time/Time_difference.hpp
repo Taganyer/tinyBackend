@@ -56,27 +56,27 @@ namespace Base {
         return { left.nanoseconds - right.nanoseconds };
     }
 
-    inline int64 operator ""ns(uint64 ns) {
+    inline int64 operator ""_ns(uint64 ns) {
         return (int64) ns;
     }
 
-    inline int64 operator ""us(uint64 us) {
+    inline int64 operator ""_us(uint64 us) {
         return (int64) us * US_;
     }
 
-    inline int64 operator ""ms(uint64 ms) {
+    inline int64 operator ""_ms(uint64 ms) {
         return (int64) ms * MS_;
     }
 
-    inline int64 operator ""s(uint64 sec) {
+    inline int64 operator ""_s(uint64 sec) {
         return (int64) sec * SEC_;
     }
 
-    inline int64 operator ""min(uint64 min) {
+    inline int64 operator ""_min(uint64 min) {
         return (int64) min * MIN_;
     }
 
-    inline int64 operator ""h(uint64 hour) {
+    inline int64 operator ""_h(uint64 hour) {
         return (int64) hour * HOUR_;
     }
 
@@ -86,7 +86,7 @@ namespace Base {
 
     template <typename Fun, typename...Args>
     Time_difference chronograph(Fun &&fun, Args &&...args) {
-        struct timespec startTime {}, endTime {};
+        timespec startTime {}, endTime {};
         clock_gettime(CLOCK_REALTIME, &startTime);
         fun(std::forward<Args>(args)...);
         clock_gettime(CLOCK_REALTIME, &endTime);

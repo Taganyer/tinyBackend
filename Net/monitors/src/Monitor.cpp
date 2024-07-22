@@ -3,7 +3,7 @@
 //
 
 #include "../Monitor.hpp"
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 
 using namespace Net;
 using namespace Base;

@@ -4,7 +4,7 @@
 
 #include "../Selector.hpp"
 #include "Net/error/errors.hpp"
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 
 using namespace Net;
 

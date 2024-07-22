@@ -2,7 +2,7 @@
 // Created by taganyer on 3/12/24.
 //
 
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 #include "Net/error/errors.hpp"
 #include "../FileDescriptor.hpp"
 #include "Net/functions/Interface.hpp"

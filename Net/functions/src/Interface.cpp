@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include "../Interface.hpp"
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 
 using namespace Net;
 

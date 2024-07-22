@@ -8,7 +8,7 @@
 #ifdef BASE_EVENTLOOP_HPP
 
 #include "Base/Condition.hpp"
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 
 namespace Base {
 

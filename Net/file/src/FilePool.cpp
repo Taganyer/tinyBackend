@@ -4,7 +4,7 @@
 
 #include "../FilePool.hpp"
 #include "Base/Thread.hpp"
-#include "Base/Log/Log.hpp"
+#include "Base/Log/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
 
 using namespace Base;

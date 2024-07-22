@@ -7,7 +7,7 @@
 
 using namespace Base;
 
-const Time_difference SendThread::FLUSH_TIME = 1s;
+const Time_difference SendThread::FLUSH_TIME = 1_s;
 
 SendThread::SendThread() {
     Thread thread(string("SendThread"), [this] {
@@ -31,10 +31,7 @@ SendThread::SendThread() {
 }
 
 SendThread::~SendThread() {
-    Lock l(_mutex);
-    shutdown = true;
-    _condition.notify_one();
-    _condition.wait(l, [this] { return !running; });
+    shutdown_thread();
 }
 
 void SendThread::add_sender(const Sender::SenderPtr &sender, Data &data) {
@@ -56,6 +53,7 @@ void SendThread::remove_sender(Data &data) {
 }
 
 void SendThread::put_buffer(SendThread::Data &data) {
+    if (data.buffer == _buffers.end()) return;
     Lock l(_mutex);
     _ready.push_back(data);
     data.sender->need_flush = false;
@@ -64,7 +62,15 @@ void SendThread::put_buffer(SendThread::Data &data) {
     _condition.notify_one();
 }
 
+void SendThread::shutdown_thread() {
+    Lock l(_mutex);
+    shutdown = true;
+    _condition.notify_one();
+    _condition.wait(l, [this] { return !running; });
+}
+
 SendThread::BufferPtr SendThread::get_empty() {
+    if (shutdown) return _buffers.end();
     if (_empty.empty()) {
         _buffers.insert(_buffers.end());
         return _buffers.tail();

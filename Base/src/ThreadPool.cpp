@@ -3,6 +3,7 @@
 //
 
 #include "../ThreadPool.hpp"
+#include "Base/Thread.hpp"
 
 using namespace Base;
 

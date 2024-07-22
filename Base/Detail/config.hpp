@@ -5,8 +5,6 @@
 #ifndef BASE_CONFIG_HPP
 #define BASE_CONFIG_HPP
 
-#ifdef BASE_CONFIG_HPP
-
 #if defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
 #define SIZEOF_LONG_ 4
 #define IS_WIN
@@ -61,7 +59,7 @@ constexpr unsigned long MAX_ULONG = -1;
 #elif SIZEOF_LONG_ == 8
 constexpr long MAX_LONG = 9223372036854775807;
 
-constexpr long MIN_LONG = static_cast<const long>(-9223372036854775808);
+constexpr long MIN_LONG = -9223372036854775807L - 1;
 
 constexpr unsigned long MAX_ULONG = static_cast<const unsigned long>(-1);
 
@@ -71,7 +69,7 @@ constexpr unsigned long MAX_ULONG = static_cast<const unsigned long>(-1);
 
 constexpr long long MAX_LLONG = 9223372036854775807;
 
-constexpr long long MIN_LLONG = static_cast<const long long int>(-9223372036854775808);
+constexpr long long MIN_LLONG = -9223372036854775807LL - 1;
 
 constexpr unsigned long long MAX_ULLONG = static_cast<const unsigned long long int>(-1);
 
@@ -92,8 +90,6 @@ constexpr double MIN_DOUBLE = -1.7976931348623157e+308;
 
 #define likely(x)      (x)
 #define unlikely(x)    (x)
-
-#endif
 
 #endif
 

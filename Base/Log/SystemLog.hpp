@@ -2,13 +2,14 @@
 // Created by taganyer on 23-12-27.
 //
 
-#ifndef BASE_LOG_HPP
-#define BASE_LOG_HPP
+#ifndef BASE_SYSTEMLOG_HPP
+#define BASE_SYSTEMLOG_HPP
 
-#ifdef BASE_LOG_HPP
+#ifdef BASE_SYSTEMLOG_HPP
 
 #include "LogRank.hpp"
 #include "SendThread.hpp"
+
 
 namespace Base {
 
@@ -16,12 +17,12 @@ namespace Base {
 
     constexpr uint64 FILE_LIMIT = 2 << 30;
 
-    class Log : private NoCopy {
+    class SystemLog : private NoCopy {
     public:
-        Log(SendThread &thread, std::string dictionary_path,
-            LogRank rank, uint64 limit_size = FILE_LIMIT);
+        SystemLog(SendThread &thread, std::string dictionary_path,
+                  LogRank rank, uint64 limit_size = FILE_LIMIT);
 
-        ~Log();
+        ~SystemLog();
 
         void push(LogRank rank, const void* ptr, uint64 size);
 
@@ -69,7 +70,7 @@ namespace Base {
 
     class LogStream : NoCopy {
     public:
-        LogStream(Log &log, LogRank rank) : _log(&log), _rank(rank) {};
+        LogStream(SystemLog &log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
             _log->push(_rank, _message, _index);
@@ -118,7 +119,7 @@ namespace Base {
 #undef StreamOperator
 
     private:
-        Log* _log;
+        SystemLog* _log;
 
         LogRank _rank;
 
@@ -151,14 +152,14 @@ namespace Base {
 
 
 /// 解除注释开启全局 SendThread 对象
-//#define GLOBAL_SENDTHREAD
+// #define GLOBAL_SENDTHREAD
 
 #ifdef GLOBAL_SENDTHREAD
 
 extern Base::SendThread Global_LogThread;
 
 /// 解除注释开启全局日志
-//#define GLOBAL_LOG
+#define GLOBAL_LOG
 
 #ifdef GLOBAL_LOG
 
@@ -169,7 +170,7 @@ constexpr char GLOBAL_LOG_PATH[] = PROJECT_GLOBAL_LOG_PATH;
 
 static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
 
-extern Base::Log Global_Logger;
+extern Base::SystemLog Global_Logger;
 
 #endif
 

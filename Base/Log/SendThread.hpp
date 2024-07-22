@@ -20,7 +20,7 @@ namespace Base {
     private:
         class SenderData {
         public:
-            SenderData(const Sender::SenderPtr sender) : _sender(sender) {};
+            SenderData(Sender::SenderPtr sender) : _sender(std::move(sender)) {};
 
         private:
             Sender::SenderPtr _sender;
@@ -54,6 +54,11 @@ namespace Base {
         void remove_sender(Data &data);
 
         void put_buffer(Data &data);
+
+        /// 会阻塞直到强制刷新结束（刷新注册到线程中的所有 Sender 调用此函数前的所有内容）。
+        void shutdown_thread();
+
+        [[nodiscard]] bool closed() const { return shutdown; };
 
     private:
         volatile bool shutdown = false;
@@ -93,8 +98,13 @@ namespace Base {
 
     public:
         struct Data {
+        private:
             SenderIter sender;
+
+        public:
             BufferPtr buffer;
+
+            friend class SendThread;
         };
 
     };

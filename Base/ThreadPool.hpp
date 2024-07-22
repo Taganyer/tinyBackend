@@ -7,7 +7,6 @@
 
 #ifdef BASE_THREADPOOL_HPP
 
-#include "Thread.hpp"
 #include "Condition.hpp"
 #include "Detail/AsyncFun.hpp"
 #include "Container/SingleList.hpp"

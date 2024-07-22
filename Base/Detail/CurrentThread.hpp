@@ -11,13 +11,12 @@
 #include <exception>
 #include <pthread.h>
 #include <functional>
-#include "NoCopy.hpp"
 
 namespace Base {
 
     using std::string;
 
-    class CurrentThread : private NoCopy {
+    class CurrentThread {
     public:
         /// 判断当前线程是否为主线程。
         static bool is_main_thread() { return main_thread_id == thread_tid; };
@@ -53,14 +52,18 @@ namespace Base {
         static void set_loacl_terminal_function(TerminalFun fun);
 
         /// 设置错误信息输出文件并把该文件设置为无缓冲模式，默认为 stderr，为 nullptr 不输出错误信息。
-        static void set_error_message_file(FILE* file);
+        static void set_error_message_file(FILE *file);
+
+        CurrentThread(const CurrentThread &) = delete;
+
+        CurrentThread &operator=(const CurrentThread &) = delete;
 
     private:
         static TerminalFun global_terminal_function;
 
         static thread_local TerminalFun local_terminal_function;
 
-        static FILE* error_message_file;
+        static FILE *error_message_file;
 
         static const pthread_t main_thread_id;
 

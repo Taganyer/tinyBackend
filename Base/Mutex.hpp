@@ -9,6 +9,7 @@
 
 #include <cassert>
 #include "Detail/config.hpp"
+#include "Detail/NoCopy.hpp"
 #include "Detail/CurrentThread.hpp"
 
 
@@ -40,7 +41,7 @@ namespace Base {
     class Condition;
 
     template <typename Mutex>
-    class Lock : Base::NoCopy {
+    class Lock : NoCopy {
     public:
         Lock(Mutex &lock) : _lock(lock) {
             _lock.lock();
