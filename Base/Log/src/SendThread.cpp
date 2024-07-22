@@ -35,6 +35,7 @@ SendThread::~SendThread() {
 }
 
 void SendThread::add_sender(const Sender::SenderPtr &sender, Data &data) {
+    if (shutdown) return;
     Lock l(_mutex);
     _senders.insert(_senders.end(), sender);
     data.sender = _senders.tail();
@@ -43,6 +44,7 @@ void SendThread::add_sender(const Sender::SenderPtr &sender, Data &data) {
 }
 
 void SendThread::remove_sender(Data &data) {
+    if (shutdown) return;
     Lock l(_mutex);
     _ready.push_back(data);
     data.sender->shutdown = true;
@@ -67,6 +69,11 @@ void SendThread::shutdown_thread() {
     shutdown = true;
     _condition.notify_one();
     _condition.wait(l, [this] { return !running; });
+    _senders.erase(_senders.begin(), _senders.end());
+    _buffers.erase(_buffers.begin(), _buffers.end());
+    _empty = {};
+    _ready = {};
+    _invoking = {};
 }
 
 SendThread::BufferPtr SendThread::get_empty() {
