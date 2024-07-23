@@ -4,8 +4,11 @@
 
 #include "../SendThread.hpp"
 #include "Base/Thread.hpp"
+#include "Base/Time/Time_difference.hpp"
 
 using namespace Base;
+
+using namespace LogSystem;
 
 const Time_difference SendThread::FLUSH_TIME = 1_s;
 
@@ -100,7 +103,7 @@ void SendThread::wait_if_no_sender() {
     });
 }
 
-bool SendThread::waiting(Time_difference endTime) {
+bool SendThread::waiting(Base::Time_difference endTime) {
     Lock l(_mutex);
     bool waiting_again = _condition.wait_until(l, endTime.to_timespec());
     assert(_invoking.empty());

@@ -3,6 +3,9 @@
 //
 
 #include "../EventLoop.hpp"
+#include "LogSystem/SystemLog.hpp"
+
+using namespace Net;
 
 using namespace Base;
 

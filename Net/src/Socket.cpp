@@ -4,9 +4,9 @@
 
 #include <netinet/tcp.h>
 #include "../Socket.hpp"
-#include "Base/Log/SystemLog.hpp"
 #include "Net/InetAddress.hpp"
 #include "Net/error/errors.hpp"
+#include "LogSystem/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
 
 using namespace Net;

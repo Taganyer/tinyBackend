@@ -18,8 +18,6 @@ namespace Net {
 
     struct error_mark;
 
-    class NetLink;
-
     class Acceptor : public std::enable_shared_from_this<Acceptor>, private Base::NoCopy {
     public:
 

@@ -629,12 +629,6 @@ namespace Net::ops {
         return ret;
     }
 
-    const char* get_socket_setOpt_error(int error) {
-        const char* ret;
-
-        return ret;
-    }
-
     const char* get_socket_opt_error(int error) {
         const char* ret;
         switch (error) {

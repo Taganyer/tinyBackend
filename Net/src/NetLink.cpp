@@ -5,14 +5,11 @@
 #include "../NetLink.hpp"
 #include "Net/Acceptor.hpp"
 #include "Net/error/errors.hpp"
+#include "LogSystem/SystemLog.hpp"
 #include "Net/monitors/Monitor.hpp"
 #include "Net/functions/Interface.hpp"
-#include "Base/Loop/EventLoop.hpp"
 
 using namespace Net;
-
-using namespace Base;
-
 
 void NetLink::handle_read(Event* event) {
     if (!_socket->valid()) {

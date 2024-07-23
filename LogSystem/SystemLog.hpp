@@ -2,29 +2,30 @@
 // Created by taganyer on 23-12-27.
 //
 
-#ifndef BASE_SYSTEMLOG_HPP
-#define BASE_SYSTEMLOG_HPP
+#ifndef LOGSYSTEM_SYSTEMLOG_HPP
+#define LOGSYSTEM_SYSTEMLOG_HPP
 
-#ifdef BASE_SYSTEMLOG_HPP
+#ifdef LOGSYSTEM_SYSTEMLOG_HPP
 
 #include "LogRank.hpp"
-#include "SendThread.hpp"
+#include "Send/SendThread.hpp"
 
 
-namespace Base {
+namespace LogSystem {
 
     class LogStream;
 
     constexpr uint64 FILE_LIMIT = 2 << 30;
 
-    class SystemLog : private NoCopy {
+    class SystemLog : private Base::NoCopy {
     public:
+
         SystemLog(SendThread &thread, std::string dictionary_path,
-                  LogRank rank, uint64 limit_size = FILE_LIMIT);
+            LogRank rank, uint64 limit_size = FILE_LIMIT);
 
         ~SystemLog();
 
-        void push(LogRank rank, const void* ptr, uint64 size);
+        void push(LogRank rank, const void *ptr, uint64 size);
 
         LogStream stream(LogRank rank);
 
@@ -33,24 +34,27 @@ namespace Base {
         [[nodiscard]] LogRank get_rank() const { return outputRank; };
 
     private:
+
         class LogSender : public Sender {
         public:
-            Mutex IO_lock;
 
-            SendThread* _thread;
+            Base::Mutex IO_lock;
+
+            SendThread *_thread;
 
             SendThread::Data data;
 
-            LogSender(SendThread* thread, std::string dictionary_path, uint64 limit_size);
+            LogSender(SendThread *thread, std::string dictionary_path, uint64 limit_size);
 
         private:
+
             uint64 current_size = 0, limit_size;
 
-            oFile _file;
+            Base::oFile _file;
 
             std::string _path;
 
-            void send(const void* buffer, uint64 size) override;
+            void send(const void *buffer, uint64 size) override;
 
             void force_flush() override;
 
@@ -68,15 +72,16 @@ namespace Base {
     };
 
 
-    class LogStream : NoCopy {
+    class LogStream : private Base::NoCopy {
     public:
+
         LogStream(SystemLog &log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
             _log->push(_rank, _message, _index);
         };
 
-        LogStream& operator<<(const std::string &val) {
+        LogStream &operator<<(const std::string &val) {
             if (_log->get_rank() > _rank) return *this;
             int temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
@@ -84,7 +89,7 @@ namespace Base {
             return *this;
         };
 
-        LogStream& operator<<(const std::string_view &val) {
+        LogStream &operator<<(const std::string_view &val) {
             if (_log->get_rank() > _rank) return *this;
             auto temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
@@ -119,7 +124,8 @@ namespace Base {
 #undef StreamOperator
 
     private:
-        SystemLog* _log;
+
+        SystemLog *_log;
 
         LogRank _rank;
 
@@ -152,25 +158,25 @@ namespace Base {
 
 
 /// 解除注释开启全局 SendThread 对象
-// #define GLOBAL_SENDTHREAD
+#define GLOBAL_SENDTHREAD
 
 #ifdef GLOBAL_SENDTHREAD
 
-extern Base::SendThread Global_LogThread;
+extern LogSystem::SendThread Global_LogThread;
 
 /// 解除注释开启全局日志
 #define GLOBAL_LOG
 
 #ifdef GLOBAL_LOG
 
-#include "CMake_config.h"
+#include "../CMake_config.h"
 
 /// 设置全局日志文件夹路径
 constexpr char GLOBAL_LOG_PATH[] = PROJECT_GLOBAL_LOG_PATH;
 
 static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
 
-extern Base::SystemLog Global_Logger;
+extern LogSystem::SystemLog Global_Logger;
 
 #endif
 
@@ -179,28 +185,29 @@ extern Base::SystemLog Global_Logger;
 #ifdef GLOBAL_LOG
 
 /// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define G_TRACE if (Global_Logger.get_rank() <= Base::LogRank::TRACE) \
-                    (Global_Logger.stream(Base::LogRank::TRACE))
+#define G_TRACE if (Global_Logger.get_rank() <= LogSystem::LogRank::TRACE) \
+                    (Global_Logger.stream(LogSystem::LogRank::TRACE))
 
-#define G_DEBUG if (Global_Logger.get_rank() <= Base::LogRank::DEBUG) \
-                    (Global_Logger.stream(Base::LogRank::DEBUG))
+#define G_DEBUG if (Global_Logger.get_rank() <= LogSystem::LogRank::DEBUG) \
+                    (Global_Logger.stream(LogSystem::LogRank::DEBUG))
 
-#define G_INFO if (Global_Logger.get_rank() <= Base::LogRank::INFO) \
-                    (Global_Logger.stream(Base::LogRank::INFO))
+#define G_INFO if (Global_Logger.get_rank() <= LogSystem::LogRank::INFO) \
+                    (Global_Logger.stream(LogSystem::LogRank::INFO))
 
-#define G_WARN if (Global_Logger.get_rank() <= Base::LogRank::WARN) \
-                    (Global_Logger.stream(Base::LogRank::WARN))
+#define G_WARN if (Global_Logger.get_rank() <= LogSystem::LogRank::WARN) \
+                    (Global_Logger.stream(LogSystem::LogRank::WARN))
 
-#define G_ERROR if (Global_Logger.get_rank() <= Base::LogRank::ERROR) \
-                    (Global_Logger.stream(Base::LogRank::ERROR))
+#define G_ERROR if (Global_Logger.get_rank() <= LogSystem::LogRank::ERROR) \
+                    (Global_Logger.stream(LogSystem::LogRank::ERROR))
 
-#define G_FATAL if (Global_Logger.get_rank() <= Base::LogRank::FATAL) \
-                    (Global_Logger.stream(Base::LogRank::FATAL))
+#define G_FATAL if (Global_Logger.get_rank() <= LogSystem::LogRank::FATAL) \
+                    (Global_Logger.stream(LogSystem::LogRank::FATAL))
 
 #else
 
 class Empty {
 public:
+
 #define Empty_fun(type) Empty &operator<<(type) { \
         return *this;                             \
 };
@@ -248,4 +255,4 @@ public:
 
 #endif
 
-#endif //BASE_LOG_HPP
+#endif //LOGSYSTEM_SYSTEMLOG_HPP

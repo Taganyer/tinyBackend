@@ -1,5 +1,5 @@
 #项目名
-project(Net)
+project(LogSystem)
 
 # 项目源文件和头文件列表（考虑到 IDE 的分析功能，故加入头文件）
 set(src_list)
@@ -94,4 +94,4 @@ add_library(${PROJECT_NAME} ${src_list})
 target_include_directories(${PROJECT_NAME} PUBLIC "${current_dir}/..")
 
 # 链接 Base 库
-target_link_libraries(${PROJECT_NAME} PRIVATE Base PRIVATE LogSystem)
+target_link_libraries(${PROJECT_NAME} PRIVATE Base PRIVATE Net)

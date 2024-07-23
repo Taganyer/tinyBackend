@@ -5,17 +5,17 @@
 #ifndef BASE_SENDBUFFER_HPP
 #define BASE_SENDBUFFER_HPP
 
-#ifdef BASE_SENDBUFFER_HPP
-
-#include "LogRank.hpp"
+#include "LogSystem/LogRank.hpp"
 #include "Base/Detail/config.hpp"
 #include "Base/Detail/NoCopy.hpp"
 
 namespace Base {
+    struct Time;
+}
 
-    class Time;
+namespace LogSystem {
 
-    class SendBuffer : private NoCopy {
+    class SendBuffer : private Base::NoCopy {
     public:
         static constexpr uint64 default_buffer_size = 1 << 20;
 
@@ -28,7 +28,7 @@ namespace Base {
 
         uint64 append(const void* data, uint64 size);
 
-        uint64 append(LogRank rank, const Time &time, const void* data, uint64 size);
+        uint64 append(LogRank rank, const Base::Time &time, const void* data, uint64 size);
 
         void flush();
 
@@ -47,6 +47,5 @@ namespace Base {
     };
 }
 
-#endif
 
 #endif //BASE_SENDBUFFER_HPP

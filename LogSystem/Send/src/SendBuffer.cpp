@@ -7,6 +7,8 @@
 
 using namespace Base;
 
+using namespace LogSystem;
+
 SendBuffer::SendBuffer(SendBuffer &&other) noexcept:
         buffer(other.buffer), index(other.index), buffer_size(other.buffer_size) {
     other.buffer = nullptr;

@@ -11,7 +11,7 @@
 #include <memory>
 #include <functional>
 #include "Base/Condition.hpp"
-#include "Base/Time/Time_difference.hpp"
+#include "Time_difference.hpp"
 
 namespace Base {
 

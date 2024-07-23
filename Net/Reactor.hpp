@@ -7,7 +7,6 @@
 
 #include <map>
 #include "NetLink.hpp"
-#include "Base/Loop/EventLoop.hpp"
 #include "Base/Container/List.hpp"
 #include "Base/Time/Time_difference.hpp"
 
@@ -18,6 +17,8 @@ namespace Net {
     class Event;
 
     class Monitor;
+
+    class EventLoop;
 
     class Reactor : Base::NoCopy {
     public:
@@ -35,7 +36,7 @@ namespace Net {
 
         void start(int monitor_timeoutMS);
 
-        Base::EventLoop* get_loop() { return _loop; };
+        EventLoop* get_loop() { return _loop; };
 
         Monitor* get_monitor() { return _monitor; };
 
@@ -52,7 +53,7 @@ namespace Net {
 
         Monitor* _monitor;
 
-        Base::EventLoop* _loop = nullptr;
+        EventLoop* _loop = nullptr;
 
         LinkMap _map;
 

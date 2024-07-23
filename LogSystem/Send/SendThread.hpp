@@ -13,10 +13,12 @@
 #include "Base/Container/List.hpp"
 
 namespace Base {
+    struct  Time_difference;
+}
 
-    class Log;
+namespace LogSystem {
 
-    class SendThread : NoCopy {
+    class SendThread : Base::NoCopy {
     private:
         class SenderData {
         public:
@@ -31,9 +33,9 @@ namespace Base {
             friend class SendThread;
         };
 
-        using SenderQueue = List<SenderData>;
+        using SenderQueue = Base::List<SenderData>;
 
-        using BufferQueue = List<SendBuffer>;
+        using BufferQueue = Base::List<SendBuffer>;
 
         using BufferPtr = BufferQueue::Iter;
 
@@ -42,7 +44,7 @@ namespace Base {
 
         struct Data;
 
-        static const Time_difference FLUSH_TIME;
+        static const Base::Time_difference FLUSH_TIME;
 
         SendThread();
 
@@ -65,11 +67,11 @@ namespace Base {
         volatile bool shutdown = false;
         volatile bool running = false;
 
-        Mutex _mutex;
+        Base::Mutex _mutex;
 
-        Condition _condition;
+        Base::Condition _condition;
 
-        Time_difference _next_flush_time;
+        Base::Time_difference _next_flush_time;
 
         SenderQueue _senders;
 
@@ -87,7 +89,7 @@ namespace Base {
 
         void wait_if_no_sender();
 
-        bool waiting(Time_difference endTime);
+        bool waiting(Base::Time_difference endTime);
 
         void get_need_flush(std::vector<SenderIter> &need_flush);
 

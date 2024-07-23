@@ -4,6 +4,8 @@
 
 #include "../Controller.hpp"
 #include "Net/Reactor.hpp"
+#include "Net/EventLoop.hpp"
+#include "LogSystem/SystemLog.hpp"
 #include "Net/monitors/Monitor.hpp"
 #include "Net/functions/Interface.hpp"
 
