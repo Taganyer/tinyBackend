@@ -3,15 +3,15 @@
 //
 
 #include "../Thread.hpp"
-#include "Base/Exception.hpp"
+#include "../Exception.hpp"
 
 
 namespace Base {
 
     Thread::Thread(Thread &&other) noexcept:
-        _started(other._started), _joined(other._joined),
-        name(std::move(other.name)),
-        fun(std::move(other.fun)), pthread(other.pthread) {
+            _started(other._started), _joined(other._joined),
+            name(std::move(other.name)),
+            fun(std::move(other.fun)), pthread(other.pthread) {
         other._started = other._joined = false;
         other.pthread = -1;
     }
@@ -37,8 +37,8 @@ namespace Base {
         _joined = true;
     }
 
-    void* Thread::invoke(void* self) {
-        auto* data = static_cast<Data *>(self);
+    void *Thread::invoke(void *self) {
+        auto *data = static_cast<Data *>(self);
         if (!data->_name.empty())
             CurrentThread::thread_name() = std::move(data->_name);
         try {

@@ -49,7 +49,7 @@ namespace Base {
         static void set_global_terminal_function(TerminalFun fun);
 
         /// 当程序异常退出时，调用注册的函数。每个线程可设置不同的调用函数，线程安全。
-        static void set_loacl_terminal_function(TerminalFun fun);
+        static void set_local_terminal_function(TerminalFun fun);
 
         /// 设置错误信息输出文件并把该文件设置为无缓冲模式，默认为 stderr，为 nullptr 不输出错误信息。
         static void set_error_message_file(FILE *file);

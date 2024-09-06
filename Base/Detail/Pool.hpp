@@ -7,16 +7,16 @@
 
 #ifdef BASE_POOL_HPP
 
+#include "../Thread.hpp"
+#include "../Condition.hpp"
 #include <atomic>
-#include "Net/Thread.hpp"
-#include "Net/Condition.hpp"
 
 namespace Base::Detail {
 
     struct PoolData {
         using A_Size = std::atomic<uint32>;
         using Size = uint32;
-        using State = std::atomic<uint8>;
+        using State = std::atomic<uint32>;
         using Mutex = Base::Mutex;
         using Condition = Base::Condition;
         using Lock = Base::Lock<Mutex>;
@@ -38,7 +38,7 @@ namespace Base::Detail {
     template<typename Creator>
     class Pool {
     public:
-        using Fun = typename Creator::Fun;
+        using Event = typename Creator::Event;
         using Task = typename Creator::Task;
         using Size = PoolData::Size;
         using Lock = PoolData::Lock;
@@ -52,9 +52,9 @@ namespace Base::Detail {
 
         void delete_threads(Size size);
 
-        void submit_to_top(Fun &&fun);
+        void submit_to_top(Event &&fun);
 
-        void submit_to_tail(Fun &&fun);
+        void submit_to_tail(Event &&fun);
 
         void delete_tasks(Size size);
 
@@ -143,7 +143,7 @@ namespace Base::Detail {
     }
 
     template<typename Creator>
-    void Pool<Creator>::submit_to_top(Pool::Fun &&fun) {
+    void Pool<Creator>::submit_to_top(Pool::Event &&fun) {
         auto task = creator.create_task(std::move(fun));
         if (stopping()) {
             creator.delete_task(task);
@@ -160,7 +160,7 @@ namespace Base::Detail {
     }
 
     template<typename Creator>
-    void Pool<Creator>::submit_to_tail(Pool::Fun &&fun) {
+    void Pool<Creator>::submit_to_tail(Pool::Event &&fun) {
         auto task = creator.create_task(std::move(fun));
         if (stopping()) {
             creator.delete_task(task);

@@ -10,25 +10,36 @@ using namespace Base;
 
 using namespace LogSystem;
 
-SystemLog::SystemLog(SendThread &thread, std::string dictionary_path,
-                     LogRank rank, uint64 limit_size) :
-    logSender(std::make_shared<LogSender>(&thread, std::move(dictionary_path), limit_size)), outputRank(rank) {
-    logSender->_thread->add_sender(logSender->shared_from_this(), logSender->data);
+SystemLog::SystemLog(ScheduledThread &thread, BufferPool &buffer_pool,
+                     std::string dictionary_path, LogRank rank,
+                     uint64 file_limit_size, uint64 buffer_limit_size) :
+    _scheduler(std::make_shared<LogScheduler>(&thread, std::move(dictionary_path), file_limit_size)),
+    outputRank(rank), _bufferPool(&buffer_pool), _buffer_size(buffer_limit_size) {
+    thread.add_scheduler(_scheduler);
+    _scheduler->_buffer = new LogBuffer(buffer_pool.get(buffer_limit_size));
 }
 
 SystemLog::~SystemLog() {
-    if (logSender)
-        logSender->_thread->remove_sender(logSender->data);
+    Lock l(_scheduler->IO_lock);
+    if (_scheduler) {
+        _scheduler->_thread->remove_scheduler(_scheduler, _scheduler->_buffer);
+        _scheduler->_buffer = nullptr;
+    }
 }
 
 void SystemLog::push(LogRank rank, const void* ptr, uint64 size) {
-    if (rank < outputRank || logSender->_thread->closed()) return;
-    Lock l(logSender->IO_lock);
+    if (rank < outputRank || _scheduler->_thread->closed()) return;
+    Lock l(_scheduler->IO_lock);
     while (size) {
-        uint64 ret = logSender->data.buffer->append(rank, get_time_now(), ptr, size);
+        uint64 ret = _scheduler->_buffer->append(rank, get_time_now(), ptr, size);
         if (size > ret) {
-            logSender->_thread->put_buffer(logSender->data);
-            ptr = (char *) ptr + ret;
+            _scheduler->_thread->submit_task(*_scheduler, _scheduler->_buffer);
+            _scheduler->_buffer = new LogBuffer(_bufferPool->get(LOG_BUFFER_SIZE));
+            if (!_scheduler->_buffer->valid()) {
+                /// FIXME memory overflow
+                break;
+            }
+            ptr = (const char *) ptr + ret;
         }
         size -= ret;
     }
@@ -38,13 +49,44 @@ LogStream SystemLog::stream(LogRank rank) {
     return { *this, rank };
 }
 
-void SystemLog::LogSender::send(const void* buffer, uint64 size) {
+uint64 SystemLog::LogBuffer::append(LogRank rank, const Time &time,
+                                    const void* ptr, uint64 size) {
+    if (_buffer.size() - _index < size + TimeStamp::Time_us_format_len + 8)
+        return 0;
+    char* buffer = _buffer.data();
+    format(buffer + _index, time);
+    _index += TimeStamp::Time_us_format_len;
+    buffer[_index++] = ' ';
+    _index += rank_toString(buffer + _index, rank);
+    std::memcpy(buffer + _index, ptr, size);
+    buffer[_index += size] = '\n';
+    ++_index;
+    return size;
+}
+
+SystemLog::LogScheduler::LogScheduler(ScheduledThread* thread, std::string dictionary_path,
+                                      uint64 limit_size) : _thread(thread), limit_size(limit_size),
+    _path(std::move(dictionary_path)) {
+    if (_path.back() != '/' && _path.back() != '\\') _path.push_back('/');
+    open_new_file();
+}
+
+void SystemLog::LogScheduler::open_new_file() {
+    string path = _path + to_string(get_time_now(), true) + ".log";
+    if (unlikely(!_file.open(path.c_str(), false, true)))
+        throw Exception("fail to open: " + path);
+    current_size = 0;
+}
+
+void SystemLog::LogScheduler::write_to_file(const LogBuffer* logBuffer) {
+    uint64 size = logBuffer->size();
+    auto buffer = (const char *) logBuffer->data();
     while (size) {
         uint64 rest = limit_size - current_size;
         if (size > rest) {
             _file.write(buffer, rest);
             size -= rest;
-            buffer = (const char *) buffer + rest;
+            buffer = buffer + rest;
             open_new_file();
         } else {
             current_size += _file.write(buffer, size);
@@ -54,32 +96,38 @@ void SystemLog::LogSender::send(const void* buffer, uint64 size) {
     _file.flush_to_disk();
 }
 
-void SystemLog::LogSender::force_flush() {
+void SystemLog::LogScheduler::invoke(void* buffer_ptr) {
+    if (!buffer_ptr) return;
+    auto logBuffer = (const LogBuffer *) buffer_ptr;
+    write_to_file(logBuffer);
+    delete logBuffer;
+}
+
+void SystemLog::LogScheduler::force_invoke() {
     Lock l(IO_lock);
-    _thread->put_buffer(data);
+    if (!_buffer || _buffer->size() == 0) return;
+    write_to_file(_buffer);
+    _buffer->clear();
 }
 
-void SystemLog::LogSender::open_new_file() {
-    string path = _path + to_string(get_time_now(), true) + ".log";
-    if (unlikely(!_file.open(path.c_str(), false, true)))
-        throw Exception("fail to open: " + path);
-    current_size = 0;
-}
 
-SystemLog::LogSender::LogSender(SendThread* thread, std::string dictionary_path, uint64 limit_size) :
-    _thread(thread), limit_size(limit_size), _path(std::move(dictionary_path)) {
-    if (_path.back() != '/' && _path.back() != '\\') _path.push_back('/');
-    open_new_file();
-}
+#ifdef GLOBAL_BUFFER_POOL
 
-#ifdef GLOBAL_SENDTHREAD
+BufferPool Global_BufferPool(1 << 28);
 
-SendThread Global_LogThread;
+#endif
+
+
+#ifdef GLOBAL_SCHEDULED_THREAD
+
+Time_difference Global_ScheduledThread_FlushTime(1_s);
+ScheduledThread Global_ScheduledThread(Global_ScheduledThread_FlushTime);
+
+#endif
+
 
 #ifdef GLOBAL_LOG
 
-SystemLog Global_Logger(Global_LogThread, GLOBAL_LOG_PATH, LogRank::TRACE);
-
-#endif
+SystemLog Global_Logger(Global_ScheduledThread, Global_BufferPool, GLOBAL_LOG_PATH, TRACE);
 
 #endif

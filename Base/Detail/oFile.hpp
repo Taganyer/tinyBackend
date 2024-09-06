@@ -5,27 +5,26 @@
 #ifndef BASE_OFILE_HPP
 #define BASE_OFILE_HPP
 
-#ifdef BASE_OFILE_HPP
-
-#include <cstdio>
-#include <unistd.h>
 #include "config.hpp"
 #include "NoCopy.hpp"
+#include <cstdio>
+#include <unistd.h>
 
 
 namespace Base {
 
     class oFile : NoCopy {
     public:
+
         oFile() = default;
 
-        oFile(const char* path, bool append = false, bool binary = false);
+        oFile(const char *path, bool append = false, bool binary = false);
 
         oFile(oFile &&other) noexcept;
 
         ~oFile();
 
-        bool open(const char* path, bool append = false, bool binary = false);
+        bool open(const char *path, bool append = false, bool binary = false);
 
         bool close();
 
@@ -41,16 +40,18 @@ namespace Base {
 
         int putDouble(double d);
 
-        size_t write(const void* str, size_t len = -1);
+        size_t write(const void *str, size_t len = -1);
 
-        size_t put_line(const char* str, size_t len = -1);
+        size_t put_line(const char *str, size_t len = -1);
 
         void flush();
 
         void flush_to_disk();
 
-        template <typename...Args>
-        int formatPut(const char* f, Args...args) {
+        bool resize_file(uint64 size);
+
+        template<typename ...Args>
+        int formatPut(const char *f, Args ... args) {
             return fprintf(_file, f, args...);
         };
 
@@ -63,10 +64,11 @@ namespace Base {
             return fileno(_file);
         };
 
-        FILE* get_fp() { return _file; };
+        FILE *get_fp() { return _file; };
 
     protected:
-        FILE* _file = nullptr;
+
+        FILE *_file = nullptr;
 
     };
 
@@ -75,7 +77,7 @@ namespace Base {
 
 namespace Base {
 
-    inline oFile::oFile(const char* path, bool append, bool binary) {
+    inline oFile::oFile(const char *path, bool append, bool binary) {
         open(path, append, binary);
     }
 
@@ -87,9 +89,9 @@ namespace Base {
         close();
     }
 
-    inline bool oFile::open(const char* path, bool append, bool binary) {
+    inline bool oFile::open(const char *path, bool append, bool binary) {
         close();
-        char mod[3] { 'w', 'b', '\0' };
+        char mod[3]{'w', 'b', '\0'};
         if (append) mod[0] = 'a';
         if (!binary) mod[1] = '\0';
         _file = fopen(path, mod);
@@ -126,12 +128,12 @@ namespace Base {
         return fprintf(_file, "%lf", d);
     }
 
-    inline size_t oFile::write(const void* str, size_t len) {
+    inline size_t oFile::write(const void *str, size_t len) {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
 
-    inline size_t oFile::put_line(const char* str, size_t len) {
+    inline size_t oFile::put_line(const char *str, size_t len) {
         size_t flag = write(str, len);
         if (fputc('\n', _file) != EOF) ++flag;
         return flag;
@@ -146,8 +148,10 @@ namespace Base {
         fsync(get_fd());
     }
 
-}
+    inline bool oFile::resize_file(uint64 size) {
+        return ftruncate(get_fd(), size) == 0;
+    }
 
-#endif
+}
 
 #endif //BASE_OFILE_HPP

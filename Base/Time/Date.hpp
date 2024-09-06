@@ -5,8 +5,8 @@
 #ifndef BASE_DATE_HPP
 #define BASE_DATE_HPP
 
+#include "../Detail/config.hpp"
 #include <string>
-#include "Base/Detail/config.hpp"
 
 struct tm;
 
@@ -24,7 +24,8 @@ namespace Base {
 
     class Date {
     public:
-        static const char* Date_format;
+
+        static const char *Date_format;
 
         static const int32 Date_format_len;
 
@@ -50,11 +51,12 @@ namespace Base {
 
         [[nodiscard]] std::string to_string() const;
 
-        void format(char* dest) const;
+        void format(char *dest) const;
 
         operator bool() const { return _julianDayNumber; };
 
     private:
+
         int32 _julianDayNumber = 0;
 
     };
@@ -92,7 +94,7 @@ namespace Base {
 
     std::string date_to_string(const Date_data &data);
 
-    void date_format(char* dest, const Date_data &data);
+    void date_format(char *dest, const Date_data &data);
 
 }
 

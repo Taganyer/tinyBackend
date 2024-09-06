@@ -5,8 +5,7 @@
 #ifndef BASE_EXCEPTION_HPP
 #define BASE_EXCEPTION_HPP
 
-#ifdef BASE_EXCEPTION_HPP
-
+#include <exception>
 #include <string>
 
 namespace Base {
@@ -17,11 +16,11 @@ namespace Base {
 
         ~Exception() noexcept override = default;
 
-        [[nodiscard]] const char* what() const noexcept override {
+        [[nodiscard]] const char *what() const noexcept override {
             return message_.c_str();
         }
 
-        [[nodiscard]] const char* stackTrace() const noexcept {
+        [[nodiscard]] const char *stackTrace() const noexcept {
             return stack_.c_str();
         }
 
@@ -31,7 +30,5 @@ namespace Base {
     };
 
 }
-
-#endif
 
 #endif //BASE_EXCEPTION_HPP

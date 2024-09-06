@@ -5,11 +5,10 @@
 #ifndef BASE_THREAD_HPP
 #define BASE_THREAD_HPP
 
-#ifdef BASE_THREAD_HPP
-
 #include <functional>
 #include "Detail/NoCopy.hpp"
 #include "Detail/CurrentThread.hpp"
+
 
 namespace Base {
 
@@ -21,11 +20,11 @@ namespace Base {
 
         Thread(Thread &&other) noexcept;
 
-        template <typename Fun, typename...Args>
+        template<typename Fun, typename ...Args>
         Thread(string name, Fun fun, Args &&...args) :
-            name(std::move(name)), fun(fun, args...) {};
+                name(std::move(name)), fun(fun, args...) {};
 
-        template <typename Fun, typename...Args>
+        template<typename Fun, typename ...Args>
         Thread(Fun fun, Args &&...args) : fun(fun, args...) {};
 
         ~Thread();
@@ -40,15 +39,17 @@ namespace Base {
 
         [[nodiscard]] Id get_id() const { return pthread; };
 
-        [[nodiscard]] const string& get_name() const { return name; };
+        [[nodiscard]] const string &get_name() const { return name; };
 
     private:
+
         bool _started = false, _joined = false;
 
         string name;
 
         Thread_fun fun;
 
+        [[nodiscard]] bool valid() const { return pthread != -1; };
         pthread_t pthread = -1;
 
         struct Data {
@@ -61,7 +62,7 @@ namespace Base {
 
         };
 
-        static void* invoke(void* self);
+        static void *invoke(void *self);
 
     };
 
@@ -74,7 +75,5 @@ namespace Base {
     }
 
 }
-
-#endif
 
 #endif //BASE_THREAD_HPP

@@ -1,9 +1,8 @@
 #项目名
-project(LogSystem)
+project(AOP)
 
 # 项目源文件和头文件列表（考虑到 IDE 的分析功能，故加入头文件）
-set(src_list
-        ResultSet.hpp)
+set(src_list)
 
 # 获取当前目录的绝对路径
 get_filename_component(current_dir ${CMAKE_CURRENT_SOURCE_DIR} ABSOLUTE)
@@ -95,4 +94,4 @@ add_library(${PROJECT_NAME} ${src_list})
 target_include_directories(${PROJECT_NAME} PUBLIC "${current_dir}/..")
 
 # 链接 Base 库
-target_link_libraries(${PROJECT_NAME} PRIVATE Base PRIVATE Net)
+target_link_libraries(${PROJECT_NAME} PRIVATE Base PRIVATE LogSystem)

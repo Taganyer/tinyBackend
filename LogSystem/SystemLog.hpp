@@ -8,24 +8,27 @@
 #ifdef LOGSYSTEM_SYSTEMLOG_HPP
 
 #include "LogRank.hpp"
-#include "Send/SendThread.hpp"
-
+#include "Base/Detail/oFile.hpp"
+#include "Base/ScheduledThread.hpp"
+#include "Base/Buffer/BufferPool.hpp"
 
 namespace LogSystem {
 
     class LogStream;
 
-    constexpr uint64 FILE_LIMIT = 2 << 30;
+    constexpr uint64 FILE_LIMIT = 1 << 29;
 
-    class SystemLog : private Base::NoCopy {
+    constexpr uint64 LOG_BUFFER_SIZE = 1 << 24;
+
+    class SystemLog : Base::NoCopy {
     public:
-
-        SystemLog(SendThread &thread, std::string dictionary_path,
-            LogRank rank, uint64 limit_size = FILE_LIMIT);
+        SystemLog(Base::ScheduledThread &thread, Base::BufferPool &buffer_pool,
+                  std::string dictionary_path, LogRank rank,
+                  uint64 file_limit_size = FILE_LIMIT, uint64 buffer_limit_size = LOG_BUFFER_SIZE);
 
         ~SystemLog();
 
-        void push(LogRank rank, const void *ptr, uint64 size);
+        void push(LogRank rank, const void* ptr, uint64 size);
 
         LogStream stream(LogRank rank);
 
@@ -34,54 +37,76 @@ namespace LogSystem {
         [[nodiscard]] LogRank get_rank() const { return outputRank; };
 
     private:
-
-        class LogSender : public Sender {
+        class LogBuffer {
         public:
+            explicit LogBuffer(Base::BufferPool::Buffer &&buffer) : _buffer(std::move(buffer)) {};
 
-            Base::Mutex IO_lock;
+            uint64 append(LogRank rank, const Base::Time &time, const void* ptr, uint64 size);
 
-            SendThread *_thread;
+            void clear() { _index = 0; };
 
-            SendThread::Data data;
+            [[nodiscard]] const void* data() const { return _buffer.data(); };
 
-            LogSender(SendThread *thread, std::string dictionary_path, uint64 limit_size);
+            [[nodiscard]] uint64 size() const { return _index; };
+
+            bool valid() const { return _buffer.size() > 0; };
 
         private:
+            Base::BufferPool::Buffer _buffer;
 
+            uint64 _index = 0;
+        };
+
+        class LogScheduler : public Base::Scheduler {
+        public:
+            Base::Mutex IO_lock;
+
+            LogBuffer* _buffer = nullptr;
+
+            Base::ScheduledThread* _thread;
+
+            LogScheduler(Base::ScheduledThread* thread, std::string dictionary_path, uint64 limit_size);
+
+        private:
             uint64 current_size = 0, limit_size;
 
             Base::oFile _file;
 
             std::string _path;
 
-            void send(const void *buffer, uint64 size) override;
-
-            void force_flush() override;
-
             void open_new_file();
 
-            friend class SendThread;
+            void write_to_file(const LogBuffer* logBuffer);
+
+            void invoke(void* buffer_ptr) override;
+
+            void force_invoke() override;
+
+            friend class Base::ScheduledThread;
         };
 
-        std::shared_ptr<LogSender> logSender;
+        std::shared_ptr<LogScheduler> _scheduler;
 
         LogRank outputRank;
 
-        friend class SendThread;
+        Base::BufferPool* _bufferPool;
+
+        uint64 _buffer_size;
+
+        friend class Base::ScheduledThread;
 
     };
 
 
     class LogStream : private Base::NoCopy {
     public:
-
         LogStream(SystemLog &log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
             _log->push(_rank, _message, _index);
         };
 
-        LogStream &operator<<(const std::string &val) {
+        LogStream& operator<<(const std::string &val) {
             if (_log->get_rank() > _rank) return *this;
             int temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
@@ -89,7 +114,7 @@ namespace LogSystem {
             return *this;
         };
 
-        LogStream &operator<<(const std::string_view &val) {
+        LogStream& operator<<(const std::string_view &val) {
             if (_log->get_rank() > _rank) return *this;
             auto temp = val.size() > 256 - _index ? 256 - _index : val.size();
             memcpy(_message + _index, val.data(), temp);
@@ -124,8 +149,7 @@ namespace LogSystem {
 #undef StreamOperator
 
     private:
-
-        SystemLog *_log;
+        SystemLog* _log;
 
         LogRank _rank;
 
@@ -157,15 +181,26 @@ namespace LogSystem {
                         (val.stream(Base::LogRank::FATAL))
 
 
-/// 解除注释开启全局 SendThread 对象
-#define GLOBAL_SENDTHREAD
+/// 解除注释开启全局 BufferPool 对象
+#define GLOBAL_BUFFER_POOL
+#ifdef GLOBAL_BUFFER_POOL
 
-#ifdef GLOBAL_SENDTHREAD
+extern Base::BufferPool Global_BufferPool;
+/// 解除注释开启全局 ScheduledThread 对象
+#define GLOBAL_SCHEDULED_THREAD
 
-extern LogSystem::SendThread Global_LogThread;
+#endif
 
+
+#ifdef GLOBAL_SCHEDULED_THREAD
+
+extern Base::Time_difference Global_ScheduledThread_FlushTime;
+extern Base::ScheduledThread Global_ScheduledThread;
 /// 解除注释开启全局日志
 #define GLOBAL_LOG
+
+#endif
+
 
 #ifdef GLOBAL_LOG
 
@@ -180,7 +215,6 @@ extern LogSystem::SystemLog Global_Logger;
 
 #endif
 
-#endif
 
 #ifdef GLOBAL_LOG
 
@@ -207,7 +241,6 @@ extern LogSystem::SystemLog Global_Logger;
 
 class Empty {
 public:
-
 #define Empty_fun(type) Empty &operator<<(type) { \
         return *this;                             \
 };
@@ -252,6 +285,7 @@ public:
 #define G_FATAL if (false) (Empty())
 
 #endif
+
 
 #endif
 

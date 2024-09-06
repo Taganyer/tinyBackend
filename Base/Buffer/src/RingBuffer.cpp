@@ -2,9 +2,9 @@
 // Created by taganyer on 24-3-5.
 //
 
+#include "../RingBuffer.hpp"
 #include <cstring>
 #include <cassert>
-#include "../RingBuffer.hpp"
 
 void Base::RingBuffer::resize(uint32 size) {
     if (size < _readable) size = _readable;

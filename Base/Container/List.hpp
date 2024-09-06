@@ -5,8 +5,6 @@
 #ifndef BASE_LIST_HPP
 #define BASE_LIST_HPP
 
-#ifdef BASE_LIST_HPP
-
 #include <utility>
 #include "Base/Detail/config.hpp"
 
@@ -17,9 +15,9 @@ namespace Base {
     public:
         List() = default;
 
-        List(const List<Data> &other);
+        List(const List &other);
 
-        List(List<Data> &&other) noexcept;
+        List(List &&other) noexcept;
 
         ~List();
 
@@ -112,9 +110,9 @@ namespace Base {
         bool operator!=(const Iter &other) const { return _ptr != other._ptr; };
 
     private:
-        List<Data>::Node* _ptr = nullptr;
+        Node* _ptr = nullptr;
 
-        friend class List<Data>;
+        friend class List;
 
     };
 
@@ -144,9 +142,9 @@ namespace Base {
 
 
     template <typename Data>
-    List<Data>::List(const List<Data> &other) : _size(other.size()) {
+    List<Data>::List(const List &other) : _size(other.size()) {
         Iter iter = other.begin(), end = other.end();
-        Node *temp, *last = nullptr;
+        Node* temp,* last = nullptr;
         while (iter != end) {
             temp = new Node(*iter);
             if (!last) {
@@ -162,7 +160,7 @@ namespace Base {
     }
 
     template <typename Data>
-    List<Data>::List(List<Data> &&other) noexcept :
+    List<Data>::List(List &&other) noexcept :
         _head(other._head), _tail(other._tail), _size(other._size) {
         other._head = other._tail = nullptr;
         other._size = 0;
@@ -199,7 +197,7 @@ namespace Base {
     }
 
     template <typename Data>
-    inline void List<Data>::move_to(List::Iter dest, List::Iter target) {
+    inline void List<Data>::move_to(Iter dest, Iter target) {
         auto ptr = target._ptr;
         if (!ptr || ptr->_next == dest._ptr) return;
         if (ptr->_next) {
@@ -227,7 +225,7 @@ namespace Base {
     }
 
     template <typename Data>
-    inline void List<Data>::erase(List::Iter target) {
+    inline void List<Data>::erase(Iter target) {
         auto ptr = target._ptr;
         if (!ptr) return;
         if (ptr->_next) {
@@ -244,7 +242,7 @@ namespace Base {
     }
 
     template <typename Data>
-    inline void List<Data>::erase(List::Iter begin, List::Iter end) {
+    inline void List<Data>::erase(Iter begin, Iter end) {
         if (!begin._ptr) return;
         if (begin._ptr->_prev) begin._ptr->_prev->_next = end._ptr;
         else _head = end._ptr;
@@ -257,7 +255,7 @@ namespace Base {
     }
 
     template <typename Data>
-    typename List<Data>::Val List<Data>::release(List::Iter target) {
+    typename List<Data>::Val List<Data>::release(Iter target) {
         auto ptr = target._ptr;
         if (!ptr) return List::Val(nullptr);
         if (ptr->_next) {
@@ -274,7 +272,5 @@ namespace Base {
     }
 
 }
-
-#endif
 
 #endif //BASE_LIST_HPP

@@ -5,7 +5,6 @@
 #ifndef BASE_IOFILE_HPP
 #define BASE_IOFILE_HPP
 
-#ifdef BASE_IOFILE_HPP
 
 #include <cstdio>
 #include <unistd.h>
@@ -28,9 +27,15 @@ namespace Base {
 
         bool close();
 
-        uint64 read(uint64 size, void* dest);
+        uint64 read(uint64 size, void* dest) const;
 
         size_t write(const void* str, size_t len = -1);
+
+        void flush();
+
+        void flush_to_disk();
+
+        bool resize_file(uint64 size);
 
         bool seek_cur(int64 step) { return fseek(_file, step, SEEK_CUR) == 0; };
 
@@ -58,19 +63,19 @@ namespace Base {
 
     };
 
-    ioFile::ioFile(const char* path, bool append, bool binary) {
+    inline ioFile::ioFile(const char* path, bool append, bool binary) {
         open(path, append, binary);
     }
 
-    ioFile::ioFile(ioFile &&other) noexcept: _file(other._file) {
+    inline ioFile::ioFile(ioFile &&other) noexcept : _file(other._file) {
         other._file = nullptr;
     }
 
-    ioFile::~ioFile() {
+    inline ioFile::~ioFile() {
         close();
     }
 
-    bool ioFile::open(const char* path, bool append, bool binary) {
+    inline bool ioFile::open(const char* path, bool append, bool binary) {
         close();
         char mod[4] { 'w', 'b', '+', '\0' };
         if (append) mod[0] = 'a';
@@ -82,23 +87,36 @@ namespace Base {
         return _file;
     }
 
-    bool ioFile::close() {
-        if (!_file) return true;
-        if (fclose(_file) == 0) _file = nullptr;
-        return !_file;
+    inline bool ioFile::close() {
+        if (!_file || fclose(_file) == 0) {
+            _file = nullptr;
+            return true;
+        }
+        return false;
     }
 
-    uint64 ioFile::read(uint64 size, void* dest) {
+    inline uint64 ioFile::read(uint64 size, void* dest) const {
         return fread(dest, 1, size, _file);
     }
 
-    size_t ioFile::write(const void* str, size_t len) {
+    inline size_t ioFile::write(const void* str, size_t len) {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
 
-}
+    inline void ioFile::flush() {
+        fflush(_file);
+    }
 
-#endif
+    inline void ioFile::flush_to_disk() {
+        fflush(_file);
+        fsync(get_fd());
+    }
+
+    inline bool ioFile::resize_file(uint64 size) {
+        return ftruncate(get_fd(), size) == 0;
+    }
+
+}
 
 #endif //BASE_IOFILE_HPP

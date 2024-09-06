@@ -9,7 +9,7 @@
 
 #include <ctime>
 #include <utility>
-#include "Base/Detail/config.hpp"
+#include "../Detail/config.hpp"
 
 namespace Base {
 
@@ -86,7 +86,7 @@ namespace Base {
 
     template <typename Fun, typename...Args>
     Time_difference chronograph(Fun &&fun, Args &&...args) {
-        timespec startTime {}, endTime {};
+        struct timespec startTime {}, endTime {};
         clock_gettime(CLOCK_REALTIME, &startTime);
         fun(std::forward<Args>(args)...);
         clock_gettime(CLOCK_REALTIME, &endTime);

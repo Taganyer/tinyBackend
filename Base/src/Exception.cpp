@@ -2,13 +2,13 @@
 // Created by taganyer on 24-2-21.
 //
 
-#include "Base/Exception.hpp"
+#include "../Exception.hpp"
 
-#include "Base/Detail/CurrentThread.hpp"
+#include "../Detail/CurrentThread.hpp"
 
 namespace Base {
 
-
     Exception::Exception(std::string what) : message_(std::move(what)),
-        stack_(CurrentThread::stackTrace(false)) {}
+                                             stack_(CurrentThread::stackTrace()) {}
+
 }

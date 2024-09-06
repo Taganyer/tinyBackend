@@ -6,7 +6,7 @@
 #define BASE_SENDER_HPP
 
 #include <memory>
-#include "Base/Detail/oFile.hpp"
+#include "Base/Detail/config.hpp"
 
 namespace LogSystem {
 

@@ -5,10 +5,8 @@
 #ifndef BASE_SINGLELIST_HPP
 #define BASE_SINGLELIST_HPP
 
-#ifdef BASE_SINGLELIST_HPP
-
 #include <utility>
-#include "Base/Detail/config.hpp"
+#include "../Detail/config.hpp"
 
 namespace Base {
 
@@ -17,9 +15,9 @@ namespace Base {
     public:
         SingleList() = default;
 
-        SingleList(const SingleList<Data> &other);
+        SingleList(const SingleList &other);
 
-        SingleList(SingleList<Data> &&other) noexcept;
+        SingleList(SingleList &&other) noexcept;
 
         ~SingleList();
 
@@ -134,9 +132,9 @@ namespace Base {
 
 
     template <typename Data>
-    SingleList<Data>::SingleList(const SingleList<Data> &other) : _size(other._size) {
+    SingleList<Data>::SingleList(const SingleList &other) : _size(other._size) {
         Iter iter = other.begin(), end = other.end();
-        Node *temp, *last = nullptr;
+        Node* temp,* last = nullptr;
         while (iter != end) {
             temp = new Node(*iter);
             (!last ? _head : last->_next) = temp;
@@ -147,7 +145,7 @@ namespace Base {
     }
 
     template <typename Data>
-    SingleList<Data>::SingleList(SingleList<Data> &&other) noexcept :
+    SingleList<Data>::SingleList(SingleList &&other) noexcept :
         _head(other._head), _tail(other._tail), _size(other._size) {
         other._head = other._tail = nullptr;
         other._size = 0;
@@ -165,7 +163,7 @@ namespace Base {
     template <typename Data>
     template <typename...Args>
     typename SingleList<Data>::Iter
-    SingleList<Data>::insert_after(SingleList::Iter before_dest, Args &&...args) {
+    SingleList<Data>::insert_after(Iter before_dest, Args &&...args) {
         auto ptr = new Node(std::forward<Args>(args)...);
         if (before_dest._ptr) {
             if (before_dest._ptr == _tail) _tail = ptr;
@@ -181,7 +179,7 @@ namespace Base {
     }
 
     template <typename Data>
-    void SingleList<Data>::next_to_after(SingleList::Iter before_dest, SingleList::Iter before_target) {
+    void SingleList<Data>::next_to_after(Iter before_dest, Iter before_target) {
         if (before_dest == before_target) return;
         if (before_dest._ptr) {
             if (before_target._ptr) {
@@ -210,7 +208,7 @@ namespace Base {
     }
 
     template <typename Data>
-    void SingleList<Data>::erase_after(SingleList::Iter before_target) {
+    void SingleList<Data>::erase_after(Iter before_target) {
         if (before_target._ptr == _tail) return;
         Node* ptr;
         if (before_target._ptr) {
@@ -227,7 +225,7 @@ namespace Base {
     }
 
     template <typename Data>
-    void SingleList<Data>::erase_after(SingleList::Iter before_begin, SingleList::Iter end) {
+    void SingleList<Data>::erase_after(Iter before_begin, Iter end) {
         if (before_begin._ptr == _tail) return;
         if (!end._ptr) _tail = before_begin._ptr;
         Node* ptr;
@@ -248,7 +246,7 @@ namespace Base {
 
     template <typename Data>
     typename SingleList<Data>::Val
-    SingleList<Data>::release_after(SingleList::Iter before_target) {
+    SingleList<Data>::release_after(Iter before_target) {
         if (before_target._ptr == _tail) return SingleList::Val(nullptr);
         Node* ptr;
         if (before_target._ptr) {
@@ -265,7 +263,5 @@ namespace Base {
     }
 
 }
-
-#endif
 
 #endif //BASE_SINGLELIST_HPP

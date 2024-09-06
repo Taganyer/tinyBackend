@@ -2,10 +2,11 @@
 // Created by taganyer on 24-2-13.
 //
 
-#include <unistd.h>
-#include <sys/timerfd.h>
 #include "../Timer.hpp"
-#include "Base/Exception.hpp"
+#include <sys/timerfd.h>
+#include <unistd.h>
+
+#include "../../Exception.hpp"
 
 namespace Base {
 
@@ -33,7 +34,7 @@ namespace Base {
 
     void Timer::sleep(int32 timeouts) {
         if (timeouts <= 0 || _time.nanoseconds <= 0) return;
-        struct timespec time {};
+        struct timespec time{};
         time.tv_sec = _time.nanoseconds / SEC_ * timeouts;
         time.tv_nsec = _time.nanoseconds % SEC_;
         time.tv_sec += timeouts * time.tv_nsec / SEC_;
@@ -43,7 +44,7 @@ namespace Base {
     }
 
     void Timer::start() {
-        struct itimerspec timeout {};
+        struct itimerspec timeout{};
         timeout.it_value = timeout.it_interval = _time.to_timespec();
 
         if (fd == -1) {

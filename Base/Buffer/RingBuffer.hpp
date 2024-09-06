@@ -5,8 +5,6 @@
 #ifndef BASE_RINGBUFFER_HPP
 #define BASE_RINGBUFFER_HPP
 
-#ifdef BASE_RINGBUFFER_HPP
-
 #include <string_view>
 #include "Base/Detail/config.hpp"
 #include "Base/Detail/NoCopy.hpp"
@@ -85,7 +83,7 @@ namespace Base {
 
 namespace Base {
 
-    char Base::RingBuffer::peek() {
+    char RingBuffer::peek() {
         if (!empty()) {
             char t = *_write;
             write_move(1);
@@ -94,14 +92,14 @@ namespace Base {
         return -1;
     }
 
-    void Base::RingBuffer::read_move(uint32 step) {
+    void RingBuffer::read_move(uint32 step) {
         _read += step;
         if (_read >= end())
             _read -= _size;
         _readable -= step;
     }
 
-    void Base::RingBuffer::write_move(uint32 step) {
+    void RingBuffer::write_move(uint32 step) {
         _write += step;
         if (_write >= end())
             _write -= _size;
@@ -110,6 +108,5 @@ namespace Base {
 
 }
 
-#endif
 
 #endif //BASE_RINGBUFFER_HPP

@@ -37,7 +37,6 @@ thread_local string CurrentThread::this_thread_name = [] {
     }
 }();
 
-
 void CurrentThread::yield_this_thread() {
     sched_yield();
 }
@@ -89,7 +88,7 @@ void CurrentThread::set_global_terminal_function(TerminalFun fun) {
     global_terminal_function = std::move(fun);
 }
 
-void CurrentThread::set_loacl_terminal_function(TerminalFun fun) {
+void CurrentThread::set_local_terminal_function(TerminalFun fun) {
     local_terminal_function = std::move(fun);
 }
 
