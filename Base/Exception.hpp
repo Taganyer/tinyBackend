@@ -12,6 +12,8 @@ namespace Base {
 
     class Exception : public std::exception {
     public:
+        Exception() = default;
+
         Exception(std::string what);
 
         ~Exception() noexcept override = default;

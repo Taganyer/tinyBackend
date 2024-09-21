@@ -5,12 +5,11 @@
 #ifndef NET_POLL_INTERFACE_HPP
 #define NET_POLL_INTERFACE_HPP
 
-#ifdef NET_POLL_INTERFACE_HPP
+#include "Base/Detail/config.hpp"
 
 #include <poll.h>
-#include <unistd.h>
 #include <sys/epoll.h>
-#include "Base/Detail/config.hpp"
+#include <unistd.h>
 
 struct pollfd;
 
@@ -42,6 +41,5 @@ namespace Net::ops {
 
 }
 
-#endif
 
 #endif //NET_POLL_INTERFACE_HPP

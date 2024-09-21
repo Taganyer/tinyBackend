@@ -5,8 +5,6 @@
 #ifndef NET_ERROR_MARK_HPP
 #define NET_ERROR_MARK_HPP
 
-#ifdef NET_ERROR_MARK_HPP
-
 namespace Net {
 
     enum class error_types {
@@ -38,7 +36,5 @@ namespace Net {
         int codes = -1;
     };
 }
-
-#endif
 
 #endif //NET_ERROR_MARK_HPP

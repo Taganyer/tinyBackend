@@ -15,7 +15,6 @@ namespace {
 
 }
 
-
 EventLoop::EventLoop() {
     if (!this_thread_have_object) {
         this_thread_have_object = true;
@@ -29,7 +28,7 @@ EventLoop::EventLoop() {
 EventLoop::~EventLoop() {
     assert_in_thread();
     shutdown();
-    G_TRACE << "EventLoop in " << CurrentThread::thread_name() << " has been destroyed.";
+    G_TRACE << "EventLoop in " << CurrentThread::thread_name() << " has been destroyed";
     this_thread_have_object = false;
 }
 
@@ -65,7 +64,7 @@ void EventLoop::put_event(Event event) {
     Lock l(_mutex);
     _waiting.push_back(std::move(event));
     G_TRACE << "put a event in EventLoop "
-        << _tid << " at " << CurrentThread::thread_name();
+            << _tid << " at " << CurrentThread::thread_name();
     _condition.notify_one();
 }
 

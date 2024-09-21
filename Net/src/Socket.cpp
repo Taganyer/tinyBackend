@@ -4,7 +4,7 @@
 
 #include <netinet/tcp.h>
 #include "../Socket.hpp"
-#include "Net/InetAddress.hpp"
+#include "../InetAddress.hpp"
 #include "Net/error/errors.hpp"
 #include "LogSystem/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"

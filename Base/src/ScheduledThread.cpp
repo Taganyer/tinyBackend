@@ -43,7 +43,14 @@ void ScheduledThread::add_scheduler(const ObjectPtr &ptr) {
     _condition.notify_one();
 }
 
-void ScheduledThread::remove_scheduler(const ObjectPtr &ptr, void* arg) {
+void ScheduledThread::remove_scheduler(const ObjectPtr &ptr) {
+    if (shutdown.load(std::memory_order_acquire)) return;
+    Lock l(_mutex);
+    ptr->shutdown = true;
+    ptr->need_flush = false;
+}
+
+void ScheduledThread::remove_scheduler_and_invoke(const ObjectPtr &ptr, void* arg) {
     if (shutdown.load(std::memory_order_acquire)) return;
     Lock l(_mutex);
     _ready.push_back(Task { ptr->self_location, arg });
@@ -73,7 +80,6 @@ void ScheduledThread::shutdown_thread() {
 
 void ScheduledThread::get_readyQueue() {
     Lock l(_mutex);
-    assert(_invoking.empty());
     _invoking.swap(_ready);
 }
 
@@ -87,9 +93,8 @@ void ScheduledThread::wait_if_no_scheduler() {
 bool ScheduledThread::waiting(Time_difference endTime) {
     Lock l(_mutex);
     bool waiting_again = _condition.wait_until(l, endTime.to_timespec());
-    assert(_invoking.empty());
     _invoking.swap(_ready);
-    return waiting_again;
+    return waiting_again && !shutdown.load(std::memory_order_consume);
 }
 
 void ScheduledThread::get_need_flush(std::vector<QueueIter> &need_flush) {
@@ -104,7 +109,7 @@ void ScheduledThread::get_need_flush(std::vector<QueueIter> &need_flush) {
 
 void ScheduledThread::flush_need(std::vector<QueueIter> &need_flush) {
     for (auto iter : need_flush) {
-        if ((*iter)->waiting_tasks.load(std::memory_order_acquire) == 0) {
+        if (likely((*iter)->waiting_tasks.load(std::memory_order_acquire) == 0)) {
             (*iter)->force_invoke();
         } else {
             get_readyQueue();

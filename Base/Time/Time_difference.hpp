@@ -25,7 +25,7 @@ namespace Base {
 
         Time_difference() = default;
 
-        Time_difference(int64 ns) : nanoseconds(ns) {};
+        constexpr Time_difference(int64 ns) : nanoseconds(ns) {};
 
         operator int64() const { return nanoseconds; };
 
@@ -40,7 +40,7 @@ namespace Base {
         [[nodiscard]] double to_us() const { return (double) nanoseconds / US_; };
 
         [[nodiscard]] timespec to_timespec() const {
-            struct timespec time {};
+            timespec time {};
             time.tv_sec = nanoseconds / SEC_;
             time.tv_nsec = nanoseconds % SEC_;
             return time;

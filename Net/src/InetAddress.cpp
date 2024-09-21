@@ -21,9 +21,9 @@ InetAddress::InetAddress(bool IPv4, short port, const char* IP,
 }
 
 std::string InetAddress::toIp() const {
-    char buf[INET6_ADDRSTRLEN];
+    char buf[INET6_ADDRSTRLEN] {};
     ops::toIp(buf, sizeof buf, ops::sockaddr_cast(addr_in_cast()));
-    return buf;
+    return { buf };
 }
 
 std::string InetAddress::toIpPort() const {
@@ -31,3 +31,20 @@ std::string InetAddress::toIpPort() const {
     ops::toIpPort(buf, sizeof buf, ops::sockaddr_cast(addr_in_cast()));
     return buf;
 }
+
+// InetAddress InetAddress::getLocalHost() {
+// #include <cstring>
+// #include <ifaddrs.h>
+//     sockaddr_in* addr = nullptr;
+//     ifaddrs* interfaces;
+//     getifaddrs(&interfaces);
+//     for (ifaddrs* ifa = interfaces; ifa; ifa = ifa->ifa_next) {
+//         if (strcmp(ifa->ifa_name, "lo") != 0 && ifa->ifa_addr
+//             && ifa->ifa_addr->sa_family == AF_INET) {
+//             addr = (sockaddr_in *) ifa->ifa_addr;
+//             break;
+//         }
+//     }
+//     freeifaddrs(interfaces);
+//     return addr ? InetAddress { *addr } : InetAddress {};
+// }

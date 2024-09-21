@@ -14,6 +14,7 @@ using namespace Net;
 
 using namespace Base;
 
+
 Reactor::Reactor(MOD mod, Time_difference link_timeout) :
     timeout(link_timeout) {
     switch (mod) {
@@ -77,6 +78,8 @@ void Reactor::start(int monitor_timeoutMS) {
         _loop->loop();
 
         close_alive();
+        delete _monitor;
+        delete _loop;
         _loop = nullptr;
         _running = false;
     });
@@ -152,6 +155,4 @@ void Reactor::close_alive() {
         }
         _map.clear();
     }
-    delete _monitor;
-    delete _loop;
 }

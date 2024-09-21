@@ -7,17 +7,16 @@
 
 #ifdef LOGSYSTEM_BLOCKFILE_HPP
 
-#include "Base/Detail/ioFile.hpp"
+#include "ioFile.hpp"
 
-namespace LogSystem {
+namespace Base {
 
     class BlockFile {
     public:
-        static constexpr uint64 BlockSize = 1 << 12;
-
         BlockFile() = default;
 
-        BlockFile(const char* path, bool append, bool binary);
+        explicit BlockFile(const char* path, bool append,
+                           bool binary = true, uint64 block_size = (1 << 12));
 
         BlockFile(BlockFile &&other) noexcept;
 
@@ -33,13 +32,21 @@ namespace LogSystem {
 
         bool erase_back_blocks(uint64 count);
 
+        bool resize_file_total_blocks(uint64 new_block_size);
+
         void flush() { _file.flush(); };
 
         void flush_to_disk() { _file.flush_to_disk(); };
 
-        [[nodiscard]] uint64 blocks_size() const { return _total_blocks; };
+        bool delete_file() { return _file.delete_file(); };
+
+        [[nodiscard]] uint64 block_size() const { return _block_size; };
+
+        [[nodiscard]] uint64 total_blocks() const { return _total_blocks; };
 
         [[nodiscard]] bool is_open() const { return _file.is_open(); };
+
+        [[nodiscard]] const std::string& get_path() const { return _file.get_path(); };
 
     private:
         bool locating(uint64 index);
@@ -48,13 +55,16 @@ namespace LogSystem {
 
         bool write_error_handle();
 
-        Base::ioFile _file;
+        ioFile _file;
 
         int64 _offset = 0;
 
         uint64 _total_blocks = 0;
 
+        uint64 _block_size = 0;
+
     };
+
 }
 
 #endif

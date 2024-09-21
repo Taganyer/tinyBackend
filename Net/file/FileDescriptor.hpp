@@ -5,8 +5,6 @@
 #ifndef NET_FILEDESCRIPTOR_HPP
 #define NET_FILEDESCRIPTOR_HPP
 
-#ifdef NET_FILEDESCRIPTOR_HPP
-
 #include "Base/Detail/NoCopy.hpp"
 
 namespace Net {
@@ -34,6 +32,5 @@ namespace Net {
 
 }
 
-#endif
 
 #endif //NET_FILEDESCRIPTOR_HPP

@@ -13,9 +13,9 @@ void Monitor::set_tid(pthread_t tid) {
     _tid = tid;
 }
 
-void Monitor::assert_in_right_thread(const char* message) const {
+void Monitor::assert_in_right_thread(const char *message) const {
     if (unlikely(_tid != Base::CurrentThread::tid())) {
-        G_ERROR << message << _tid << " running in wrong thread " << Base::CurrentThread::tid();
+        G_ERROR << message << _tid << " running in wrong thread " << CurrentThread::tid();
         assert(_tid != Base::CurrentThread::tid());
     }
 }

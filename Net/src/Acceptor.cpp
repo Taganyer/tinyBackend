@@ -2,10 +2,10 @@
 // Created by taganyer on 3/14/24.
 //
 
-#include "../Acceptor.hpp"
+#include "../../LogSystem/SystemLog.hpp"
+#include "Net/Acceptor.hpp"
 #include "Net/InetAddress.hpp"
 #include "Net/error/errors.hpp"
-#include "LogSystem/SystemLog.hpp"
 
 using namespace Net;
 

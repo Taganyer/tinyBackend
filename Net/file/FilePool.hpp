@@ -5,12 +5,11 @@
 #ifndef NET_FILEPOOL_HPP
 #define NET_FILEPOOL_HPP
 
-#ifdef NET_FILEPOOL_HPP
 
 #include <map>
 #include <functional>
-#include "Base/Condition.hpp"
 #include "Base/Detail/oFile.hpp"
+#include "Base/Condition.hpp"
 #include "Net/monitors/Selector.hpp"
 
 
@@ -23,6 +22,7 @@ namespace Net {
     /// 大文件发送线程，提供了错误处理回调函数。
     class FilePool {
     public:
+
         static const int Default_timeWait;
 
         /*
@@ -49,6 +49,7 @@ namespace Net {
         [[nodiscard]] bool running() const { return run; };
 
     private:
+
         struct Data {
             off_t ptr;
             uint64 total;
@@ -81,6 +82,5 @@ namespace Net {
 
 }
 
-#endif
 
 #endif //NET_FILEPOOL_HPP

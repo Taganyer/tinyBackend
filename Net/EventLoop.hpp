@@ -13,6 +13,7 @@ namespace Net {
 
     class EventLoop {
     public:
+
         using Event = std::function<void()>;
 
         using EventsQueue = std::vector<Event>;
@@ -34,12 +35,15 @@ namespace Net {
 
         void assert_in_thread() const;
 
-        [[nodiscard]] bool object_in_thread() const { return Base::CurrentThread::tid() == _tid; };
+        [[nodiscard]] bool object_in_thread() const {
+            return Base::CurrentThread::tid() == _tid;
+        };
 
         [[nodiscard]] bool looping() const { return _run; };
 
     private:
-        volatile bool _run = false, _quit = false;
+
+        volatile bool _run = false,  _quit = false;
 
         bool _weak = false;
 

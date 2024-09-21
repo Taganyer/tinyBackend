@@ -83,6 +83,8 @@ namespace Net {
 
         [[nodiscard]] const sockaddr_in6 *addr6_in_cast() const { return &_addr6; };
 
+        // static InetAddress getLocalHost();
+
     private:
 
         union {

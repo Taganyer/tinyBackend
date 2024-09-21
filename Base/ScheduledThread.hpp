@@ -52,7 +52,9 @@ namespace Base {
 
         void add_scheduler(const ObjectPtr &ptr);
 
-        void remove_scheduler(const ObjectPtr &ptr, void *arg);
+        void remove_scheduler(const ObjectPtr &ptr);
+
+        void remove_scheduler_and_invoke(const ObjectPtr &ptr, void* arg);
 
         void submit_task(Scheduler &scheduler, void *arg);
 

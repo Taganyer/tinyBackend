@@ -5,7 +5,6 @@
 #ifndef NET_EVENT_HPP
 #define NET_EVENT_HPP
 
-#ifdef NET_EVENT_HPP
 
 namespace Net {
 
@@ -60,6 +59,5 @@ namespace Net {
 
 }
 
-#endif
 
 #endif //NET_EVENT_HPP

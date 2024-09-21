@@ -34,6 +34,8 @@ namespace Base {
         template <typename...Args>
         Iter insert(Iter dest, Args &&...args);
 
+        Iter insert(Iter dest, Val &&val);
+
         void move_to(Iter dest, Iter target);
 
         void erase(Iter target);
@@ -138,6 +140,8 @@ namespace Base {
     private:
         Node* _ptr = nullptr;
 
+        friend class List;
+
     };
 
 
@@ -167,7 +171,7 @@ namespace Base {
     }
 
     template <typename Data>
-    inline List<Data>::~List() {
+    List<Data>::~List() {
         while (_head) {
             Node* temp = _head;
             _head = _head->_next;
@@ -177,8 +181,8 @@ namespace Base {
 
     template <typename Data>
     template <typename...Args>
-    inline typename List<Data>::Iter
-    List<Data>::insert(List::Iter dest, Args &&...args) {
+    typename List<Data>::Iter
+    List<Data>::insert(Iter dest, Args &&...args) {
         auto ptr = new Node(std::forward<Args>(args)...);
         if (dest._ptr) {
             ptr->_prev = dest._ptr->_prev;
@@ -197,7 +201,28 @@ namespace Base {
     }
 
     template <typename Data>
-    inline void List<Data>::move_to(Iter dest, Iter target) {
+    typename List<Data>::Iter List<Data>::insert(Iter dest, Val&& val) {
+        auto ptr = val._ptr;
+        val._ptr = nullptr;
+        ptr->_prev = ptr->_next = nullptr;
+        if (dest._ptr) {
+            ptr->_prev = dest._ptr->_prev;
+            ptr->_next = dest._ptr;
+            dest._ptr->_prev = ptr;
+            if (dest == _head) _head = ptr;
+            else ptr->_prev->_next = ptr;
+        } else {
+            ptr->_prev = _tail;
+            if (_tail) _tail->_next = ptr;
+            else _head = ptr;
+            _tail = ptr;
+        }
+        ++_size;
+        return List::Iter(ptr);
+    }
+
+    template <typename Data>
+    void List<Data>::move_to(Iter dest, Iter target) {
         auto ptr = target._ptr;
         if (!ptr || ptr->_next == dest._ptr) return;
         if (ptr->_next) {
@@ -225,7 +250,7 @@ namespace Base {
     }
 
     template <typename Data>
-    inline void List<Data>::erase(Iter target) {
+    void List<Data>::erase(Iter target) {
         auto ptr = target._ptr;
         if (!ptr) return;
         if (ptr->_next) {
@@ -242,7 +267,7 @@ namespace Base {
     }
 
     template <typename Data>
-    inline void List<Data>::erase(Iter begin, Iter end) {
+    void List<Data>::erase(Iter begin, Iter end) {
         if (!begin._ptr) return;
         if (begin._ptr->_prev) begin._ptr->_prev->_next = end._ptr;
         else _head = end._ptr;

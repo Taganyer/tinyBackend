@@ -9,5 +9,6 @@
 
 #include "Detail/oFile.hpp"
 
+#include "Detail/ioFile.hpp"
 
 #endif //BASE_FILE_HPP

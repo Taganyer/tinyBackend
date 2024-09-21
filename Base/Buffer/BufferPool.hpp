@@ -14,7 +14,7 @@ namespace Base {
 
     class BufferPool : NoCopy {
     public:
-        constexpr static uint64 block_size = 1 << 12;
+        constexpr static uint64 BLOCK_SIZE = 1 << 12;
 
         /// 返回与 block_size 向上对齐的大小。
         static uint64 round_size(uint64 target);
@@ -51,16 +51,37 @@ namespace Base {
     public:
         class Buffer : NoCopy {
         public:
+            Buffer() = default;
+
             Buffer(Buffer &&other) noexcept : _buf(other._buf), _size(other._size), _pool(other._pool) {
                 other._buf = nullptr;
                 other._size = 0;
+                other._pool = nullptr;
             };
 
             ~Buffer() { put_back(); };
 
             char* data() { return _buf; };
 
-            void put_back() { if (_buf) _pool.put(*this); };
+            void put_back() {
+                if (_buf) {
+                    _pool->put(*this);
+                    _buf = nullptr;
+                    _size = 0;
+                    _pool = nullptr;
+                }
+            };
+
+            Buffer &operator=(Buffer &&other) noexcept {
+                put_back();
+                _buf = other._buf;
+                _size = other._size;
+                _pool = other._pool;
+                other._buf = nullptr;
+                other._size = 0;
+                other._pool = nullptr;
+                return *this;
+            }
 
             [[nodiscard]] const char* data() const { return _buf; };
 
@@ -69,11 +90,11 @@ namespace Base {
             [[nodiscard]] operator bool() const { return _buf; };
 
         private:
-            char* _buf;
-            uint64 _size;
-            BufferPool &_pool;
+            char* _buf = nullptr;
+            uint64 _size = 0;
+            BufferPool *_pool = nullptr;
 
-            Buffer(char* b, uint64 s, BufferPool &pool) : _buf(b), _size(s), _pool(pool) {};
+            Buffer(char* b, uint64 s, BufferPool &pool) : _buf(b), _size(s), _pool(&pool) {};
 
             friend class BufferPool;
 

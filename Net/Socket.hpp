@@ -5,8 +5,6 @@
 #ifndef NET_SOCKET_HPP
 #define NET_SOCKET_HPP
 
-#ifdef NET_SOCKET_HPP
-
 #include "file/FileDescriptor.hpp"
 
 struct tcp_info;
@@ -60,6 +58,5 @@ namespace Net {
 
 }
 
-#endif
 
 #endif //NET_SOCKET_HPP

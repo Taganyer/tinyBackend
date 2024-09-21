@@ -24,12 +24,12 @@ namespace LogSystem {
     inline int rank_toString(char *ptr, LogRank rank) {
         if (rank == EMPTY) return 0;
         constexpr char store[6][7]{
-                "TRACE:",
-                "DEBUG:",
-                "INFO :",
-                "WARN :",
-                "ERROR:",
-                "FATAL:",
+            "TRACE:",
+            "DEBUG:",
+            "INFO :",
+            "WARN :",
+            "ERROR:",
+            "FATAL:",
         };
         std::memcpy(ptr, store[rank], 6);
         return 6;

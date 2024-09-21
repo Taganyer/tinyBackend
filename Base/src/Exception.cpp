@@ -3,8 +3,7 @@
 //
 
 #include "../Exception.hpp"
-
-#include "../Detail/CurrentThread.hpp"
+#include "Base/Detail/CurrentThread.hpp"
 
 namespace Base {
 

@@ -5,8 +5,6 @@
 #ifndef NET_EPOLLER_HPP
 #define NET_EPOLLER_HPP
 
-#ifdef NET_EPOLLER_HPP
-
 #include <set>
 #include "Monitor.hpp"
 
@@ -51,6 +49,5 @@ namespace Net {
 
 }
 
-#endif
 
 #endif //NET_EPOLLER_HPP

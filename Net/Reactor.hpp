@@ -22,6 +22,7 @@ namespace Net {
 
     class Reactor : Base::NoCopy {
     public:
+
         enum MOD {
             SELECT,
             POLL,
@@ -36,13 +37,14 @@ namespace Net {
 
         void start(int monitor_timeoutMS);
 
-        EventLoop* get_loop() { return _loop; };
+        EventLoop *get_loop() { return _loop; };
 
-        Monitor* get_monitor() { return _monitor; };
+        Monitor *get_monitor() { return _monitor; };
 
         [[nodiscard]] bool running() const { return _running; };
 
     private:
+
         using TimerQueue = Base::List<std::pair<Base::Time_difference, Event>>;
 
         using MapData = std::pair<NetLink::WeakPtr, TimerQueue::Iter>;
@@ -51,9 +53,9 @@ namespace Net {
 
         Base::Time_difference timeout;
 
-        Monitor* _monitor;
+        Monitor *_monitor;
 
-        EventLoop* _loop = nullptr;
+        EventLoop *_loop = nullptr;
 
         LinkMap _map;
 

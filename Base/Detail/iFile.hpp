@@ -9,6 +9,7 @@
 #include "NoCopy.hpp"
 #include <cstdio>
 #include <string>
+#include <sys/stat.h>
 
 
 namespace Base {
@@ -17,16 +18,15 @@ namespace Base {
 
     class iFile : NoCopy {
     public:
-
         iFile() = default;
 
-        iFile(const char *path, bool binary = false);
+        explicit iFile(const char* path, bool binary = false);
 
         iFile(iFile &&other) noexcept;
 
         ~iFile();
 
-        bool open(const char *path, bool binary = false);
+        bool open(const char* path, bool binary = false);
 
         bool close();
 
@@ -44,21 +44,23 @@ namespace Base {
 
         string read(uint64 size);
 
-        uint64 read(uint64 size, void *dest);
+        uint64 read(uint64 size, void* dest);
 
         string getline();
 
-        int64 getline(char *dest, size_t size);
+        int64 getline(char* dest, size_t size);
 
         string get_until(int target);
 
-        int64 get_until(char target, char *dest, size_t size = 256);
+        int64 get_until(char target, char* dest, size_t size = 256);
 
         string getAll();
 
         void skip_to(int ch);
 
         int64 find(int ch);
+
+        bool delete_file();
 
         bool seek_cur(int64 step) { return fseek(_file, step, SEEK_CUR) == 0; };
 
@@ -74,32 +76,30 @@ namespace Base {
 
         [[nodiscard]] bool is_end() const { return feof(_file); };
 
-        [[nodiscard]] uint64 size() const {
-            if (!_file) return 0;
-            auto pos = ftell(_file);
-            fseek(_file, 0, SEEK_END);
-            auto _size = ftell(_file) - pos;
-            fseek(_file, pos, SEEK_SET);
-            return _size;
-        };
+        [[nodiscard]] const std::string &get_path() const { return _path; };
 
-        int get_fd() {
+        [[nodiscard]] int get_fd() const {
             if (!_file) return -1;
             return fileno(_file);
         };
 
-        FILE *get_fp() { return _file; };
+        [[nodiscard]] FILE* get_fp() const { return _file; };
+
+        [[nodiscard]] bool get_stat(struct stat* ptr) const;
+
+        [[nodiscard]] uint64 size() const;
 
     protected:
+        FILE* _file = nullptr;
 
-        FILE *_file = nullptr;
+        std::string _path;
 
     };
 
 }
 
 namespace Base {
-    inline iFile::iFile(const char *path, bool binary) {
+    inline iFile::iFile(const char* path, bool binary) {
         open(path, binary);
     }
 
@@ -111,15 +111,20 @@ namespace Base {
         close();
     }
 
-    inline bool iFile::open(const char *path, bool binary) {
+    inline bool iFile::open(const char* path, bool binary) {
         close();
         _file = fopen(path, binary ? "rb" : "r");
+        if (_file)
+            _path = path;
         return _file;
     }
 
     inline bool iFile::close() {
         if (!_file) return true;
-        if (fclose(_file) == 0) _file = nullptr;
+        if (fclose(_file) == 0) {
+            _file = nullptr;
+            _path = std::string();
+        }
         return !_file;
     }
 
@@ -164,7 +169,7 @@ namespace Base {
         return ans;
     }
 
-    inline uint64 iFile::read(uint64 size, void *dest) {
+    inline uint64 iFile::read(uint64 size, void* dest) {
         return fread(dest, 1, size, _file);
     }
 
@@ -172,12 +177,12 @@ namespace Base {
         return get_until('\n');
     }
 
-    inline int64 iFile::getline(char *dest, size_t size) {
+    inline int64 iFile::getline(char* dest, size_t size) {
         return getdelim(&dest, &size, '\n', _file);
     }
 
     inline string iFile::get_until(int target) {
-        char *ptr = nullptr;
+        char* ptr = nullptr;
         size_t t = getdelim(&ptr, &t, target, _file);
         if (t && ptr[t - 1] == target) --t;
         if (t == -1) t = 0;
@@ -186,7 +191,7 @@ namespace Base {
         return ans;
     }
 
-    inline int64 iFile::get_until(char target, char *dest, size_t size) {
+    inline int64 iFile::get_until(char target, char* dest, size_t size) {
         return getdelim(&dest, &size, target, _file);
     }
 
@@ -213,6 +218,24 @@ namespace Base {
         if (c != EOF) ans = ftell(_file);
         seek_beg(pos);
         return ans;
+    }
+
+    inline bool iFile::delete_file() {
+        if (!_file || fclose(_file) != 0) return false;
+        _file = nullptr;
+        bool success = remove(_path.c_str()) == 0;
+        _path = std::string();
+        return success;
+    }
+
+    inline bool iFile::get_stat(struct stat* ptr) const {
+        return is_open() && fstat(get_fd(), ptr) == 0;
+    }
+
+    inline uint64 iFile::size() const {
+        struct stat st{};
+        if (!get_stat(&st)) return 0;
+        return st.st_size;
     }
 
 }

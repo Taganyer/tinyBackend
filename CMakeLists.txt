@@ -26,10 +26,12 @@ add_subdirectory(Base)
 # 添加 Net 子库
 add_subdirectory(Net)
 
+add_subdirectory(AOP)
+
 add_subdirectory(LogSystem)
 
 # 生成可执行文件
 add_executable(${PROJECT_NAME} main.cpp CMake_config.h)
 
 # 链接 Base Net 子库
-target_link_libraries(${PROJECT_NAME} Base Net LogSystem)
+target_link_libraries(${PROJECT_NAME} Base Net AOP LogSystem)

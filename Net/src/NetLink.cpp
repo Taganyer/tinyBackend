@@ -11,6 +11,9 @@
 
 using namespace Net;
 
+using namespace Base;
+
+
 void NetLink::handle_read(Event* event) {
     if (!_socket->valid()) {
         handle_error({ error_types::UnexpectedShutdown, 0 }, event);

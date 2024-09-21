@@ -16,7 +16,7 @@ namespace LogSystem {
 
     class LogStream;
 
-    constexpr uint64 FILE_LIMIT = 1 << 29;
+    constexpr uint64 FILE_LIMIT = 1 << 28;
 
     constexpr uint64 LOG_BUFFER_SIZE = 1 << 24;
 
@@ -162,23 +162,23 @@ namespace LogSystem {
 }
 
 /// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define TRACE(val) if (val.get_rank() <= Base::LogRank::TRACE) \
-                        (val.stream(Base::LogRank::TRACE))
+#define TRACE(val) if ((val).get_rank() <= LogSystem::LogRank::TRACE) \
+                        ((val).stream(LogSystem::LogRank::TRACE))
 
-#define DEBUG(val) if (val.get_rank() <= Base::LogRank::DEBUG) \
-                        (val.stream(Base::LogRank::DEBUG))
+#define DEBUG(val) if ((val).get_rank() <= LogSystem::LogRank::DEBUG) \
+                        ((val).stream(LogSystem::LogRank::DEBUG))
 
-#define INFO(val) if (val.get_rank() <= Base::LogRank::INFO) \
-                        (val.stream(Base::LogRank::INFO))
+#define INFO(val) if ((val).get_rank() <= LogSystem::LogRank::INFO) \
+                        ((val).stream(LogSystem::LogRank::INFO))
 
-#define WARN(val) if (val.get_rank() <= Base::LogRank::WARN) \
-                        (val.stream(Base::LogRank::WARN))
+#define WARN(val) if ((val).get_rank() <= LogSystem::LogRank::WARN) \
+                        ((val).stream(LogSystem::LogRank::WARN))
 
-#define ERROR(val) if (val.get_rank() <= Base::LogRank::ERROR) \
-                        (val.stream(Base::LogRank::ERROR))
+#define ERROR(val) if ((val).get_rank() <= LogSystem::LogRank::ERROR) \
+                        ((val).stream(LogSystem::LogRank::ERROR))
 
-#define FATAL(val) if (val.get_rank() <= Base::LogRank::FATAL) \
-                        (val.stream(Base::LogRank::FATAL))
+#define FATAL(val) if ((val).get_rank() <= LogSystem::LogRank::FATAL) \
+                        ((val).stream(LogSystem::LogRank::FATAL))
 
 
 /// 解除注释开启全局 BufferPool 对象
@@ -197,7 +197,7 @@ extern Base::BufferPool Global_BufferPool;
 extern Base::Time_difference Global_ScheduledThread_FlushTime;
 extern Base::ScheduledThread Global_ScheduledThread;
 /// 解除注释开启全局日志
-#define GLOBAL_LOG
+// #define GLOBAL_LOG
 
 #endif
 

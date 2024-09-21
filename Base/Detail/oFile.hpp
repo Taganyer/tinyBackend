@@ -8,23 +8,24 @@
 #include "config.hpp"
 #include "NoCopy.hpp"
 #include <cstdio>
+#include <string>
 #include <unistd.h>
+#include <sys/stat.h>
 
 
 namespace Base {
 
     class oFile : NoCopy {
     public:
-
         oFile() = default;
 
-        oFile(const char *path, bool append = false, bool binary = false);
+        explicit oFile(const char* path, bool append = false, bool binary = false);
 
         oFile(oFile &&other) noexcept;
 
         ~oFile();
 
-        bool open(const char *path, bool append = false, bool binary = false);
+        bool open(const char* path, bool append = false, bool binary = false);
 
         bool close();
 
@@ -40,9 +41,9 @@ namespace Base {
 
         int putDouble(double d);
 
-        size_t write(const void *str, size_t len = -1);
+        size_t write(const void* str, size_t len = -1);
 
-        size_t put_line(const char *str, size_t len = -1);
+        size_t put_line(const char* str, size_t len = -1);
 
         void flush();
 
@@ -50,8 +51,10 @@ namespace Base {
 
         bool resize_file(uint64 size);
 
-        template<typename ...Args>
-        int formatPut(const char *f, Args ... args) {
+        bool delete_file();
+
+        template <typename...Args>
+        int formatPut(const char* f, Args...args) {
             return fprintf(_file, f, args...);
         };
 
@@ -59,16 +62,21 @@ namespace Base {
 
         [[nodiscard]] bool is_open() const { return _file; };
 
-        int get_fd() {
+        [[nodiscard]] const std::string &get_path() const { return _path; };
+
+        [[nodiscard]] int get_fd() const {
             if (!_file) return -1;
             return fileno(_file);
         };
 
-        FILE *get_fp() { return _file; };
+        [[nodiscard]] FILE* get_fp() const { return _file; };
+
+        [[nodiscard]] bool get_stat(struct stat* ptr) const;
 
     protected:
+        FILE* _file = nullptr;
 
-        FILE *_file = nullptr;
+        std::string _path;
 
     };
 
@@ -77,7 +85,7 @@ namespace Base {
 
 namespace Base {
 
-    inline oFile::oFile(const char *path, bool append, bool binary) {
+    inline oFile::oFile(const char* path, bool append, bool binary) {
         open(path, append, binary);
     }
 
@@ -89,18 +97,23 @@ namespace Base {
         close();
     }
 
-    inline bool oFile::open(const char *path, bool append, bool binary) {
+    inline bool oFile::open(const char* path, bool append, bool binary) {
         close();
-        char mod[3]{'w', 'b', '\0'};
+        char mod[3] { 'w', 'b', '\0' };
         if (append) mod[0] = 'a';
         if (!binary) mod[1] = '\0';
         _file = fopen(path, mod);
+        if (_file)
+            _path = path;
         return _file;
     }
 
     inline bool oFile::close() {
         if (!_file) return true;
-        if (fclose(_file) == 0) _file = nullptr;
+        if (fclose(_file) == 0) {
+            _file = nullptr;
+            _path = std::string();
+        }
         return !_file;
     }
 
@@ -128,12 +141,12 @@ namespace Base {
         return fprintf(_file, "%lf", d);
     }
 
-    inline size_t oFile::write(const void *str, size_t len) {
+    inline size_t oFile::write(const void* str, size_t len) {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
 
-    inline size_t oFile::put_line(const char *str, size_t len) {
+    inline size_t oFile::put_line(const char* str, size_t len) {
         size_t flag = write(str, len);
         if (fputc('\n', _file) != EOF) ++flag;
         return flag;
@@ -150,6 +163,18 @@ namespace Base {
 
     inline bool oFile::resize_file(uint64 size) {
         return ftruncate(get_fd(), size) == 0;
+    }
+
+    inline bool oFile::delete_file() {
+        if (!_file || fclose(_file) != 0) return false;
+        _file = nullptr;
+        bool success = remove(_path.c_str()) == 0;
+        _path = std::string();
+        return success;
+    }
+
+    inline bool oFile::get_stat(struct stat* ptr) const {
+        return is_open() && fstat(get_fd(), ptr) == 0;
     }
 
 }

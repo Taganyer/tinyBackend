@@ -36,6 +36,8 @@ namespace Base {
         template <typename...Args>
         Iter insert_after(Iter before_dest, Args &&...args);
 
+        Iter insert_after(Iter before_dest, Val &&val);
+
         void next_to_after(Iter before_dest, Iter before_target);
 
         void erase_after(Iter before_target);
@@ -128,6 +130,8 @@ namespace Base {
     private:
         Node* _ptr = nullptr;
 
+        friend class SingleList;
+
     };
 
 
@@ -165,6 +169,25 @@ namespace Base {
     typename SingleList<Data>::Iter
     SingleList<Data>::insert_after(Iter before_dest, Args &&...args) {
         auto ptr = new Node(std::forward<Args>(args)...);
+        if (before_dest._ptr) {
+            if (before_dest._ptr == _tail) _tail = ptr;
+            ptr->_next = before_dest._ptr->_next;
+            before_dest._ptr->_next = ptr;
+        } else {
+            if (_head) ptr->_next = _head;
+            else _tail = ptr;
+            _head = ptr;
+        }
+        ++_size;
+        return SingleList::Iter();
+    }
+
+    template <typename Data>
+    typename SingleList<Data>::Iter
+    SingleList<Data>::insert_after(Iter before_dest, Val&& val) {
+        auto ptr = val._ptr;
+        val._ptr = nullptr;
+        ptr->_next = nullptr;
         if (before_dest._ptr) {
             if (before_dest._ptr == _tail) _tail = ptr;
             ptr->_next = before_dest._ptr->_next;

@@ -3,9 +3,9 @@
 //
 
 #include "../FileDescriptor.hpp"
-#include "Net/error/errors.hpp"
-#include "LogSystem/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
+#include "LogSystem/SystemLog.hpp"
+#include "Net/error/errors.hpp"
 
 
 using namespace Net;
@@ -13,5 +13,5 @@ using namespace Net;
 
 FileDescriptor::~FileDescriptor() {
     if (_fd > 0 && !ops::close(_fd))
-        G_FATAL << "fd " << _fd << ' ' << ops::get_close_error(errno);
+        G_FATAL << "FileDescriptor " << _fd << ' ' << ops::get_close_error(errno) << errno;
 }

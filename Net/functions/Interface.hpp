@@ -5,12 +5,10 @@
 #ifndef NET_INTERFACE_HPP
 #define NET_INTERFACE_HPP
 
-#ifdef NET_INTERFACE_HPP
-
-#include <unistd.h>
-#include <sys/uio.h>
-#include <arpa/inet.h>
 #include "Base/Detail/config.hpp"
+#include <sys/uio.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 struct sockaddr;
 struct sockaddr_in;
@@ -169,6 +167,5 @@ namespace Net {
 
 }
 
-#endif
 
 #endif //NET_INTERFACE_HPP

@@ -22,7 +22,7 @@ SystemLog::SystemLog(ScheduledThread &thread, BufferPool &buffer_pool,
 SystemLog::~SystemLog() {
     Lock l(_scheduler->IO_lock);
     if (_scheduler) {
-        _scheduler->_thread->remove_scheduler(_scheduler, _scheduler->_buffer);
+        _scheduler->_thread->remove_scheduler_and_invoke(_scheduler, _scheduler->_buffer);
         _scheduler->_buffer = nullptr;
     }
 }

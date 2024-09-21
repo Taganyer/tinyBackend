@@ -6,7 +6,7 @@
 
 using namespace Base;
 
-static inline std::pair<uint64, uint64> parent_sibling(uint64 i) {
+static std::pair<uint64, uint64> parent_sibling(uint64 i) {
     uint64 p, s;
     if (i & 1) {
         p = (i - 1) >> 1;
@@ -19,7 +19,7 @@ static inline std::pair<uint64, uint64> parent_sibling(uint64 i) {
 }
 
 uint64 BufferPool::round_size(uint64 target) {
-    uint64 pre = 0, size = block_size;
+    uint64 pre = 0, size = BLOCK_SIZE;
     while (size < target && size > pre) {
         pre = size;
         size <<= 1;
@@ -29,14 +29,18 @@ uint64 BufferPool::round_size(uint64 target) {
 
 BufferPool::BufferPool(uint64 total_size) :
     _size(round_size(total_size)), _buffer(new char[_size]),
-    _rest(std::vector<uint64>(_size / block_size << 1)) {
-    for (uint64 s = _size, t = 1, i = 0; s >= block_size; s >>= 1, t <<= 1)
+    _rest(std::vector<uint64>(_size / BLOCK_SIZE << 1)) {
+    for (uint64 s = _size, t = 1, i = 0; s >= BLOCK_SIZE; s >>= 1, t <<= 1)
         for (uint64 end = i + t; i < end; ++i)
             _rest[i] = s;
 }
 
 BufferPool::~BufferPool() {
-    assert(_rest[0] != _size ? nullptr : "memory leak");
+    if (max_block() != _size) {
+        std::fprintf(stderr, "Premature destruction of the BufferPool "
+                     "can result in invalid references.\n");
+        std::terminate();
+    }
     delete[] _buffer;
 }
 
@@ -62,8 +66,6 @@ BufferPool::Buffer BufferPool::get(uint64 size) {
 void BufferPool::put(Buffer &buffer) {
     Lock l(_mutex);
     uint64 i = location(buffer._buf, buffer._size), fs = buffer._size;
-    buffer._buf = nullptr;
-    buffer._size = 0;
 
     assert(_rest[i] == 0);
     _rest[i] = fs;
