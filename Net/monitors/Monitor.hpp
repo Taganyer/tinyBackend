@@ -15,9 +15,8 @@
 
 namespace Net {
 
-    class Monitor : private Base::NoCopy {
+    class Monitor : Base::NoCopy {
     public:
-
         using EventList = std::vector<Event>;
 
         Monitor() = default;
@@ -35,21 +34,17 @@ namespace Net {
         virtual void update_fd(Event event) = 0;
 
         /// TODO 只在初始化时调用
-        void set_tid(pthread_t tid);
-
-        void assert_in_right_thread(const char *message) const;
+        void set_tid(pthread_t tid) { _tid = tid; };
 
         [[nodiscard]] virtual uint64 fd_size() const = 0;
 
         [[nodiscard]] pthread_t tid() const { return _tid; };
 
     protected:
-
         pthread_t _tid = -1;
 
     public:
-
-        error_mark error_ = {error_types::Null, 0};
+        error_mark error_ = { error_types::Null, 0 };
 
     };
 

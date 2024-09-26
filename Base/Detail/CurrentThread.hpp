@@ -30,6 +30,9 @@ namespace Base {
         /// 线程名
         static string& thread_name() { return this_thread_name; };
 
+        /// 线程标识指针
+        static void *& thread_mark_ptr() { return this_thread_mark_ptr; };
+
         /// 放弃当前线程运行权。
         static void yield_this_thread();
 
@@ -72,6 +75,8 @@ namespace Base {
         static const thread_local pthread_t thread_tid;
 
         static thread_local string this_thread_name;
+
+        static thread_local void* this_thread_mark_ptr;
 
         friend class Thread;
 

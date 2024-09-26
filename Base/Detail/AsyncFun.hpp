@@ -10,16 +10,32 @@
 
 namespace Base::Detail {
 
-    template <typename Result, typename Target_fun, typename...Args>
-    class AsyncFun {
-    private:
-        std::promise<Result> _promise;
+    template <typename Target_fun, typename...Args>
+    class FunPack {
+    public:
+        explicit FunPack(Target_fun &&fun, Args &&...args) :
+            fun(std::forward<Target_fun>(fun)), args(std::tuple<Args...>(std::forward<Args>(args)...)) {};
+
+        virtual ~FunPack() = default;
+
+        virtual void operator()() {
+            std::apply(fun, std::move(args));
+        };
+
+    protected:
         Target_fun fun;
         std::tuple<Args...> args;
 
+    };
+
+    template <typename Result, typename Target_fun, typename...Args>
+    class AsyncFun : public FunPack<Target_fun, Args...> {
     public:
-        AsyncFun(Target_fun &&fun, Args &&...args) :
-            fun(fun), args(std::tuple<Args...>(std::forward<Args>(args)...)) {};
+        using Parent = FunPack<Target_fun, Args...>;
+        explicit AsyncFun(Target_fun &&fun, Args &&...args) :
+            Parent(std::forward<Target_fun>(fun), std::forward<Args>(args)...) {};
+
+        ~AsyncFun() override = default;
 
         auto get_future() { return _promise.get_future(); };
 
@@ -27,18 +43,22 @@ namespace Base::Detail {
             _promise.set_exception(std::make_exception_ptr(Exception("This Task have been interrupted")));
         };
 
-        void operator()() {
+        void operator()() override {
             try {
-                if constexpr (std::is_same<Result, void>::value) {
-                    std::apply(fun, std::move(args));
+                if constexpr (std::is_same_v<Result, void>) {
+                    std::apply(Parent::fun, std::move(Parent::args));
                     _promise.set_value();
                 } else {
-                    _promise.set_value(std::apply(fun, std::move(args)));
+                    _promise.set_value(std::apply(Parent::fun, std::move(Parent::args)));
                 }
             } catch (...) {
                 _promise.set_exception(std::current_exception());
             }
-        }
+        };
+
+    private:
+        std::promise<Result> _promise;
+
     };
 
 }

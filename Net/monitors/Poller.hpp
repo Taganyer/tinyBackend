@@ -15,7 +15,6 @@ namespace Net {
 
     class Poller : public Monitor {
     public:
-
         using ActiveEvents = std::vector<pollfd>;
 
         ~Poller() override;
@@ -33,8 +32,9 @@ namespace Net {
         [[nodiscard]] uint64 fd_size() const override;
 
     private:
-
         ActiveEvents _fds;
+
+        std::vector<void *> _datas;
 
         std::map<int, int> _mapping;
 

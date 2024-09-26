@@ -197,7 +197,7 @@ extern Base::BufferPool Global_BufferPool;
 extern Base::Time_difference Global_ScheduledThread_FlushTime;
 extern Base::ScheduledThread Global_ScheduledThread;
 /// 解除注释开启全局日志
-// #define GLOBAL_LOG
+#define GLOBAL_LOG
 
 #endif
 

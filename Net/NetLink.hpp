@@ -9,7 +9,6 @@
 
 #include <memory>
 #include <functional>
-
 #include "Socket.hpp"
 #include "Base/Buffer/RingBuffer.hpp"
 
@@ -22,11 +21,11 @@ namespace Net {
 
     class Acceptor;
 
-    class NetLink : public std::enable_shared_from_this<NetLink>, private Base::NoCopy {
+    class NetLink : public std::enable_shared_from_this<NetLink>, Base::NoCopy {
     public:
         using ReadCallback = std::function<void(Base::RingBuffer &, Socket &)>;
 
-        using WriteCallback = std::function<void(Base::RingBuffer &, Socket &)>;
+        using WriteCallback = std::function<void(Socket &)>;
 
         /*
          * 返回值表示是否调用 CloseCallback
@@ -92,6 +91,8 @@ namespace Net {
         friend class Controller;
 
         friend class Reactor;
+
+        friend class BalancedReactor;
 
         friend class Acceptor;
 

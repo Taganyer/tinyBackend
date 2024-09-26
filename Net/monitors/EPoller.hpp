@@ -5,7 +5,7 @@
 #ifndef NET_EPOLLER_HPP
 #define NET_EPOLLER_HPP
 
-#include <set>
+#include <map>
 #include "Monitor.hpp"
 
 struct epoll_event;
@@ -29,6 +29,7 @@ namespace Net {
 
         void remove_all() override;
 
+        /// 设置为 NoEvent 会直接删除 fd;
         void update_fd(Event event) override;
 
         [[nodiscard]] uint64 fd_size() const override { return _fds.size(); };
@@ -37,13 +38,13 @@ namespace Net {
 
         ActiveEvents activeEvents;
 
-        std::set<int> _fds;
+        std::map<int, Event> _fds;
 
         int _epfd = -1;
 
         void get_events(EventList &list, int size);
 
-        bool operate(int mod, int fd, int events);
+        bool operate(int mod, Event *event);
 
     };
 

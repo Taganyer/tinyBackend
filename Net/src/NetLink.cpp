@@ -55,7 +55,7 @@ void NetLink::handle_write(Event* event) {
     } else {
         _output.read_advance(size);
         G_TRACE << _socket->fd() << " write " << size << " bytes to " << _socket->fd();
-        if (_writeFun) _writeFun(_output, *_socket);
+        if (_writeFun) _writeFun(*_socket);
     }
 }
 

@@ -13,10 +13,10 @@
 
 namespace Base {
 
-    class Condition : private NoCopy {
+    class Condition : NoCopy {
     public:
         Condition() {
-            check(pthread_cond_init(&_cond, nullptr))
+            CAPI_CHECK(pthread_cond_init(&_cond, nullptr))
         };
 
         Condition(Condition &&other) noexcept: _cond(other._cond) {
@@ -24,22 +24,22 @@ namespace Base {
         };
 
         ~Condition() {
-            check(pthread_cond_destroy(&_cond))
+            CAPI_CHECK(pthread_cond_destroy(&_cond))
         };
 
         void notify_one() {
-            check(pthread_cond_signal(&_cond))
+            CAPI_CHECK(pthread_cond_signal(&_cond))
         };
 
         void notify_all() {
-            check(pthread_cond_broadcast(&_cond))
+            CAPI_CHECK(pthread_cond_broadcast(&_cond))
         };
 
         template<typename Mutex>
         void wait(Lock<Mutex> &lock) {
-            lock._lock.owner_thread = 0;
-            check(pthread_cond_wait(&_cond, &lock._lock._lock))
-            lock._lock.owner_thread = CurrentThread::tid();
+            lock._lock._owner_thread = 0;
+            CAPI_CHECK(pthread_cond_wait(&_cond, &lock._lock._lock))
+            lock._lock._owner_thread = CurrentThread::tid();
         };
 
         template<typename Mutex, typename Fun>
@@ -74,9 +74,9 @@ namespace Base {
 
         /// 未超时返回 true
         bool wait_until(Lock<Mutex> &lock, const timespec &endTime) {
-            lock._lock.owner_thread = 0;
+            lock._lock._owner_thread = 0;
             int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &endTime);
-            lock._lock.owner_thread = CurrentThread::tid();
+            lock._lock._owner_thread = CurrentThread::tid();
             return t == 0;
         }
 

@@ -7,13 +7,13 @@
 
 #ifdef NET_EVENTLOOP_HPP
 
+#include <atomic>
 #include "Base/Condition.hpp"
 
 namespace Net {
 
     class EventLoop {
     public:
-
         using Event = std::function<void()>;
 
         using EventsQueue = std::vector<Event>;
@@ -42,8 +42,7 @@ namespace Net {
         [[nodiscard]] bool looping() const { return _run; };
 
     private:
-
-        volatile bool _run = false,  _quit = false;
+        std::atomic_bool _run = false, _quit = false;
 
         bool _weak = false;
 

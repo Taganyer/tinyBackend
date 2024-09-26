@@ -6,6 +6,7 @@
 #include "Net/Reactor.hpp"
 #include "Net/EventLoop.hpp"
 #include "LogSystem/SystemLog.hpp"
+#include "Net/BalancedReactor.hpp"
 #include "Net/monitors/Monitor.hpp"
 #include "Net/functions/Interface.hpp"
 
@@ -13,6 +14,9 @@ using namespace Net;
 
 Controller::Controller(const Shared &ptr, Reactor* reactor) :
     _weak(ptr), _reactor(reactor) {}
+
+Controller::Controller(const Shared &ptr, BalancedReactor* reactor) :
+    _weak(ptr), _balanced_reactor(reactor) {}
 
 uint32 Controller::send(const void* target, uint32 size) {
     Shared ptr = _weak.lock();
@@ -25,7 +29,7 @@ uint32 Controller::send(const void* target, uint32 size) {
             return -1;
         } else {
             G_TRACE << "write " << writen << " byte in " << ptr->fd();
-            if (ptr->_writeFun) ptr->_writeFun(ptr->_output, *ptr->_socket);
+            if (ptr->_writeFun) ptr->_writeFun(*ptr->_socket);
         }
     }
     if (writen < size)
@@ -75,20 +79,15 @@ void Controller::update_event(Event event) {
     Shared ptr = _weak.lock();
     if (!ptr || !ptr->valid()) return;
     if (in_loop_thread()) {
-        auto iter = _reactor->_map.find(ptr->fd());
-        if (iter == _reactor->_map.end()) return;
-        auto e = iter->second.second;
-        e->second = event;
-        _reactor->_monitor->update_fd(event);
+        if (_reactor) _reactor->update_link(event);
+        else _balanced_reactor->update_link(event);
     } else {
-        send_to_loop([weak = _weak, reactor = _reactor, event] {
+        send_to_loop([weak = _weak, reactor = _reactor,
+            balanced_reactor = _balanced_reactor, event] {
             Shared data = weak.lock();
             if (data && data->valid()) {
-                auto iter = reactor->_map.find(data->fd());
-                if (iter == reactor->_map.end()) return;
-                auto e = iter->second.second;
-                e->second = event;
-                reactor->_monitor->update_fd(event);
+                if (reactor) reactor->update_link(event);
+                else balanced_reactor->update_link(event);
             }
         });
     }
@@ -101,9 +100,11 @@ void Controller::close_fd() {
 }
 
 void Controller::send_to_loop(EventFun fun) {
-    _reactor->_loop->put_event(std::move(fun));
+    if (_reactor) _reactor->_loop->put_event(std::move(fun));
+    else _balanced_reactor->_loop->put_event(std::move(fun));
 }
 
 bool Controller::in_loop_thread() const {
-    return _reactor->_loop->object_in_thread();
+    if (_reactor) return _reactor->in_reactor_thread();
+    return _balanced_reactor->in_reactor_thread();
 }

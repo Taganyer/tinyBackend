@@ -13,6 +13,8 @@ namespace Net {
 
     class Reactor;
 
+    class BalancedReactor;
+
     /*
      * 对相应的 NetLink 进行控制，所有操作均线程安全（不安全的操作进行了标记）。
      * 可以在任何时候调用，不会影响到对应 Reactor 的正常运行。
@@ -35,6 +37,8 @@ namespace Net {
         using EventFun = std::function<void()>;
 
         Controller(const Shared &ptr, Reactor* reactor);
+
+        Controller(const Shared &ptr, BalancedReactor* reactor);
 
         /// 在 EventLoop 的线程中并且发送缓冲区无数据时会直接发送，否则写入缓冲区中，失败返回 -1。
         uint32 send(const void* target, uint32 size);
@@ -62,7 +66,9 @@ namespace Net {
     private:
         Weak _weak;
 
-        Reactor* _reactor;
+        Reactor* _reactor = nullptr;
+
+        BalancedReactor* _balanced_reactor = nullptr;
 
     };
 

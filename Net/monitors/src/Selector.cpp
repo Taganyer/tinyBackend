@@ -14,8 +14,6 @@ Selector::~Selector() {
 }
 
 int Selector::get_aliveEvent(int timeoutMS, EventList &list) {
-    assert_in_right_thread("Selector::get_aliveEvent ");
-
     init_fd_set();
     timeval timeout { timeoutMS / 1000, timeoutMS % 1000 };
     int ret = ::select(ndfs + 1,
@@ -38,12 +36,11 @@ int Selector::get_aliveEvent(int timeoutMS, EventList &list) {
 }
 
 bool Selector::add_fd(Event event) {
-    assert_in_right_thread("Selector::add_fd ");
     if (event.fd >= FD_SETSIZE || find_fd(event.fd) != _fds.end()) {
         G_INFO << "Selector add " << event.fd << " failed.";
         return false;
     }
-    ndfs = ndfs < event.fd ? event.fd : ndfs;
+    ndfs = ndfs < event.fd ? (short) event.fd : ndfs;
     _fds.push_back(event);
     if (event.canRead()) ++read_size;
     if (event.canWrite()) ++write_size;
@@ -53,7 +50,6 @@ bool Selector::add_fd(Event event) {
 }
 
 void Selector::remove_fd(int fd) {
-    assert_in_right_thread("Selector::remove_fd ");
     auto iter = find_fd(fd);
     if (iter == _fds.end()) return;
     if (iter->canRead()) --read_size;
@@ -63,14 +59,13 @@ void Selector::remove_fd(int fd) {
     _fds.pop_back();
     if (fd == ndfs) {
         ndfs = 0;
-        for (auto [f, _] : _fds)
-            if (f > ndfs) ndfs = f;
+        for (auto [_fd, event, extra_data] : _fds)
+            if (_fd > ndfs) ndfs = (short) _fd;
     }
     G_INFO << "Selector remove fd " << fd;
 }
 
 void Selector::remove_all() {
-    assert_in_right_thread("Selector::remove_all ");
     if (_fds.size() > 0)
         G_WARN << "Selector force remove " << _fds.size() << " fds.";
     _fds.clear();
@@ -78,7 +73,6 @@ void Selector::remove_all() {
 }
 
 void Selector::update_fd(Event event) {
-    assert_in_right_thread("Selector::update_fd ");
     auto iter = find_fd(event.fd);
     if (iter == _fds.end()) return;
     if (iter->canRead()) --read_size;
@@ -107,7 +101,7 @@ void Selector::init_fd_set() {
 
 void Selector::fill_events(EventList &list) {
     for (const auto &event : _fds) {
-        Event val { event.fd, Event::NoEvent };
+        Event val { event.fd, Event::NoEvent, event.extra_data };
         if (event.canRead() && FD_ISSET(event.fd, &_read))
             val.set_read();
         if (event.canWrite() && FD_ISSET(event.fd, &_write))

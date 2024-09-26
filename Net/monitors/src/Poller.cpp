@@ -18,8 +18,6 @@ Poller::~Poller() {
 
 
 int Poller::get_aliveEvent(int timeoutMS, EventList &list) {
-    assert_in_right_thread("Poller::get_aliveEvent ");
-
     int active = ops::poll(_fds.data(), _fds.size(), timeoutMS);
     if (active > 0) {
         get_events(list, active);
@@ -35,36 +33,38 @@ int Poller::get_aliveEvent(int timeoutMS, EventList &list) {
 }
 
 bool Poller::add_fd(Event event) {
-    assert_in_right_thread("Poller::add_fd ");
     if (!_mapping.try_emplace(event.fd, _fds.size()).second)
         return false;
     _fds.push_back({ event.fd, (short) event.event, 0 });
+    _datas.push_back(event.extra_data);
     return true;
 }
 
 void Poller::remove_fd(int fd) {
-    assert_in_right_thread("Poller::remove_fd ");
     auto iter = _mapping.find(fd);
     if (iter == _mapping.end()) return;
+    _mapping[_fds.back().fd] = iter->second;
     _fds[iter->second] = _fds.back();
     _fds.pop_back();
+    _datas[iter->second] = _datas.back();
+    _datas.pop_back();
     _mapping.erase(iter);
     G_INFO << "Poller remove fd " << fd;
 }
 
 void Poller::remove_all() {
-    assert_in_right_thread("Poller::remove_all ");
     if (_fds.size() > 0)
         G_WARN << "Poller force remove " << _fds.size() << " fds.";
     _mapping.clear();
     _fds.clear();
+    _datas.clear();
 }
 
 void Poller::update_fd(Event event) {
-    assert_in_right_thread("Poller::update_fd ");
     auto iter = _mapping.find(event.fd);
     if (iter == _mapping.end()) return;
     _fds[iter->second].events = (short) event.event;
+    _datas[iter->second] = event.extra_data;
     G_INFO << "Poller update " << event.fd << " events to " << event.event;
 }
 
@@ -74,9 +74,9 @@ uint64 Poller::fd_size() const {
 
 void Poller::get_events(EventList &list, int size) {
     list.reserve(size + list.size());
-    for (auto const &i : _fds) {
-        if (i.revents <= 0)
+    for (int i = 0; i < _fds.size(); ++i) {
+        if (_fds[i].revents <= 0)
             continue;
-        list.push_back({ i.fd, i.revents });
+        list.push_back({ _fds[i].fd, _fds[i].revents, _datas[i] });
     }
 }

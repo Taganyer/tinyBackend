@@ -48,8 +48,10 @@ void Reactor::add_NetLink(NetLink::LinkPtr &netLink, Event event) {
         if (!ptr) return;
         auto [iter, success] = _map.try_emplace(ptr->fd(), weak, _queue.end());
         if (success) {
-            if (_monitor->add_fd(event)) {
-                _queue.insert(_queue.end(), Base::Unix_to_now(), event);
+            Event _event = event;
+            Event::write_to_extra_data(_event, iter);
+            if (_monitor->add_fd(_event)) {
+                _queue.insert(_queue.end(), Unix_to_now(), _event);
                 iter->second.second = _queue.tail();
                 return;
             }
@@ -63,9 +65,10 @@ void Reactor::start(int monitor_timeoutMS) {
     assert(!running() && _monitor);
     G_TRACE << "Reactor start.";
     Thread thread([this, monitor_timeoutMS] {
-        std::vector<Event> active;
         _loop = new EventLoop();
         _monitor->set_tid(CurrentThread::tid());
+
+        std::vector<Event> active;
         _running = true;
 
         _loop->set_distributor([this, monitor_timeoutMS, &active] {
@@ -88,8 +91,12 @@ void Reactor::start(int monitor_timeoutMS) {
     while (!_running) CurrentThread::yield_this_thread();
 }
 
+bool Reactor::in_reactor_thread() const {
+    return _loop->object_in_thread();
+}
+
 void Reactor::remove_timeouts() {
-    Time_difference time = Base::Unix_to_now() - timeout;
+    Time_difference time = Unix_to_now() - timeout;
     auto iter = _queue.begin(), end = _queue.end();
     while (iter != end && iter->first <= time) {
         auto m = _map.find(iter->second.fd);
@@ -107,40 +114,46 @@ void Reactor::invoke(int timeoutMS, std::vector<Event> &list) {
     if (ret < 0) return;
 
     for (Event* event = list.data(); ret > 0; --ret, ++event) {
-        auto iter = _map.find(event->fd);
-        assert(iter != _map.end());
-
-        auto ptr = iter->second.first.lock();
-        if (!ptr) {
-            _monitor->remove_fd(event->fd);
-            _queue.erase(iter->second.second);
-            _map.erase(iter);
-            continue;
-        }
-
-        if (event->hasError() && !event->hasHangUp())
-            ptr->handle_error({ error_types::ErrorEvent, 0 }, event);
-
-        if (event->canRead() && !event->hasHangUp())
-            ptr->handle_read(event);
-
-        if (event->canWrite() && !event->hasHangUp())
-            ptr->handle_write(event);
-
-        if (event->hasHangUp()) {
-            ptr->handle_close();
-            _queue.erase(iter->second.second);
-            _monitor->remove_fd(event->fd);
-            _map.erase(iter);
-            continue;
-        }
-
-        iter->second.second->first = Base::Unix_to_now();
-        _queue.move_to(_queue.end(), iter->second.second);
+        create_task(event);
     }
 
     list.clear();
+}
 
+void Reactor::create_task(Event* event) {
+    auto iter = Event::get_extra_data<LinkMap::iterator>(*event);
+    assert(iter != _map.end());
+    assert(iter->first == event->fd);
+
+    auto ptr = iter->second.first.lock();
+    if (!ptr) {
+        erase_link(iter);
+        return;
+    }
+
+    if (event->hasError() && !event->hasHangUp())
+        ptr->handle_error({ error_types::ErrorEvent, 0 }, event);
+
+    if (event->canRead() && !event->hasHangUp())
+        ptr->handle_read(event);
+
+    if (event->canWrite() && !event->hasHangUp())
+        ptr->handle_write(event);
+
+    if (event->hasHangUp()) {
+        ptr->handle_close();
+        erase_link(iter);
+        return;
+    }
+
+    iter->second.second->first = Unix_to_now();
+    _queue.move_to(_queue.end(), iter->second.second);
+}
+
+void Reactor::erase_link(LinkMap::iterator iter) {
+    _monitor->remove_fd(iter->first);
+    _queue.erase(iter->second.second);
+    _map.erase(iter);
 }
 
 void Reactor::close_alive() {
@@ -154,5 +167,13 @@ void Reactor::close_alive() {
             if (event.hasHangUp()) ptr->handle_close();
         }
         _map.clear();
+        _queue.erase(_queue.begin(), _queue.end());
     }
+}
+
+void Reactor::update_link(Event event) {
+    auto iter = _map.find(event.fd);
+    if (iter == _map.end()) return;
+    iter->second.second->second.event = event.event;
+    _monitor->update_fd(iter->second.second->second);
 }

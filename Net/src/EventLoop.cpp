@@ -27,15 +27,14 @@ EventLoop::EventLoop() {
 
 EventLoop::~EventLoop() {
     assert_in_thread();
-    shutdown();
     G_TRACE << "EventLoop in " << CurrentThread::thread_name() << " has been destroyed";
     this_thread_have_object = false;
 }
 
 void EventLoop::loop() {
     assert_in_thread();
-    _run = true;
-    while (!_quit) {
+    _run.store(true, std::memory_order_release);
+    while (!_quit.load(std::memory_order_acquire)) {
         if (_distributor)
             _distributor();
         loop_begin();
@@ -46,12 +45,12 @@ void EventLoop::loop() {
         }
         loop_end();
     }
-    _run = false;
+    _run.store(false, std::memory_order_release);
     G_TRACE << "end EventLoop::loop() " << _tid;
 }
 
 void EventLoop::shutdown() {
-    _quit = true;
+    _quit.store(true, std::memory_order_release);
     _condition.notify_one();
 }
 

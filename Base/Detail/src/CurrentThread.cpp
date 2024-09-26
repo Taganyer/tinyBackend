@@ -37,6 +37,8 @@ thread_local string CurrentThread::this_thread_name = [] {
     }
 }();
 
+thread_local void* CurrentThread::this_thread_mark_ptr = nullptr;
+
 void CurrentThread::yield_this_thread() {
     sched_yield();
 }
