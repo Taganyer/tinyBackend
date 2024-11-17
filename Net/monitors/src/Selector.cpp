@@ -36,7 +36,7 @@ int Selector::get_aliveEvent(int timeoutMS, EventList &list) {
 }
 
 bool Selector::add_fd(Event event) {
-    if (event.fd >= FD_SETSIZE || find_fd(event.fd) != _fds.end()) {
+    if (event.fd >= FD_SETSIZE || event.fd < 0 || find_fd(event.fd) != _fds.end()) {
         G_INFO << "Selector add " << event.fd << " failed.";
         return false;
     }
@@ -49,7 +49,7 @@ bool Selector::add_fd(Event event) {
     return true;
 }
 
-void Selector::remove_fd(int fd) {
+void Selector::remove_fd(int fd, bool fd_closed) {
     auto iter = find_fd(fd);
     if (iter == _fds.end()) return;
     if (iter->canRead()) --read_size;
@@ -62,7 +62,7 @@ void Selector::remove_fd(int fd) {
         for (auto [_fd, event, extra_data] : _fds)
             if (_fd > ndfs) ndfs = (short) _fd;
     }
-    G_INFO << "Selector remove fd " << fd;
+    G_INFO << "Selector remove" << (fd_closed ? " closed fd " : " fd ") << fd;
 }
 
 void Selector::remove_all() {
@@ -83,6 +83,13 @@ void Selector::update_fd(Event event) {
     if (iter->canWrite()) ++write_size;
     if (iter->hasError()) ++error_size;
     G_INFO << "Selector update " << event.fd << " events to " << event.event;
+}
+
+bool Selector::exist_fd(int fd) const {
+    auto iter = _fds.begin(), end = _fds.end();
+    while (iter != end && iter->fd != fd)
+        ++iter;
+    return iter != end;
 }
 
 void Selector::init_fd_set() {

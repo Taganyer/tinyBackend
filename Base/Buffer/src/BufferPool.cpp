@@ -28,8 +28,14 @@ uint64 BufferPool::round_size(uint64 target) {
 }
 
 BufferPool::BufferPool(uint64 total_size) :
-    _size(round_size(total_size)), _buffer(new char[_size]),
+    _size(round_size(total_size)),
     _rest(std::vector<uint64>(_size / BLOCK_SIZE << 1)) {
+    int ret = posix_memalign((void **) &_buffer, BLOCK_SIZE, total_size);
+    if (ret != 0) {
+        _size = 0;
+        _buffer = nullptr;
+        return;
+    }
     for (uint64 s = _size, t = 1, i = 0; s >= BLOCK_SIZE; s >>= 1, t <<= 1)
         for (uint64 end = i + t; i < end; ++i)
             _rest[i] = s;
@@ -37,9 +43,8 @@ BufferPool::BufferPool(uint64 total_size) :
 
 BufferPool::~BufferPool() {
     if (max_block() != _size) {
-        std::fprintf(stderr, "Premature destruction of the BufferPool "
+        CurrentThread::emergency_exit("Premature destruction of the BufferPool "
                      "can result in invalid references.\n");
-        std::terminate();
     }
     delete[] _buffer;
 }

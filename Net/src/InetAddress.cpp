@@ -8,28 +8,38 @@
 using namespace Net;
 
 
-InetAddress::InetAddress(bool IPv4, short port, const char* IP,
+InetAddress::InetAddress(bool IPv4, const char* IP, short port,
                          unsigned short family) {
     if (IPv4) {
-        _addr.sin_port = port;
+        _addr.sin_port = htons(port);
         _addr.sin_family = family == (unsigned short) -1 ? AF_INET : family;
     } else {
-        _addr6.sin6_port = port;
+        _addr6.sin6_port = htons(port);
         _addr6.sin6_family = family == (unsigned short) -1 ? AF_INET6 : family;
     }
     set_IP(IPv4, IP);
 }
 
 std::string InetAddress::toIp() const {
+    if (!valid()) return "[Invalid]";
     char buf[INET6_ADDRSTRLEN] {};
     ops::toIp(buf, sizeof buf, ops::sockaddr_cast(addr_in_cast()));
     return { buf };
 }
 
 std::string InetAddress::toIpPort() const {
+    if (!valid()) return "[Invalid]";
     char buf[64];
     ops::toIpPort(buf, sizeof buf, ops::sockaddr_cast(addr_in_cast()));
     return buf;
+}
+
+InetAddress InetAddress::get_InetAddress(int fd) {
+    InetAddress addr{};
+    socklen_t addr_size = sizeof(addr);
+    if (getsockname(fd, (sockaddr*)&addr, &addr_size))
+        return {};
+    return addr;
 }
 
 // InetAddress InetAddress::getLocalHost() {

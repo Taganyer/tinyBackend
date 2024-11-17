@@ -41,7 +41,7 @@ constexpr short MAX_SHORT = 32767;
 
 constexpr short MIN_SHORT = -32768;
 
-constexpr short MAX_USHORT = -1;
+constexpr unsigned short MAX_USHORT = static_cast<unsigned short>(-1);
 
 constexpr int MAX_INT = 2147483647;
 

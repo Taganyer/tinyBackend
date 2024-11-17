@@ -20,8 +20,14 @@ namespace Base {
     template <typename T>
     struct has_size_member<T, std::void_t<decltype(T::ObjectSize)>> {};
 
+    template <typename T>
+    struct directly_replicable {
+        constexpr static bool value = std::is_trivially_copyable_v<T>
+            && std::is_standard_layout_v<T>;
+    };
+
     template <typename T, typename = void>
-    struct get_size {
+    struct size_helper {
         constexpr static uint32 size = T::ObjectSize;
 
         static constexpr void write_to(void* dest, const T &obj) {
@@ -29,12 +35,17 @@ namespace Base {
         };
     };
 
+    template <>
+    struct size_helper<void, void> {
+        constexpr static uint32 size = 0;
+    };
+
     template <typename T>
-    struct get_size<T, std::enable_if_t<std::is_arithmetic_v<T>>> {
+    struct size_helper<T, std::enable_if_t<directly_replicable<T>::value>> {
         constexpr static uint32 size = sizeof(T);
 
         static constexpr void write_to(void* dest, const T &obj) {
-            *(static_cast<T *>(dest)) = obj;
+            *static_cast<T *>(dest) = obj;
         };
     };
 
@@ -51,17 +62,22 @@ namespace Base {
         };
     };
 
+    template <>
+    struct FixedSizeChecker<void, void> {
+        constexpr static bool is_fixed = true;
+    };
+
     template <typename T>
-    struct FixedSizeChecker<T, std::enable_if_t<std::is_arithmetic_v<T>
+    struct FixedSizeChecker<T, std::enable_if_t<directly_replicable<T>::value
                                 || has_size_member<T>::value>> {
         constexpr static bool is_fixed = true;
 
         static constexpr uint32 get_size(const T &) {
-            return Base::get_size<T>::size;
+            return Base::size_helper<T>::size;
         };
 
         static constexpr void write_to(void* dest, const T &obj) {
-            Base::get_size<T>::write_to(dest, obj);
+            Base::size_helper<T>::write_to(dest, obj);
         };
     };
 

@@ -25,6 +25,8 @@ namespace Base {
 
         ~BPTree_impl();
 
+        void flush() const { _scheduler->force_invoke(); };
+
         static BlockFile open_file(const char* filename) {
             return BlockFile(filename, true, true, Interpreter::BLOCK_SIZE);
         };

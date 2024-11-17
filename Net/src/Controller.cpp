@@ -2,109 +2,90 @@
 // Created by taganyer on 3/24/24.
 //
 
+
 #include "../Controller.hpp"
-#include "Net/Reactor.hpp"
 #include "Net/EventLoop.hpp"
-#include "LogSystem/SystemLog.hpp"
-#include "Net/BalancedReactor.hpp"
-#include "Net/monitors/Monitor.hpp"
-#include "Net/functions/Interface.hpp"
+#include "Net/reactor/Reactor.hpp"
 
 using namespace Net;
 
-Controller::Controller(const Shared &ptr, Reactor* reactor) :
-    _weak(ptr), _reactor(reactor) {}
+int64 Controller::send(const void* target, uint32 size, bool invoke_write_fun) const {
+    assert(in_loop_thread());
 
-Controller::Controller(const Shared &ptr, BalancedReactor* reactor) :
-    _weak(ptr), _balanced_reactor(reactor) {}
-
-uint32 Controller::send(const void* target, uint32 size) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return -1;
-    int64 writen = 0;
-    if (in_loop_thread() && ptr->_output.empty()) {
-        writen = ops::write(ptr->fd(), target, size);
-        if (writen < 0) {
-            ptr->handle_error({ error_types::Write, errno }, nullptr);
-            return -1;
-        } else {
-            G_TRACE << "write " << writen << " byte in " << ptr->fd();
-            if (ptr->_writeFun) ptr->_writeFun(*ptr->_socket);
-        }
+    int64 written = _link._agent.direct_send(target, size);
+    if (written < 0) {
+        _link.handle_error({ error_types::Write, errno }, *this);
+    } else if (invoke_write_fun && _link._writeFun) {
+        _link._writeFun(*this);
     }
-    if (writen < size)
-        writen += ptr->_output.write((const char *) target + writen, size - writen);
-    return writen;
+    return written;
 }
 
-void Controller::reset_readCallback(ReadCallback event) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return;
-    send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+uint32 Controller::indirect_send(const void* target, uint32 size,
+                                 bool fixed, bool invoke_write_fun) const {
+    assert(in_loop_thread());
+
+    uint32 written = _link._agent.indirect_send(target, size, fixed);
+    if (invoke_write_fun && _link._writeFun)
+        _link._writeFun(*this);
+    return written;
+}
+
+void Controller::reset_readCallback(ReadCallback event) const {
+    send_to_loop([weak = _link.weak_from_this(), e = std::move(event)]() mutable {
         Shared data = weak.lock();
         if (data && data->valid())
             data->set_readCallback(std::move(e));
     });
 }
 
-void Controller::reset_writeCallback(WriteCallback event) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return;
-    send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+void Controller::reset_writeCallback(WriteCallback event) const {
+    send_to_loop([weak = _link.weak_from_this(), e = std::move(event)]() mutable {
         Shared data = weak.lock();
         if (data && data->valid())
             data->set_writeCallback(std::move(e));
     });
 }
 
-void Controller::reset_errorCallback(ErrorCallback event) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return;
-    send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+void Controller::reset_errorCallback(ErrorCallback event) const {
+    send_to_loop([weak = _link.weak_from_this(), e = std::move(event)]() mutable {
         Shared data = weak.lock();
         if (data) data->set_errorCallback(std::move(e));
     });
 }
 
-void Controller::reset_closeCallback(CloseCallback event) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return;
-    send_to_loop([weak = _weak, e = std::move(event)]() mutable {
+void Controller::reset_closeCallback(CloseCallback event) const {
+    send_to_loop([weak = _link.weak_from_this(), e = std::move(event)]() mutable {
         Shared data = weak.lock();
         if (data) data->set_closeCallback(std::move(e));
     });
 }
 
-void Controller::update_event(Event event) {
-    Shared ptr = _weak.lock();
-    if (!ptr || !ptr->valid()) return;
-    if (in_loop_thread()) {
-        if (_reactor) _reactor->update_link(event);
-        else _balanced_reactor->update_link(event);
-    } else {
-        send_to_loop([weak = _weak, reactor = _reactor,
-            balanced_reactor = _balanced_reactor, event] {
-            Shared data = weak.lock();
-            if (data && data->valid()) {
-                if (reactor) reactor->update_link(event);
-                else balanced_reactor->update_link(event);
-            }
-        });
-    }
+void Controller::update_event(Event event) const {
+    assert(in_loop_thread());
+    _reactor.update_link(event);
 }
 
-void Controller::close_fd() {
-    Shared ptr = _weak.lock();
-    if (!ptr) return;
-    ptr->close_fd();
+void Controller::send_to_loop(EventFun fun) const {
+    assert(in_loop_thread());
+    _reactor._loop->put_event(std::move(fun));
 }
 
-void Controller::send_to_loop(EventFun fun) {
-    if (_reactor) _reactor->_loop->put_event(std::move(fun));
-    else _balanced_reactor->_loop->put_event(std::move(fun));
+Event& Controller::current_event() const {
+    assert(in_loop_thread());
+    return _event;
+}
+
+Event Controller::registered_event() const {
+    assert(in_loop_thread());
+    Event event(_event);
+    event.event = _registered_event;
+    return event;
 }
 
 bool Controller::in_loop_thread() const {
-    if (_reactor) return _reactor->in_reactor_thread();
-    return _balanced_reactor->in_reactor_thread();
+    return _reactor.in_reactor_thread();
 }
+
+Controller::Controller(NetLink &link, Event &event, Reactor &reactor, int registered_event) :
+    _link(link), _event(event), _reactor(reactor), _registered_event(registered_event) {}

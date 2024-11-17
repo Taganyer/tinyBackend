@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <memory>
+#include "Base/Thread.hpp"
 #include "Base/Condition.hpp"
 #include "Base/Container/List.hpp"
 #include "Base/Time/Time_difference.hpp"
@@ -64,7 +65,6 @@ namespace Base {
 
     private:
         std::atomic_bool shutdown = false;
-        std::atomic_bool running = false;
 
         using Queue = List<ObjectPtr>;
 
@@ -88,6 +88,8 @@ namespace Base {
         std::vector<Task> _ready;
 
         std::vector<Task> _invoking;
+
+        Thread _thread;
 
         void get_readyQueue();
 

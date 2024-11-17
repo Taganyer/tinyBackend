@@ -34,7 +34,7 @@ namespace Base {
     private:
         uint64 _size = 0;
 
-        char* _buffer;
+        char* _buffer = nullptr;
 
         Mutex _mutex;
 

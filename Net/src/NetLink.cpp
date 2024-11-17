@@ -3,9 +3,9 @@
 //
 
 #include "../NetLink.hpp"
-#include "Net/Acceptor.hpp"
 #include "Net/error/errors.hpp"
 #include "LogSystem/SystemLog.hpp"
+#include "Net/Controller.hpp"
 #include "Net/monitors/Monitor.hpp"
 #include "Net/functions/Interface.hpp"
 
@@ -14,93 +14,80 @@ using namespace Net;
 using namespace Base;
 
 
-void NetLink::handle_read(Event* event) {
-    if (!_socket->valid()) {
-        handle_error({ error_types::UnexpectedShutdown, 0 }, event);
+void NetLink::handle_read(const Controller &controller) {
+    if (!valid()) {
+        handle_error({ error_types::UnexpectedShutdown, 0 }, controller);
         return;
     }
-    iovec vec[2];
-    vec[0].iov_base = _input.write_data();
-    vec[0].iov_len = _input.continuously_writable();
-    vec[1].iov_base = _input.data_begin();
-    vec[1].iov_len = _input.writable_len() - _input.continuously_writable();
-    auto size = ops::readv(_socket->fd(), vec, 2);
-    if (size == 0) {
-        G_TRACE << "NetLink " << _socket->fd() << " read to end.";
-        event->set_HangUp();
-    } else if (size < 0) {
-        G_ERROR << _socket->fd() << " handle_read " << ops::get_read_error(errno);
-        handle_error({ error_types::Read, errno }, event);
+    if (!_agent.can_receive()) {
+        G_TRACE << "read buffer is full cannot read.";
     } else {
-        _input.write_advance(size);
-        G_TRACE << _socket->fd() << " read " << size << " bytes to readBuf.";
-        if (_readFun) _readFun(_input, *_socket);
+        bool success = _agent.receive_message();
+        if (!success) {
+            if (_agent.has_hang_up()) {
+                G_TRACE << "NetLink " << fd() << " read to end.";
+                controller.current_event().set_HangUp();
+            } else {
+                G_ERROR << fd() << " handle_read " << ops::get_read_error(errno);
+                handle_error({ error_types::Read, errno }, controller);
+            }
+            return;
+        }
     }
+    if (_readFun) _readFun(controller);
 }
 
-void NetLink::handle_write(Event* event) {
-    if (!_socket->valid()) {
-        handle_error({ error_types::UnexpectedShutdown, 0 }, event);
+void NetLink::handle_write(const Controller &controller) {
+    if (!valid()) {
+        handle_error({ error_types::UnexpectedShutdown, 0 }, controller);
         return;
     }
-    iovec vec[2];
-    vec[0].iov_base = _output.read_data();
-    vec[0].iov_len = _input.continuously_readable();
-    vec[1].iov_base = _input.data_begin();
-    vec[1].iov_len = _input.readable_len() - _input.continuously_readable();
-    auto size = ops::writev(_socket->fd(), vec, 2);
-    if (size < 0) {
-        G_ERROR << _socket->fd() << " handle_write " << ops::get_write_error(errno);
-        handle_error({ error_types::Write, errno }, event);
+    if (!_agent.can_send()) {
+        G_TRACE << "write buffer is empty cannot sent.";
     } else {
-        _output.read_advance(size);
-        G_TRACE << _socket->fd() << " write " << size << " bytes to " << _socket->fd();
-        if (_writeFun) _writeFun(*_socket);
+        bool success = _agent.send_message();
+        if (!success) {
+            G_ERROR << fd() << " handle_write " << ops::get_write_error(errno);
+            handle_error({ error_types::Write, errno }, controller);
+        }
     }
+    if (_writeFun) _writeFun(controller);
 }
 
-void NetLink::handle_error(error_mark mark, Event* event) {
-    event->unset_error();
-    if (_socket->valid())
-        G_ERROR << "error occur in NetLink " << _socket->fd();
-    if (!_errorFun || _errorFun(mark, *_socket))
-        event->set_HangUp();
+void NetLink::handle_error(error_mark mark, const Controller &controller) const {
+    controller.current_event().set_NoEvent();
+    if (valid())
+        G_ERROR << "error occur in NetLink " << fd();
+    if (!_errorFun || _errorFun(mark, controller))
+        controller.current_event().set_HangUp();
 }
 
-void NetLink::handle_close() {
-    G_TRACE << "NetLink " << _socket->fd() << " close";
-    if (_closeFun) _closeFun(*_socket);
-    if (_socket->valid()) {
-        auto ptr = _acceptor.lock();
-        if (ptr) ptr->remove_Link(_socket->fd());
-    }
+void NetLink::handle_close(const Controller &controller) {
+    if (_closeFun) _closeFun(controller);
+    close_fd();
 }
 
-bool NetLink::handle_timeout() {
-    G_WARN << "NetLink " << _socket->fd() << " timeout.";
-    if (!_errorFun || _errorFun({ error_types::TimeoutEvent, 0 }, *_socket)) {
-        G_TRACE << "NetLink " << _socket->fd() << " close";
-        if (_closeFun) _closeFun(*_socket);
-        return true;
-    }
-    return false;
+bool NetLink::handle_timeout(const Controller &controller) const {
+    G_WARN << "NetLink " << fd() << " timeout.";
+    return !_errorFun || _errorFun({ error_types::TimeoutEvent, 0 }, controller);
 }
 
-NetLink::LinkPtr NetLink::create_NetLinkPtr(
-    SocketPtr &&socket_ptr, const AcceptorPtr &acceptor_ptr) {
-    return LinkPtr(new NetLink(std::move(socket_ptr), acceptor_ptr));
+NetLink::LinkPtr NetLink::create_NetLinkPtr(Socket &&socket,
+                                            uint32 inputBufferSize,
+                                            uint32 outputBufferSize) {
+    return LinkPtr(new NetLink(std::move(socket), inputBufferSize, outputBufferSize));
 }
 
-NetLink::NetLink(SocketPtr &&socket_ptr, const AcceptorPtr &acceptor_ptr) :
-    _socket(std::move(socket_ptr)), _acceptor(acceptor_ptr) {}
+NetLink::NetLink(Socket &&socket, uint32 inputBufferSize, uint32 outputBufferSize) :
+    _agent(std::move(socket), inputBufferSize, outputBufferSize) {}
 
 NetLink::~NetLink() {
     close_fd();
 }
 
 void NetLink::close_fd() {
-    if (_socket->valid()) {
-        G_INFO << "NetLink " << _socket->fd() << " closed.";
-        _socket = std::make_unique<Socket>(-1);
+    if (valid()) {
+        G_INFO << "NetLink " << fd() << " closed.";
+        _agent.close();
     }
 }

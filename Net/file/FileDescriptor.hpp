@@ -11,8 +11,7 @@ namespace Net {
 
     class FileDescriptor : Base::NoCopy {
     public:
-
-        FileDescriptor(int fd) : _fd(fd) {};
+        explicit FileDescriptor(int fd) : _fd(fd) {};
 
         FileDescriptor(FileDescriptor &&other) noexcept: _fd(other._fd) {};
 
@@ -25,7 +24,6 @@ namespace Net {
         [[nodiscard]] bool valid() const { return _fd > 0; };
 
     protected:
-
         int _fd = -1;
 
     };

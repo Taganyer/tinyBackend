@@ -2,18 +2,23 @@
 // Created by taganyer on 3/9/24.
 //
 
+#include <fcntl.h>
 #include <netinet/tcp.h>
 #include "../Socket.hpp"
-#include "../InetAddress.hpp"
+#include "Net/InetAddress.hpp"
 #include "Net/error/errors.hpp"
 #include "LogSystem/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
 
+#ifdef IGNORE_SIGPIPE
+#include <csignal>
+static auto _ = [] { return signal(SIGPIPE, SIG_IGN); }();
+#endif
+
 using namespace Net;
 
-
 Socket::Socket(int domain, int type, int protocol) :
-    FileDescriptor(ops::socket(domain, type, protocol)) {
+    _fd(ops::socket(domain, type, protocol)) {
     if (!valid()) {
         G_ERROR << "Socket create " << ops::get_socket_error(errno);
     } else {
@@ -21,7 +26,24 @@ Socket::Socket(int domain, int type, int protocol) :
     }
 }
 
+Socket& Socket::operator=(Socket &&other) noexcept {
+    if (_fd > 0) {
+        if (ops::close(_fd)) {
+            G_INFO << "socket close " << _fd;
+        } else {
+            G_FATAL << "socket " << _fd << ' ' << ops::get_close_error(errno);
+        }
+    }
+    _fd = other._fd;
+    other._fd = -1;
+    return *this;
+}
+
 Socket::~Socket() {
+    close();
+}
+
+void Socket::close() {
     if (_fd > 0) {
         if (ops::close(_fd)) {
             G_INFO << "socket close " << _fd;
@@ -32,13 +54,15 @@ Socket::~Socket() {
     }
 }
 
-bool Socket::Bind(InetAddress &address) {
-    if (!ops::bind(_fd, ops::sockaddr_cast(address.addr_in_cast())))
+bool Socket::bind(const InetAddress &address) const {
+    if (!ops::bind(_fd, ops::sockaddr_cast(address.addr_in_cast()))) {
         G_ERROR << _fd << ' ' << ops::get_bind_error(errno);
+        return false;
+    }
     return true;
 }
 
-bool Socket::tcpListen(int max_size) {
+bool Socket::tcpListen(int max_size) const {
     if (!ops::listen(_fd, max_size)) {
         G_ERROR << "Socket " << _fd << ' ' << ops::get_listen_error(errno);
         return false;
@@ -46,7 +70,7 @@ bool Socket::tcpListen(int max_size) {
     return true;
 }
 
-bool Socket::tcpConnect(InetAddress &address) {
+bool Socket::tcpConnect(const InetAddress &address) const {
     if (!ops::connect(_fd, ops::sockaddr_cast(address.addr_in_cast()))) {
         G_ERROR << "Socket " << _fd << ' ' << ops::get_connect_error(errno);
         return false;
@@ -54,61 +78,81 @@ bool Socket::tcpConnect(InetAddress &address) {
     return true;
 }
 
-int Socket::tcpAccept(InetAddress &address) {
+Socket Socket::tcpAccept(InetAddress &address) const {
     int fd = ops::accept(_fd, address.addr6_in_cast());
     if (fd < 0)
         G_ERROR << "Socket " << _fd << ' ' << ops::get_accept_error(errno);
-    return fd;
+    return Socket(fd);
 }
 
-bool Socket::setTcpNoDelay(bool on) {
+bool Socket::setTcpNoDelay(bool on) const {
     int opt_val = on ? 1 : 0;
     if (!ops::set_socket_opt(_fd, IPPROTO_TCP, TCP_NODELAY,
-                             &opt_val, static_cast<socklen_t>(sizeof(int)))) {
+                             &opt_val, sizeof(int))) {
         G_ERROR << "Socket " << _fd << " set TCP_NODELAY " << ops::get_socket_opt_error(errno);
         return false;
     }
     return true;
 }
 
-bool Socket::setTcpKeepAlive(bool on) {
+bool Socket::setTcpKeepAlive(bool on) const {
     int opt_val = on ? 1 : 0;
     if (!ops::set_socket_opt(_fd, SOL_SOCKET, SO_KEEPALIVE,
-                             &opt_val, static_cast<socklen_t>(sizeof(int)))) {
+                             &opt_val, sizeof(int))) {
         G_ERROR << "Socket " << _fd << " set TCP KEEPALIVE " << ops::get_socket_opt_error(errno);
         return false;
     }
     return true;
 }
 
-bool Socket::setReuseAddr(bool on) {
+bool Socket::setReuseAddr(bool on) const {
     int opt_val = on ? 1 : 0;
     if (!ops::set_socket_opt(_fd, SOL_SOCKET, SO_REUSEADDR,
-                             &opt_val, static_cast<socklen_t>(sizeof(int)))) {
+                             &opt_val, sizeof(int))) {
         G_ERROR << "Socket " << _fd << " set REUSEADDR " << ops::get_socket_opt_error(errno);
         return false;
     }
     return true;
 }
 
-bool Socket::setReusePort(bool on) {
+bool Socket::setReusePort(bool on) const {
     int opt_val = on ? 1 : 0;
     if (!ops::set_socket_opt(_fd, SOL_SOCKET, SO_REUSEPORT,
-                             &opt_val, static_cast<socklen_t>(sizeof(int)))) {
+                             &opt_val, sizeof(int))) {
         G_ERROR << "Socket " << _fd << " set REUSEPORT " << ops::get_socket_opt_error(errno);
         return false;
     }
     return true;
 }
 
-void Socket::shutdown_TcpRead() {
-    if (!ops::shutdown(_fd, true, false))
-        G_ERROR << "Socket " << _fd << ops::get_shutdown_error(errno);
+bool Socket::setNonBlock(bool on) const {
+    int flags = fcntl(_fd, F_GETFL, 0);
+    if (flags < 0) {
+        G_ERROR << "Socket " << _fd << " fcntl(3) F_GETFL failed.";
+        return false;
+    }
+    flags = on ? flags | O_NONBLOCK : flags & ~O_NONBLOCK;
+    if (fcntl(_fd, F_SETFL, flags) != 0) {
+        G_ERROR << "Socket " << _fd << " fcntl(3) F_SETFL failed.";
+        return false;
+    }
+    return true;
 }
 
-void Socket::shutdown_TcpWrite() {
-    if (!ops::shutdown(_fd, false, true))
+bool Socket::shutdown_TcpRead() const {
+    if (!ops::shutdown(_fd, true, false)) {
         G_ERROR << "Socket " << _fd << ops::get_shutdown_error(errno);
+        return false;
+    }
+    return true;
+}
+
+bool Socket::shutdown_TcpWrite() const {
+    if (!ops::shutdown(_fd, false, true)) {
+        G_ERROR << "Socket " << _fd << ops::get_shutdown_error(errno);
+        return false;
+    }
+    return true;
 }
 
 bool Socket::TcpInfo(tcp_info* info) const {
@@ -142,3 +186,13 @@ bool Socket::TcpInfo(char* buf, int len) const {
              info.tcpi_total_retrans); // Total retransmits for entire connection
     return true;
 }
+
+PipePair Socket::create_pipe() {
+    int fds[2];
+    if (pipe(fds) < 0)
+        return PipePair {};
+    return { Socket(fds[0]), Socket(fds[1]) };
+}
+
+PipePair::PipePair(Socket read, Socket write) :
+    read(std::move(read)), write(std::move(write)) {}

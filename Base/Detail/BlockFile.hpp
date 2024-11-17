@@ -34,9 +34,9 @@ namespace Base {
 
         bool resize_file_total_blocks(uint64 new_block_size);
 
-        void flush() { _file.flush(); };
+        void flush() const { _file.flush(); };
 
-        void flush_to_disk() { _file.flush_to_disk(); };
+        void flush_to_disk() const { _file.flush_to_disk(); };
 
         bool delete_file() { return _file.delete_file(); };
 

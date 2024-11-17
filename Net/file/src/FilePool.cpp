@@ -51,12 +51,12 @@ void FilePool::thread_start() {
                 auto iter = _store.find(e.fd);
                 assert(iter != _store.end());
                 if (e.canWrite() && send(e.fd, iter->second)) {
-                    _sel.remove_fd(e.fd);
+                    _sel.remove_fd(e.fd, false);
                     _store.erase(iter);
                 }
                 if (e.hasError()) {
                     iter->second.callback({ error_types::ErrorEvent, -1 }, iter->second.ptr);
-                    _sel.remove_fd(e.fd);
+                    _sel.remove_fd(e.fd, false);
                     _store.erase(iter);
                 }
             }

@@ -19,7 +19,7 @@ namespace Base {
 
         static_assert(KeyChecker::is_fixed);
 
-        static constexpr uint32 KeySize = get_size<Key>::size;
+        static constexpr uint32 KeySize = size_helper<Key>::size;
 
         static constexpr uint32 PairSize = KeySize + Interpreter::PTR_SIZE;
 

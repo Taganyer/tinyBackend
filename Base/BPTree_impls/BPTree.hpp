@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <utility>
+#include "Base/Detail/config.hpp"
 
 #ifdef BASE_BPTREE_HPP
 
@@ -44,7 +45,7 @@
  *                   have_prev() have_next() 判断是否有上一个 / 下一个节点。
  *
  * indexBlock: B+树的索引节点，要求存在右值构造函数，能够通过 Iter.index_block(Impl &) 构造。
-*      需要调用的函数: begin() end() 返回 Iter 对象用来迭代该节点所拥有的键。
+ *      需要调用的函数: begin() end() 返回 Iter 对象用来迭代该节点所拥有的键。
  *                   self_iter() 返回 Iter 对象，要求在 IndexBlock 销毁后依旧能够表示本节点的位置（不要求其他功能）。
  *                   lower_bound(Key) 返回 iter 对象，指向第一个大于或等于 Key 的位置。
  *                   can_insert() 返回 true 表示能够插入键。
@@ -96,7 +97,7 @@ namespace Base {
         Result find(const Key &key);
 
         /// 查找 [begin, end) 范围的值，limit 为限制大小。
-        ResultSet find(const Key &begin, const Key &end, uint64 limit = UINT64_MAX);
+        ResultSet find(const Key &begin, const Key &end, uint64 limit = MAX_ULLONG);
 
         /// 查找第一个大于等于 key 的值。
         Result lower_bound(const Key &key);
@@ -105,19 +106,23 @@ namespace Base {
         Result upper_bound(const Key &key);
 
         /// 查找所有大于等于 key 的值，limit 为限制大小。
-        ResultSet above_or_equal(const Key &key, uint64 limit = UINT64_MAX);
+        ResultSet above_or_equal(const Key &key, uint64 limit = MAX_ULLONG);
 
         /// 从头部查找所有小于 key 的值，limit 为限制大小。
-        ResultSet below(const Key &key, uint64 limit = UINT64_MAX);
+        ResultSet below(const Key &key, uint64 limit = MAX_ULLONG);
 
         /// 从头部开始查找，limit 为限制大小
-        ResultSet search_from_begin(uint64 limit = UINT64_MAX);
+        ResultSet search_from_begin(uint64 limit = MAX_ULLONG);
 
         /// 从尾部开始查找，limit 为限制大小。
-        ResultSet search_from_end(uint64 limit = UINT64_MAX);
+        ResultSet search_from_end(uint64 limit = MAX_ULLONG);
 
         /// 更新对应键的值，键不存在或值长度过大会导致更新失败。
         bool update(const Key &key, const Value &value);
+
+        /// 更新对应键的值，键不存在或值长度过大会导致更新失败，fun 将会传入旧的 value 并生成新的 value。
+        template <typename Fun>
+        bool find_for_update(const Key &key, const Fun &fun);
 
         /// 插入对应键值，键已存在或 value 长度过大会导致插入失败。
         bool insert(const Key &key, const Value &value);
@@ -127,6 +132,10 @@ namespace Base {
 
         /// 删除 [begin, end) 范围内的键值，范围内不存在元素会导致删除失败。
         bool erase(const Key &begin, const Key &end);
+
+        Impl& impl() { return _impl; };
+
+        const Impl& impl() const { return _impl; };
 
     private:
         using DataBlock = typename Impl::DataBlock;
@@ -394,6 +403,21 @@ namespace Base {
         auto data_iter = data_block.lower_bound(key);
         if (data_iter == data_block.end() || data_iter.key() != key) return false;
         return data_block.update(data_iter, value);
+    }
+
+    template <typename Impl>
+    template <typename Fun>
+    bool BPTree<Impl>::find_for_update(const Key &key, const Fun &fun) {
+        Iter iter = find_data(key);
+        if (!iter.valid()) return false;
+        DataBlock data_block = iter.data_block(_impl);
+        auto data_iter = data_block.lower_bound(key);
+        if (data_iter == data_block.end() || data_iter.key() != key) return false;
+        Value old_value = data_iter.value();
+        Value new_value = fun(old_value);
+        if (!DataBlock::data_size_check(new_value))
+            return false;
+        return data_block.update(data_iter, new_value);
     }
 
     template <typename Impl>

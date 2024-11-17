@@ -3,17 +3,15 @@
 //
 
 #include "../ScheduledThread.hpp"
-#include "Base/Thread.hpp"
 
 using namespace Base;
 
 ScheduledThread::ScheduledThread(Time_difference flush_time) :
     _flush_time(flush_time) {
-    Thread thread(
+    _thread = Thread(
         string("ScheduledThread") + std::to_string(CurrentThread::tid()),
         [this] {
             std::vector<QueueIter> need_flush;
-            running.store(true, std::memory_order_release);
             while (!shutdown.load(std::memory_order_acquire)) {
                 wait_if_no_scheduler();
                 if (shutdown) break;
@@ -25,10 +23,8 @@ ScheduledThread::ScheduledThread(Time_difference flush_time) :
                 set_need_flush(need_flush);
             }
             closing();
-            running.store(false, std::memory_order_release);
-            _condition.notify_all();
         });
-    thread.start();
+    _thread.start();
 }
 
 ScheduledThread::~ScheduledThread() {
@@ -36,23 +32,23 @@ ScheduledThread::~ScheduledThread() {
 }
 
 void ScheduledThread::add_scheduler(const ObjectPtr &ptr) {
-    if (shutdown.load(std::memory_order_acquire)) return;
     Lock l(_mutex);
+    if (shutdown.load(std::memory_order_acquire)) return;
     _schedulers.insert(_schedulers.end(), ptr);
     ptr->self_location = _schedulers.tail();
     _condition.notify_one();
 }
 
 void ScheduledThread::remove_scheduler(const ObjectPtr &ptr) {
-    if (shutdown.load(std::memory_order_acquire)) return;
     Lock l(_mutex);
+    if (shutdown.load(std::memory_order_acquire)) return;
     ptr->shutdown = true;
     ptr->need_flush = false;
 }
 
 void ScheduledThread::remove_scheduler_and_invoke(const ObjectPtr &ptr, void* arg) {
-    if (shutdown.load(std::memory_order_acquire)) return;
     Lock l(_mutex);
+    if (shutdown.load(std::memory_order_acquire)) return;
     _ready.push_back(Task { ptr->self_location, arg });
     ptr->shutdown = true;
     ptr->need_flush = false;
@@ -69,10 +65,10 @@ void ScheduledThread::submit_task(Scheduler &scheduler, void* arg) {
 }
 
 void ScheduledThread::shutdown_thread() {
-    Lock l(_mutex);
     shutdown.store(true, std::memory_order_release);
     _condition.notify_one();
-    _condition.wait(l, [this] { return !running.load(std::memory_order_acquire); });
+    _thread.join();
+    Lock l(_mutex);
     _schedulers.erase(_schedulers.begin(), _schedulers.end());
     _ready = {};
     _invoking = {};

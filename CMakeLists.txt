@@ -19,19 +19,29 @@ set(PROJECT_ROOT_DIR ${PROJECT_ROOT_DIR} CACHE INTERNAL "Project root directory"
 # 生成配置头文件
 configure_file(CMake_config.h.in "$CACHE{PROJECT_ROOT_DIR}/CMake_config.h")
 
-
-# 添加 Base 子库
+# 添加子库
 add_subdirectory(Base)
 
-# 添加 Net 子库
 add_subdirectory(Net)
-
-add_subdirectory(AOP)
 
 add_subdirectory(LogSystem)
 
-# 生成可执行文件
-add_executable(${PROJECT_NAME} main.cpp CMake_config.h)
+add_subdirectory(testing)
 
-# 链接 Base Net 子库
-target_link_libraries(${PROJECT_NAME} Base Net AOP LogSystem)
+add_subdirectory(AOP)
+
+add_subdirectory(Distributed)
+
+# 生成可执行文件
+add_executable(${PROJECT_NAME} main.cpp)
+
+# 链接子库
+target_link_libraries(${PROJECT_NAME} Base Net)
+
+target_link_libraries(${PROJECT_NAME} LogSystem)
+
+target_link_libraries(${PROJECT_NAME} testing)
+
+target_link_libraries(${PROJECT_NAME} AOP)
+
+target_link_libraries(${PROJECT_NAME} Distributed)

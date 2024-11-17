@@ -45,8 +45,10 @@ int Net::EPoller::get_aliveEvent(int timeoutMS, EventList &list) {
 }
 
 bool Net::EPoller::add_fd(Event event) {
-    if (_fds.find(event.fd) != _fds.end())
+    if (event.fd < 0 || _fds.find(event.fd) != _fds.end()) {
+        G_INFO << "EPoller add " << event.fd << " failed.";
         return false;
+    }
     auto [iter, success] = _fds.emplace(event.is_NoEvent() ? -event.fd : event.fd, event);
     if (!success || !operate(EPOLL_CTL_ADD, &iter->second))
         return false;
@@ -55,13 +57,14 @@ bool Net::EPoller::add_fd(Event event) {
     return true;
 }
 
-void Net::EPoller::remove_fd(int fd) {
+void Net::EPoller::remove_fd(int fd, bool fd_closed) {
     auto iter = _fds.find(fd);
     if (iter == _fds.end()) return;
-    operate(EPOLL_CTL_DEL, &iter->second);
+    if (!fd_closed)
+        operate(EPOLL_CTL_DEL, &iter->second);
     _fds.erase(iter);
     activeEvents.pop_back();
-    G_INFO << "EPoller remove fd " << fd;
+    G_INFO << "EPoller remove" << (fd_closed ? " closed fd " : " fd ") << fd;
 }
 
 void Net::EPoller::remove_all() {
@@ -94,6 +97,10 @@ void Net::EPoller::update_fd(Event event) {
             operate(EPOLL_CTL_MOD, &iter->second);
     }
     G_TRACE << "EPoller update " << event.fd << " events to " << event.event;
+}
+
+bool Net::EPoller::exist_fd(int fd) const {
+    return _fds.find(fd) != _fds.end();
 }
 
 void Net::EPoller::get_events(EventList &list, int size) {

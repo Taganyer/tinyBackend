@@ -32,7 +32,7 @@ void TimerLoop::shutdown() {
     _list = {};
 }
 
-TimerLoop::EventID TimerLoop::put_event(TimerLoop::Event fun, Time_difference interval) {
+TimerLoop::EventID TimerLoop::put_event(Event fun, Time_difference interval) {
     assert(interval > 0);
     Lock l(_mutex);
     if (!looping()) return {this, nullptr};
@@ -67,7 +67,7 @@ void TimerLoop::invoke_event() {
     }
 }
 
-TimerLoop::Node::Node(TimerLoop::Event fun, Time_difference interval) :
+TimerLoop::Node::Node(Event fun, Time_difference interval) :
         _ptr(std::make_shared<Pair>(interval, std::move(fun))) {}
 
 bool TimerLoop::Node::update() {

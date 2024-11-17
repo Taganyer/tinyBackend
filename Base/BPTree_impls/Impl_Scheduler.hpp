@@ -59,7 +59,7 @@ namespace Base {
 
             LRU_Helper(BlockFile &&file, uint64 memory_size);
 
-            bool can_create(Key);
+            [[nodiscard]] bool can_create(Key) const;
 
             Value create(Key index);
 

@@ -10,8 +10,9 @@
 #include <string>
 #include <unistd.h>
 #include <sys/stat.h>
-#include "config.hpp"
+#include <sys/uio.h>
 #include "NoCopy.hpp"
+#include "BufferArray.hpp"
 
 namespace Base {
 
@@ -19,9 +20,11 @@ namespace Base {
     public:
         ioFile() = default;
 
-        ioFile(const char* path, bool append, bool binary);
+        explicit ioFile(const char* path, bool append, bool binary);
 
         ioFile(ioFile &&other) noexcept;
+
+        ioFile& operator=(ioFile &&other) noexcept;
 
         ~ioFile();
 
@@ -31,21 +34,27 @@ namespace Base {
 
         uint64 read(uint64 size, void* dest) const;
 
-        size_t write(const void* str, size_t len = -1);
+        template<std::size_t N>
+        int64 read(const BufferArray<N> &array) const;
 
-        void flush();
+        uint64 write(const void* str, size_t len = -1) const;
 
-        void flush_to_disk();
+        template<std::size_t N>
+        int64 write(const BufferArray<N> &array) const;
 
-        bool resize_file(uint64 size);
+        void flush() const;
+
+        void flush_to_disk() const;
+
+        [[nodiscard]] bool resize_file(uint64 size) const;
 
         bool delete_file();
 
-        bool seek_cur(int64 step) { return fseek(_file, step, SEEK_CUR) == 0; };
+        bool seek_cur(int64 step) const { return fseek(_file, step, SEEK_CUR) == 0; };
 
-        bool seek_beg(int64 step) { return fseek(_file, step, SEEK_SET) == 0; };
+        bool seek_beg(int64 step) const { return fseek(_file, step, SEEK_SET) == 0; };
 
-        bool seek_end(int64 step) { return fseek(_file, step, SEEK_END) == 0; };
+        bool seek_end(int64 step) const { return fseek(_file, step, SEEK_END) == 0; };
 
         operator bool() const { return is_open() && !feof(_file); };
 
@@ -79,6 +88,14 @@ namespace Base {
 
     inline ioFile::ioFile(ioFile &&other) noexcept : _file(other._file) {
         other._file = nullptr;
+    }
+
+    inline ioFile& ioFile::operator=(ioFile &&other) noexcept {
+        close();
+        _file = other._file;
+        other._file = nullptr;
+        _path = std::move(other._path);
+        return *this;
     }
 
     inline ioFile::~ioFile() {
@@ -117,21 +134,31 @@ namespace Base {
         return fread(dest, 1, size, _file);
     }
 
-    inline size_t ioFile::write(const void* str, size_t len) {
+    template <std::size_t N>
+    int64 ioFile::read(const BufferArray<N>& array) const {
+        return ::readv(get_fd(), array.data(), N);
+    }
+
+    inline uint64 ioFile::write(const void* str, size_t len) const {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
 
-    inline void ioFile::flush() {
+    template <std::size_t N>
+    int64 ioFile::write(const BufferArray<N>& array) const {
+        return ::writev(get_fd(), array.data(), N);
+    }
+
+    inline void ioFile::flush() const {
         fflush(_file);
     }
 
-    inline void ioFile::flush_to_disk() {
+    inline void ioFile::flush_to_disk() const {
         fflush(_file);
         fsync(get_fd());
     }
 
-    inline bool ioFile::resize_file(uint64 size) {
+    inline bool ioFile::resize_file(uint64 size) const {
         return ftruncate(get_fd(), size) == 0;
     }
 

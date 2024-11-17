@@ -27,7 +27,7 @@ namespace Net {
 
         virtual bool add_fd(Event event) = 0;
 
-        virtual void remove_fd(int fd) = 0;
+        virtual void remove_fd(int fd, bool fd_closed) = 0;
 
         virtual void remove_all() = 0;
 
@@ -35,6 +35,8 @@ namespace Net {
 
         /// TODO 只在初始化时调用
         void set_tid(pthread_t tid) { _tid = tid; };
+
+        [[nodiscard]] virtual bool exist_fd(int fd) const = 0;
 
         [[nodiscard]] virtual uint64 fd_size() const = 0;
 

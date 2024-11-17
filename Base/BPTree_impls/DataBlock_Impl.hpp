@@ -19,7 +19,7 @@ namespace Base {
         using DataBlockHelper = Interpreter::DataBlockHelper;
 
         static_assert(KeyChecker::is_fixed);
-        static constexpr uint32 KeySize = get_size<Key>::size;
+        static constexpr uint32 KeySize = size_helper<Key>::size;
 
     public:
         explicit DataBlock_Impl(Impl_Scheduler &impl);
@@ -208,7 +208,7 @@ namespace Base {
         _need_update = true;
         new_block._need_update = true;
         if constexpr (ValueChecker::is_fixed) {
-            constexpr uint32 pair_size = KeySize + get_size<Value>::size;
+            constexpr uint32 pair_size = KeySize + size_helper<Value>::size;
             uint32 this_size = *_helper.get_size();
             uint32 target_size = (this_size + pair_size) / pair_size / 2;
             uint32 target_pos = (lower_bound(key)._index_or_offset - DataBlockHelper::BeginPos) / pair_size;
@@ -262,7 +262,7 @@ namespace Base {
     void DataBlock_Impl<Key, Value>::average(DataBlock_Impl &other) {
         if (*_helper.get_size() > *other._helper.get_size()) {
             if constexpr (ValueChecker::is_fixed) {
-                constexpr uint32 pair_size = KeySize + get_size<Value>::size;
+                constexpr uint32 pair_size = KeySize + size_helper<Value>::size;
                 uint32 half_kv_pair = (*_helper.get_size() + *other._helper.get_size()) / pair_size / 2;
                 uint32 move_size = *_helper.get_size() - half_kv_pair * pair_size;
                 move_other_block_data(other, DataBlockHelper::BeginPos,
@@ -281,7 +281,7 @@ namespace Base {
             }
         } else {
             if constexpr (ValueChecker::is_fixed) {
-                constexpr uint32 pair_size = KeySize + get_size<Value>::size;
+                constexpr uint32 pair_size = KeySize + size_helper<Value>::size;
                 uint32 half_kv_pair = (*_helper.get_size() + *other._helper.get_size()) / pair_size / 2;
                 uint32 move_size = *other._helper.get_size() - half_kv_pair * pair_size;
                 move_other_block_data(*this, DataBlockHelper::BeginPos + *_helper.get_size(),
@@ -315,7 +315,7 @@ namespace Base {
     DataBlock_Impl<Key, Value>::lower_bound(const Key &key) const {
         uint32 begin = DataBlockHelper::BeginPos, end = begin + *_helper.get_size();
         if constexpr (ValueChecker::is_fixed) {
-            constexpr uint32 len = KeySize + get_size<Value>::size;
+            constexpr uint32 len = KeySize + size_helper<Value>::size;
             for (auto size = (end - begin) / len; size > 0; size = (end - begin) / len) {
                 auto mid = begin + (size / 2) * len;
                 if (*get_key(_helper.buffer, mid) < key) {
@@ -393,8 +393,8 @@ namespace Base {
     template <typename Key, typename Value>
     bool DataBlock_Impl<Key, Value>::data_size_check(const Value &value) {
         if constexpr (ValueChecker::is_fixed) {
-            constexpr uint32 size = get_size<Value>::size > Interpreter::PTR_SIZE
-                                        ? get_size<Value>::size : Interpreter::PTR_SIZE
+            constexpr uint32 size = size_helper<Value>::size > Interpreter::PTR_SIZE
+                                        ? size_helper<Value>::size : Interpreter::PTR_SIZE
                                         + KeySize;
             static_assert(size <= (Interpreter::BLOCK_SIZE - DataBlockHelper::BeginPos) / 2);
             return true;
@@ -436,7 +436,7 @@ namespace Base {
     template <typename Key, typename Value>
     uint32 DataBlock_Impl<Key, Value>::get_offset(const void* buf, uint32 from, int n) {
         if constexpr (ValueChecker::is_fixed) {
-            constexpr uint32 size = KeySize + get_size<Value>::size;
+            constexpr uint32 size = KeySize + size_helper<Value>::size;
             return from + size * n;
         } else {
             if (n >= 0) {

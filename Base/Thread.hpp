@@ -18,51 +18,47 @@ namespace Base {
 
         using Id = pthread_t;
 
+        Thread() = default;
+
         Thread(Thread &&other) noexcept;
 
-        template<typename Fun, typename ...Args>
-        Thread(string name, Fun fun, Args &&...args) :
-                name(std::move(name)), fun(fun, args...) {};
-
-        template<typename Fun, typename ...Args>
-        Thread(Fun fun, Args &&...args) : fun(fun, args...) {};
+        template <typename Fun, typename...Args>
+        Thread(string name, Fun &&fun, Args &&...args) :
+            _data(new Data(std::move(name),
+                           Thread_fun(std::forward<Fun>(fun), std::forward<Args>(args)...))) {};
 
         ~Thread();
+
+        template <typename Fun, typename...Args>
+        explicit Thread(Fun fun, Args &&...args) :
+            _data(new Data(string(), Thread_fun(std::forward<Fun>(fun), std::forward<Args>(args)...))) {};
+
+        Thread& operator=(Thread &&other) noexcept;
 
         void start();
 
         void join();
 
-        [[nodiscard]] bool started() const { return _started; };
+        [[nodiscard]] Id get_id() const { return _pthread; };
 
-        [[nodiscard]] bool joined() const { return _joined; };
-
-        [[nodiscard]] Id get_id() const { return pthread; };
-
-        [[nodiscard]] const string &get_name() const { return name; };
+        [[nodiscard]] bool valid() const { return _pthread != -1; };
 
     private:
-
-        bool _started = false, _joined = false;
-
-        string name;
-
-        Thread_fun fun;
-
-        [[nodiscard]] bool valid() const { return pthread != -1; };
-        pthread_t pthread = -1;
-
         struct Data {
+
+            Data(string name, Thread_fun fun) : _name(std::move(name)), _fun(std::move(fun)) {};
 
             string _name;
 
             Thread_fun _fun;
 
-            Data(string name, Thread_fun fun) : _name(std::move(name)), _fun(std::move(fun)) {};
-
         };
 
-        static void *invoke(void *self);
+        pthread_t _pthread = -1;
+
+        Data* _data = nullptr;
+
+        static void* invoke(void* self);
 
     };
 

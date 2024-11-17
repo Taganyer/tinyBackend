@@ -5,63 +5,51 @@
 #ifndef BASE_TIMESTAMP_HPP
 #define BASE_TIMESTAMP_HPP
 
-#include "../Detail/config.hpp"
-#include <ctime>
-#include <string>
+#include "Base/Time/Time.hpp"
 
 namespace Base {
 
-    struct Time : public tm {
-        int64 tm_us = -1;
-
-        Time() = default;
-    };
-
-
     class TimeStamp {
     public:
+        static constexpr char Time_format[] = "%4d%02d%02d-%02d:%02d:%02d";
 
-        static const char *Time_format;
+        static constexpr int32 Time_format_len = 17;
 
-        static const int32 Time_format_len;
+        static constexpr char Time_us_format[] = "%4d%02d%02d-%02d:%02d:%02d.%06ld";
 
-        static const char *Time_us_format;
-
-        static const int32 Time_us_format_len;
+        static constexpr int32 Time_us_format_len = 24;
 
         static constexpr int64 coefficient = 1000 * 1000;
 
-        static TimeStamp now();
-
-        static Time get_time(const TimeStamp &ts, bool UTC = false);
-
         TimeStamp() = default;
 
-        explicit TimeStamp(int64 us_SE) : _us_SE(us_SE) {};
+        explicit constexpr TimeStamp(int64 us_SE) : _us_SE(us_SE) {};
+
+        explicit constexpr TimeStamp(const timeval &tv) : _us_SE(expand_tv(tv)) {};
 
         explicit TimeStamp(const Time &time);
 
-        explicit TimeStamp(const timeval &tv) : _us_SE(expand_tv(tv)) {};
+        [[nodiscard]] constexpr int64 us_since_epoch() const { return _us_SE; };
 
-        std::string to_string(bool UTC = false, bool show_us = true);
-
-        void format(char *dest, bool UTC = false, bool show_us = true);
-
-        [[nodiscard]] Time get_time(bool UTC = false) const;
-
-        [[nodiscard]] int64 us_since_epoch() const { return _us_SE; };
-
-        [[nodiscard]] timespec to_timespec() const {
-            return {_us_SE / coefficient, _us_SE % coefficient};
+        [[nodiscard]] constexpr timeval to_timeval() const {
+            return { _us_SE / coefficient, _us_SE % coefficient / 1000 };
         };
 
-    private:
+        [[nodiscard]] constexpr timespec to_timespec() const {
+            return { _us_SE / coefficient, _us_SE % coefficient };
+        };
 
+        [[nodiscard]] Time to_Time(bool UTC = false) const;
+
+    private:
         int64 _us_SE = 0;
 
         static int64 expand_tv(const timeval &tv) {
             return tv.tv_sec * coefficient + tv.tv_usec;
         }
+
+    public:
+        static TimeStamp now();
 
     };
 
@@ -98,11 +86,9 @@ namespace Base {
         return TimeStamp(time.us_since_epoch() - us);
     }
 
-    std::string to_string(const Time &time, bool show_us = true);
+    std::string to_string(const TimeStamp &time, bool show_us = true, bool UTC = false);
 
-    void format(char *dest, const Time &time, bool show_us = true);
-
-    Time get_time_now(bool UTC = false);
+    void format(char* dest, const TimeStamp &time, bool show_us = true, bool UTC = false);
 
 }
 

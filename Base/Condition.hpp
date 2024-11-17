@@ -13,7 +13,7 @@
 
 namespace Base {
 
-    class Condition : NoCopy {
+    class Condition : private NoCopy {
     public:
         Condition() {
             CAPI_CHECK(pthread_cond_init(&_cond, nullptr))

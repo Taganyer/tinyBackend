@@ -11,7 +11,7 @@
 
 namespace LogSystem {
 
-    enum LogRank {
+    enum LogRank : unsigned char {
         TRACE,
         DEBUG,
         INFO,
@@ -21,15 +21,28 @@ namespace LogSystem {
         EMPTY
     };
 
-    inline int rank_toString(char *ptr, LogRank rank) {
-        if (rank == EMPTY) return 0;
-        constexpr char store[6][7]{
+    inline const char* LogRankName(LogRank rank) {
+        constexpr const char* names[] = {
+            "TRACE",
+            "DEBUG",
+            "INFO",
+            "WARN",
+            "ERROR",
+            "FATAL",
+            "EMPTY"
+        };
+        return names[rank];
+    }
+
+    inline int rank_toString(char* ptr, LogRank rank) {
+        constexpr const char* store[] {
             "TRACE:",
             "DEBUG:",
             "INFO :",
             "WARN :",
             "ERROR:",
             "FATAL:",
+            "EMPTY:"
         };
         std::memcpy(ptr, store[rank], 6);
         return 6;

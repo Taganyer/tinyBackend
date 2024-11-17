@@ -2,7 +2,7 @@
 // Created by taganyer on 24-2-20.
 //
 
-
+#include <cstring>
 #include <unistd.h>
 #include <cxxabi.h>
 #include <execinfo.h>
@@ -51,7 +51,7 @@ string CurrentThread::stackTrace(bool demangle) {
     if (char** strings = ::backtrace_symbols(frame, nptrs)) {
         for (int i = 1; i < nptrs; ++i) {
             if (demangle) {
-                char *left_par = nullptr, *plus = nullptr;
+                char* left_par = nullptr,* plus = nullptr;
                 for (char* p = strings[i]; *p; ++p) {
                     if (*p == '(') left_par = p;
                     else if (*p == '+') plus = p;
@@ -86,6 +86,27 @@ bool CurrentThread::set_exit_function(ExitFun fun) {
     return std::atexit(fun) == 0;
 }
 
+void CurrentThread::emergency_exit(const string &message) {
+    fprintf(error_message_file, "emergency exit in Thread %s:\n", thread_name().c_str());
+    fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
+    fprintf(error_message_file, "message: %s\n", message.c_str());
+    fflush(error_message_file);
+    abort();
+}
+
+void CurrentThread::exit(const string& message) {
+    fprintf(error_message_file, "exit in Thread %s:\n", thread_name().c_str());
+    fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
+    fprintf(error_message_file, "message: %s\n", message.c_str());
+    fflush(error_message_file);
+    terminal();
+}
+
+void CurrentThread::print_error_message(const string &message) {
+    fprintf(error_message_file, "error message: %s\n", message.c_str());
+    fflush(error_message_file);
+}
+
 void CurrentThread::set_global_terminal_function(TerminalFun fun) {
     global_terminal_function = std::move(fun);
 }
@@ -107,22 +128,38 @@ void CurrentThread::terminal() {
         } catch (const Exception &ex) {
             fprintf(error_message_file, "Base::Exception in Thread %s:\n", thread_name().c_str());
             fprintf(error_message_file, "Reason: %s:\n", ex.what());
+            fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
             fprintf(error_message_file, "StackTrace: %s:\n", ex.stackTrace());
+            fflush(error_message_file);
         } catch (const std::exception &ex) {
             fprintf(error_message_file, "std::exception in Thread %s:\n", thread_name().c_str());
             fprintf(error_message_file, "Reason: %s:\n", ex.what());
+            fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
             fprintf(error_message_file, "StackTrace: %s:\n", stackTrace().data());
+            fflush(error_message_file);
         } catch (...) {
             fprintf(error_message_file, "Unknown exception in Thread %s:\n", thread_name().c_str());
+            fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
             fprintf(error_message_file, "StackTrace: %s:\n", stackTrace().data());
+            fflush(error_message_file);
         }
     }
     try {
         if (local_terminal_function)
             local_terminal_function(eptr);
+    } catch (...) {
+        fprintf(error_message_file, "Unknown exception in local_terminal_function\n");
+        fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
+        fflush(error_message_file);
+        abort();
+    }
+    try {
         if (global_terminal_function)
             global_terminal_function(eptr);
     } catch (...) {
+        fprintf(error_message_file, "Unknown exception in global_terminal_function\n");
+        fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
+        fflush(error_message_file);
         abort();
     }
 }

@@ -23,11 +23,13 @@ namespace Net {
 
         bool add_fd(Event event) override;
 
-        void remove_fd(int fd) override;
+        void remove_fd(int fd, bool fd_closed) override;
 
         void remove_all() override;
 
         void update_fd(Event event) override;
+
+        [[nodiscard]] bool exist_fd(int fd) const override;
 
         [[nodiscard]] uint64 fd_size() const override;
 

@@ -61,7 +61,7 @@ Impl_Scheduler::LRU_Helper::LRU_Helper(BlockFile &&file, uint64 memory_size) :
     _total_blocks = _file.total_blocks();
 }
 
-bool Impl_Scheduler::LRU_Helper::can_create(Key) {
+bool Impl_Scheduler::LRU_Helper::can_create(Key) const {
     return _memory_pool.max_block() >= Interpreter::BLOCK_SIZE;
 }
 

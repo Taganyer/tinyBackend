@@ -31,7 +31,7 @@ namespace Base {
         static string& thread_name() { return this_thread_name; };
 
         /// 线程标识指针
-        static void *& thread_mark_ptr() { return this_thread_mark_ptr; };
+        static void*& thread_mark_ptr() { return this_thread_mark_ptr; };
 
         /// 放弃当前线程运行权。
         static void yield_this_thread();
@@ -44,6 +44,15 @@ namespace Base {
         /// 当程序正常退出时，调用注册的函数。可注册多个函数，线程安全，调用顺序为后进先出。
         static bool set_exit_function(ExitFun fun);
 
+        /// 程序紧急退出，不会调用任何退出函数，只打印信息。
+        static void emergency_exit(const string &message);
+
+        /// 程序紧急退出，先打印信息,之后调用退出函数。
+        static void exit(const string &message);
+
+        /// 向注册的文件中打印错误信息。
+        static void print_error_message(const string &message);
+
         using ExceptionPtr = std::exception_ptr;
 
         using TerminalFun = std::function<void(ExceptionPtr)>;
@@ -55,18 +64,18 @@ namespace Base {
         static void set_local_terminal_function(TerminalFun fun);
 
         /// 设置错误信息输出文件并把该文件设置为无缓冲模式，默认为 stderr，为 nullptr 不输出错误信息。
-        static void set_error_message_file(FILE *file);
+        static void set_error_message_file(FILE* file);
 
         CurrentThread(const CurrentThread &) = delete;
 
-        CurrentThread &operator=(const CurrentThread &) = delete;
+        CurrentThread& operator=(const CurrentThread &) = delete;
 
     private:
         static TerminalFun global_terminal_function;
 
         static thread_local TerminalFun local_terminal_function;
 
-        static FILE *error_message_file;
+        static FILE* error_message_file;
 
         static const pthread_t main_thread_id;
 

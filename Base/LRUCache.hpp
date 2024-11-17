@@ -32,6 +32,9 @@ namespace Base {
 
                 /// optional
                 void release(const Key &key, Value &value);
+
+                /// optional
+                void erase(const Key &key);
         };
     */
 
@@ -64,7 +67,11 @@ namespace Base {
 
         void remove(const Key &key);
 
+        void erase(const Key &key);
+
         [[nodiscard]] uint32 need_update_size() const { return _obsolete.size(); };
+
+        [[nodiscard]] uint32 total_size() const { return _map.size(); };
 
     private:
         struct Node;
@@ -115,7 +122,6 @@ namespace Base {
 
         void reserve_space(const Key &key);
 
-
         struct FunChecker {
         private:
             template <typename U>
@@ -126,9 +132,20 @@ namespace Base {
             template <typename U>
             static std::false_type release_test(...);
 
+            template <typename U>
+            static auto erase_test(int) ->
+                decltype(std::declval<U>().release(std::declval<Key>(), std::declval<Value&>()),
+                    std::true_type());
+
+            template <typename U>
+            static std::false_type erase_test(...);
+
         public:
             static constexpr bool has_release_callable =
                 decltype(release_test<Helper>(0))::value;
+
+            static constexpr bool has_erase_callable =
+                decltype(erase_test<Helper>(0))::value;
 
         };
 
@@ -226,20 +243,55 @@ namespace Base {
     }
 
     template <typename Helper>
-    void LRUCache<Helper>::remove(const Key &key) {
+    void LRUCache<Helper>::remove(const Key& key) {
         auto iter = _map.find(key);
         if (iter == _map.end())
             throw Exception("LRUCache: key not found.");
 
         auto &[_, node] = *iter;
         assert(node.instantiated_size == 0);
+
         if (node.need_update) {
             _helper.update(key, node.value);
             assert(node.obsolete_iter != _obsolete.end());
             _obsolete.erase(node.obsolete_iter);
         }
+
         if constexpr (FunChecker::has_release_callable) {
             _helper.release(key, node.value);
+        }
+
+        if (node.is_persistent) {
+            assert(node.iter != _persistent.end());
+            _persistent.erase(node.iter);
+        } else {
+            assert(node.iter != _temporary.end());
+            _temporary.erase(node.iter);
+        }
+        _map.erase(iter);
+    }
+
+    template <typename Helper> void LRUCache<Helper>::erase(const Key &key) {
+        auto iter = _map.find(key);
+        if (iter == _map.end()) {
+            if constexpr (FunChecker::has_erase_callable) {
+                _helper.erase(key);
+            }
+            return;
+        }
+        if constexpr (FunChecker::has_release_callable) {
+            _helper.release(key);
+        }
+        if constexpr (FunChecker::has_erase_callable) {
+            _helper.erase(key);
+        }
+
+        auto &[_, node] = *iter;
+        assert(node.instantiated_size == 0);
+
+        if (node.need_update) {
+            assert(node.obsolete_iter != _obsolete.end());
+            _obsolete.erase(node.obsolete_iter);
         }
 
         if (node.is_persistent) {

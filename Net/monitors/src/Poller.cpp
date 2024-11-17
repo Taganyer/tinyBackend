@@ -33,14 +33,17 @@ int Poller::get_aliveEvent(int timeoutMS, EventList &list) {
 }
 
 bool Poller::add_fd(Event event) {
-    if (!_mapping.try_emplace(event.fd, _fds.size()).second)
+    if (event.fd < 0 || !_mapping.try_emplace(event.fd, _fds.size()).second) {
+        G_INFO << "Poller add " << event.fd << " failed.";
         return false;
+    }
     _fds.push_back({ event.fd, (short) event.event, 0 });
     _datas.push_back(event.extra_data);
+    G_INFO << "Poller add " << event.fd;
     return true;
 }
 
-void Poller::remove_fd(int fd) {
+void Poller::remove_fd(int fd, bool fd_closed) {
     auto iter = _mapping.find(fd);
     if (iter == _mapping.end()) return;
     _mapping[_fds.back().fd] = iter->second;
@@ -49,7 +52,7 @@ void Poller::remove_fd(int fd) {
     _datas[iter->second] = _datas.back();
     _datas.pop_back();
     _mapping.erase(iter);
-    G_INFO << "Poller remove fd " << fd;
+    G_INFO << "Poller remove" << (fd_closed ? " closed fd " : " fd ") << fd;
 }
 
 void Poller::remove_all() {
@@ -66,6 +69,10 @@ void Poller::update_fd(Event event) {
     _fds[iter->second].events = (short) event.event;
     _datas[iter->second] = event.extra_data;
     G_INFO << "Poller update " << event.fd << " events to " << event.event;
+}
+
+bool Poller::exist_fd(int fd) const {
+    return _mapping.find(fd) != _mapping.end();
 }
 
 uint64 Poller::fd_size() const {

@@ -10,7 +10,7 @@
 #include <memory>
 #include <functional>
 #include "Socket.hpp"
-#include "Base/Buffer/RingBuffer.hpp"
+#include "Net/TcpMessageAgent.hpp"
 
 
 namespace Net {
@@ -19,13 +19,17 @@ namespace Net {
 
     class Event;
 
-    class Acceptor;
+    class Controller;
 
     class NetLink : public std::enable_shared_from_this<NetLink>, Base::NoCopy {
     public:
-        using ReadCallback = std::function<void(Base::RingBuffer &, Socket &)>;
+        static constexpr uint32 DEFAULT_INPUT_BUFFER_SIZE = 1024;
 
-        using WriteCallback = std::function<void(Socket &)>;
+        static constexpr uint32 DEFAULT_OUTPUT_BUFFER_SIZE = 1024;
+
+        using ReadCallback = std::function<void(const Controller &)>;
+
+        using WriteCallback = std::function<void(const Controller &)>;
 
         /*
          * 返回值表示是否调用 CloseCallback
@@ -36,28 +40,20 @@ namespace Net {
          *                error_types::ErrorEvent,
          *                error_types::TimeoutEvent
         */
-        using ErrorCallback = std::function<bool(error_mark, Socket &)>;
+        using ErrorCallback = std::function<bool(error_mark, const Controller &)>;
 
-        using CloseCallback = std::function<void(Socket &)>;
-
-        using SocketPtr = std::unique_ptr<Socket>;
-
-        using AcceptorPtr = std::shared_ptr<Acceptor>;
+        using CloseCallback = std::function<void(const Controller &)>;
 
         using LinkPtr = std::shared_ptr<NetLink>;
 
         using WeakPtr = std::weak_ptr<NetLink>;
 
         /// 隐藏了 NetLink 的构造函数，确保生成的对象都是 heap 对象。
-        static LinkPtr create_NetLinkPtr(SocketPtr &&socket_ptr,
-                                         const AcceptorPtr &acceptor_ptr);
+        static LinkPtr create_NetLinkPtr(Socket &&socket,
+                                         uint32 inputBufferSize = DEFAULT_INPUT_BUFFER_SIZE,
+                                         uint32 outputBufferSize = DEFAULT_OUTPUT_BUFFER_SIZE);
 
         ~NetLink();
-
-        /// 强行关闭文件描述符，多次调用不会出现问题。
-        void close_fd();
-
-        Socket& socket() { return *_socket; };
 
         void set_readCallback(ReadCallback event) { _readFun = std::move(event); };
 
@@ -67,12 +63,14 @@ namespace Net {
 
         void set_closeCallback(CloseCallback event) { _closeFun = std::move(event); };
 
-        [[nodiscard]] bool valid() const { return _socket->valid(); };
+        const Socket& socket() const { return _agent.socket; };
 
-        [[nodiscard]] int fd() const { return _socket->fd(); };
+        [[nodiscard]] bool valid() const { return _agent.socket.valid(); };
+
+        [[nodiscard]] int fd() const { return _agent.socket.fd(); };
 
     private:
-        std::unique_ptr<Socket> _socket;
+        TcpMessageAgent _agent;
 
         ReadCallback _readFun;
 
@@ -82,31 +80,24 @@ namespace Net {
 
         CloseCallback _closeFun;
 
-        Base::RingBuffer _input;
-
-        Base::RingBuffer _output;
-
-        std::weak_ptr<Acceptor> _acceptor;
-
         friend class Controller;
 
         friend class Reactor;
 
-        friend class BalancedReactor;
+        void handle_read(const Controller &controller);
 
-        friend class Acceptor;
+        void handle_write(const Controller &controller);
 
-        void handle_read(Event* event);
+        void handle_error(error_mark mark, const Controller &controller) const;
 
-        void handle_write(Event* event);
+        void handle_close(const Controller &controller);
 
-        void handle_error(error_mark mark, Event* event);
+        bool handle_timeout(const Controller &controller) const;
 
-        void handle_close();
+        /// 强行关闭文件描述符，多次调用不会出现问题。
+        void close_fd();
 
-        bool handle_timeout();
-
-        NetLink(SocketPtr &&socket_ptr, const AcceptorPtr &acceptor_ptr);
+        explicit NetLink(Socket &&socket, uint32 inputBufferSize, uint32 outputBufferSize);
 
     };
 

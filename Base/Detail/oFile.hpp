@@ -5,12 +5,13 @@
 #ifndef BASE_OFILE_HPP
 #define BASE_OFILE_HPP
 
-#include "config.hpp"
-#include "NoCopy.hpp"
 #include <cstdio>
 #include <string>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
+#include "NoCopy.hpp"
+#include "BufferArray.hpp"
 
 
 namespace Base {
@@ -23,33 +24,38 @@ namespace Base {
 
         oFile(oFile &&other) noexcept;
 
+        oFile& operator=(oFile &&other) noexcept;
+
         ~oFile();
 
         bool open(const char* path, bool append = false, bool binary = false);
 
         bool close();
 
-        int putChar(int ch);
+        uint64 write(const void* str, size_t len = -1) const;
 
-        int putInt32(int32 i);
+        template <std::size_t size>
+        int64 write(const BufferArray<size> &array) const;
 
-        int putUInt32(uint32 i);
+        uint64 put_line(const char* str, size_t len = -1) const;
 
-        int putInt64(int64 i);
+        [[nodiscard]] int putChar(int ch) const;
 
-        int putUInt64(int64 i);
+        [[nodiscard]] int putInt32(int32 i) const;
 
-        int putDouble(double d);
+        [[nodiscard]] int putUInt32(uint32 i) const;
 
-        size_t write(const void* str, size_t len = -1);
+        [[nodiscard]] int putInt64(int64 i) const;
 
-        size_t put_line(const char* str, size_t len = -1);
+        [[nodiscard]] int putUInt64(int64 i) const;
 
-        void flush();
+        [[nodiscard]] int putDouble(double d) const;
 
-        void flush_to_disk();
+        void flush() const;
 
-        bool resize_file(uint64 size);
+        void flush_to_disk() const;
+
+        [[nodiscard]] bool resize_file(uint64 size) const;
 
         bool delete_file();
 
@@ -62,7 +68,7 @@ namespace Base {
 
         [[nodiscard]] bool is_open() const { return _file; };
 
-        [[nodiscard]] const std::string &get_path() const { return _path; };
+        [[nodiscard]] const std::string& get_path() const { return _path; };
 
         [[nodiscard]] int get_fd() const {
             if (!_file) return -1;
@@ -93,6 +99,14 @@ namespace Base {
         other._file = nullptr;
     }
 
+    inline oFile& oFile::operator=(oFile &&other) noexcept {
+        close();
+        _file = other._file;
+        other._file = nullptr;
+        _path = std::move(other._path);
+        return *this;
+    }
+
     inline oFile::~oFile() {
         close();
     }
@@ -113,55 +127,61 @@ namespace Base {
         if (fclose(_file) == 0) {
             _file = nullptr;
             _path = std::string();
+            return true;
         }
-        return !_file;
+        return false;
     }
 
-    inline int oFile::putChar(int ch) {
-        return fputc(ch, _file);
-    }
-
-    inline int oFile::putInt32(int32 i) {
-        return fprintf(_file, "%d", i);
-    }
-
-    inline int oFile::putUInt32(uint32 i) {
-        return fprintf(_file, "%u", i);
-    }
-
-    inline int oFile::putInt64(int64 i) {
-        return fprintf(_file, "%lld", i);
-    }
-
-    inline int oFile::putUInt64(int64 i) {
-        return fprintf(_file, "%llu", i);
-    }
-
-    inline int oFile::putDouble(double d) {
-        return fprintf(_file, "%lf", d);
-    }
-
-    inline size_t oFile::write(const void* str, size_t len) {
+    inline uint64 oFile::write(const void* str, size_t len) const {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
 
-    inline size_t oFile::put_line(const char* str, size_t len) {
+    template <std::size_t N>
+    int64 oFile::write(const BufferArray<N> &array) const {
+        return ::writev(get_fd(), array.data(), N);
+    }
+
+    inline uint64 oFile::put_line(const char* str, size_t len) const {
         size_t flag = write(str, len);
         if (fputc('\n', _file) != EOF) ++flag;
         return flag;
     }
 
-    inline void oFile::flush() {
+    inline int oFile::putChar(int ch) const {
+        return fputc(ch, _file);
+    }
+
+    inline int oFile::putInt32(int32 i) const {
+        return fprintf(_file, "%d", i);
+    }
+
+    inline int oFile::putUInt32(uint32 i) const {
+        return fprintf(_file, "%u", i);
+    }
+
+    inline int oFile::putInt64(int64 i) const {
+        return fprintf(_file, "%lld", i);
+    }
+
+    inline int oFile::putUInt64(int64 i) const {
+        return fprintf(_file, "%llu", i);
+    }
+
+    inline int oFile::putDouble(double d) const {
+        return fprintf(_file, "%lf", d);
+    }
+
+    inline void oFile::flush() const {
         fflush(_file);
     }
 
-    inline void oFile::flush_to_disk() {
+    inline void oFile::flush_to_disk() const {
         fflush(_file);
         fsync(get_fd());
     }
 
-    inline bool oFile::resize_file(uint64 size) {
+    inline bool oFile::resize_file(uint64 size) const {
         return ftruncate(get_fd(), size) == 0;
     }
 

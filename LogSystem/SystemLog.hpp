@@ -8,6 +8,7 @@
 #ifdef LOGSYSTEM_SYSTEMLOG_HPP
 
 #include "LogRank.hpp"
+#include "GlobalObject.hpp"
 #include "Base/Detail/oFile.hpp"
 #include "Base/ScheduledThread.hpp"
 #include "Base/Buffer/BufferPool.hpp"
@@ -28,9 +29,11 @@ namespace LogSystem {
 
         ~SystemLog();
 
-        void push(LogRank rank, const void* ptr, uint64 size);
+        void push(LogRank rank, const void* ptr, uint64 size) const;
 
         LogStream stream(LogRank rank);
+
+        void flush() const;
 
         void set_rank(LogRank rank) { outputRank = rank; };
 
@@ -49,7 +52,7 @@ namespace LogSystem {
 
             [[nodiscard]] uint64 size() const { return _index; };
 
-            bool valid() const { return _buffer.size() > 0; };
+            [[nodiscard]] bool valid() const { return _buffer.size() > 0; };
 
         private:
             Base::BufferPool::Buffer _buffer;
@@ -57,7 +60,7 @@ namespace LogSystem {
             uint64 _index = 0;
         };
 
-        class LogScheduler : public Base::Scheduler {
+        class LogScheduler final : public Base::Scheduler {
         public:
             Base::Mutex IO_lock;
 
@@ -83,6 +86,8 @@ namespace LogSystem {
             void force_invoke() override;
 
             friend class Base::ScheduledThread;
+
+            friend class SystemLog;
         };
 
         std::shared_ptr<LogScheduler> _scheduler;
@@ -98,7 +103,7 @@ namespace LogSystem {
     };
 
 
-    class LogStream : private Base::NoCopy {
+    class LogStream : Base::NoCopy {
     public:
         LogStream(SystemLog &log, LogRank rank) : _log(&log), _rank(rank) {};
 
@@ -155,52 +160,20 @@ namespace LogSystem {
 
         int _index = 0;
 
-        char _message[256];
+        char _message[256] {};
 
     };
 
 }
 
-/// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define TRACE(val) if ((val).get_rank() <= LogSystem::LogRank::TRACE) \
-                        ((val).stream(LogSystem::LogRank::TRACE))
-
-#define DEBUG(val) if ((val).get_rank() <= LogSystem::LogRank::DEBUG) \
-                        ((val).stream(LogSystem::LogRank::DEBUG))
-
-#define INFO(val) if ((val).get_rank() <= LogSystem::LogRank::INFO) \
-                        ((val).stream(LogSystem::LogRank::INFO))
-
-#define WARN(val) if ((val).get_rank() <= LogSystem::LogRank::WARN) \
-                        ((val).stream(LogSystem::LogRank::WARN))
-
-#define ERROR(val) if ((val).get_rank() <= LogSystem::LogRank::ERROR) \
-                        ((val).stream(LogSystem::LogRank::ERROR))
-
-#define FATAL(val) if ((val).get_rank() <= LogSystem::LogRank::FATAL) \
-                        ((val).stream(LogSystem::LogRank::FATAL))
-
-
-/// 解除注释开启全局 BufferPool 对象
-#define GLOBAL_BUFFER_POOL
-#ifdef GLOBAL_BUFFER_POOL
-
-extern Base::BufferPool Global_BufferPool;
-/// 解除注释开启全局 ScheduledThread 对象
-#define GLOBAL_SCHEDULED_THREAD
-
-#endif
-
 
 #ifdef GLOBAL_SCHEDULED_THREAD
+#ifdef GLOBAL_BUFFER_POOL
 
-extern Base::Time_difference Global_ScheduledThread_FlushTime;
-extern Base::ScheduledThread Global_ScheduledThread;
-/// 解除注释开启全局日志
 #define GLOBAL_LOG
 
 #endif
-
+#endif
 
 #ifdef GLOBAL_LOG
 
@@ -219,23 +192,17 @@ extern LogSystem::SystemLog Global_Logger;
 #ifdef GLOBAL_LOG
 
 /// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define G_TRACE if (Global_Logger.get_rank() <= LogSystem::LogRank::TRACE) \
-                    (Global_Logger.stream(LogSystem::LogRank::TRACE))
+#define G_TRACE TRACE(Global_Logger)
 
-#define G_DEBUG if (Global_Logger.get_rank() <= LogSystem::LogRank::DEBUG) \
-                    (Global_Logger.stream(LogSystem::LogRank::DEBUG))
+#define G_DEBUG DEBUG(Global_Logger)
 
-#define G_INFO if (Global_Logger.get_rank() <= LogSystem::LogRank::INFO) \
-                    (Global_Logger.stream(LogSystem::LogRank::INFO))
+#define G_INFO INFO(Global_Logger)
 
-#define G_WARN if (Global_Logger.get_rank() <= LogSystem::LogRank::WARN) \
-                    (Global_Logger.stream(LogSystem::LogRank::WARN))
+#define G_WARN WARN(Global_Logger)
 
-#define G_ERROR if (Global_Logger.get_rank() <= LogSystem::LogRank::ERROR) \
-                    (Global_Logger.stream(LogSystem::LogRank::ERROR))
+#define G_ERROR ERROR(Global_Logger)
 
-#define G_FATAL if (Global_Logger.get_rank() <= LogSystem::LogRank::FATAL) \
-                    (Global_Logger.stream(LogSystem::LogRank::FATAL))
+#define G_FATAL FATAL(Global_Logger)
 
 #else
 

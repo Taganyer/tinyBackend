@@ -27,17 +27,18 @@ SystemLog::~SystemLog() {
     }
 }
 
-void SystemLog::push(LogRank rank, const void* ptr, uint64 size) {
+void SystemLog::push(LogRank rank, const void* ptr, uint64 size) const {
     if (rank < outputRank || _scheduler->_thread->closed()) return;
     Lock l(_scheduler->IO_lock);
     while (size) {
-        uint64 ret = _scheduler->_buffer->append(rank, get_time_now(), ptr, size);
+        uint64 ret = _scheduler->_buffer->append(rank, Time::now(), ptr, size);
         if (size > ret) {
             _scheduler->_thread->submit_task(*_scheduler, _scheduler->_buffer);
-            _scheduler->_buffer = new LogBuffer(_bufferPool->get(LOG_BUFFER_SIZE));
-            if (!_scheduler->_buffer->valid()) {
-                /// FIXME memory overflow
-                break;
+            _scheduler->_buffer = new LogBuffer(_bufferPool->get(_buffer_size));
+            while (!_scheduler->_buffer->valid()) {
+                delete _scheduler->_buffer;
+                CurrentThread::yield_this_thread();
+                _scheduler->_buffer = new LogBuffer(_bufferPool->get(_buffer_size));
             }
             ptr = (const char *) ptr + ret;
         }
@@ -49,13 +50,17 @@ LogStream SystemLog::stream(LogRank rank) {
     return { *this, rank };
 }
 
+void SystemLog::flush() const {
+    _scheduler->force_invoke();
+}
+
 uint64 SystemLog::LogBuffer::append(LogRank rank, const Time &time,
                                     const void* ptr, uint64 size) {
-    if (_buffer.size() - _index < size + TimeStamp::Time_us_format_len + 8)
+    if (_buffer.size() - _index < size + Time::Time_us_format_len + 8)
         return 0;
     char* buffer = _buffer.data();
     format(buffer + _index, time);
-    _index += TimeStamp::Time_us_format_len;
+    _index += Time::Time_us_format_len;
     buffer[_index++] = ' ';
     _index += rank_toString(buffer + _index, rank);
     std::memcpy(buffer + _index, ptr, size);
@@ -72,7 +77,7 @@ SystemLog::LogScheduler::LogScheduler(ScheduledThread* thread, std::string dicti
 }
 
 void SystemLog::LogScheduler::open_new_file() {
-    string path = _path + to_string(get_time_now(), true) + ".log";
+    string path = _path + to_string(Time::now(), true) + ".log";
     if (unlikely(!_file.open(path.c_str(), false, true)))
         throw Exception("fail to open: " + path);
     current_size = 0;
@@ -109,21 +114,6 @@ void SystemLog::LogScheduler::force_invoke() {
     write_to_file(_buffer);
     _buffer->clear();
 }
-
-
-#ifdef GLOBAL_BUFFER_POOL
-
-BufferPool Global_BufferPool(1 << 28);
-
-#endif
-
-
-#ifdef GLOBAL_SCHEDULED_THREAD
-
-Time_difference Global_ScheduledThread_FlushTime(1_s);
-ScheduledThread Global_ScheduledThread(Global_ScheduledThread_FlushTime);
-
-#endif
 
 
 #ifdef GLOBAL_LOG

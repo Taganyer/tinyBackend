@@ -116,7 +116,7 @@ bool BlockFile::locating(uint64 index) {
 uint64 BlockFile::padding_write(const void* data, uint64 size) {
     uint64 written = _file.write(data, size);
     if (written == size && size != _block_size) {
-        char *_pad = new char[_block_size];
+        char* _pad = new char[_block_size];
         written += _file.write(_pad, _block_size - size);
         delete [] _pad;
     }
