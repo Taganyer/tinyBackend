@@ -248,6 +248,7 @@ void LinkLogStorage::handle_a_log(Link_Log_Header &header, RingBuffer &buf) {
 uint32 LinkLogStorage::write_to_file(RingBuffer &buf, uint32 size) {
     assert(buf.readable_len() >= size);
     Lock l(_mutex);
+    flush_cache();
     uint32 written = 0;
     for (int i = 0; i < _records.size() && size; ++i) {
         if (i > 0) open_new_log_file(_records[i], _records[i - 1].latest_time);
@@ -261,13 +262,14 @@ uint32 LinkLogStorage::write_to_file(RingBuffer &buf, uint32 size) {
         _records[i].written += written_;
         assert(_records[i].index == _records[i].written);
     }
+    _logs.flush();
     return written;
 }
 
 void LinkLogStorage::delete_oldest_files(uint32 size) {
     Lock l(_mutex);
     auto [results] = _filename_file.search_from_begin(size);
-    if (results.empty()) return;
+    if (results.size() < 2) return;
 
     for (auto [k, v] : results) {
         std::string path = get_log_name(k);
@@ -301,8 +303,8 @@ void LinkLogStorage::delete_oldest_files(uint32 size) {
 
 LinkLogStorage::QuerySet*
 LinkLogStorage::get_query_set(const LinkServiceID &id, const NodeFilter &filter) {
-    flush_cache();
     Lock l(_mutex);
+    flush_cache();
     LinkServiceID end(id);
     char* ptr = end.data() + sizeof(LinkServiceID) - 1;
     for (; ptr >= end.data(); --ptr) {
@@ -382,12 +384,6 @@ LinkLogStorage::query(RingBuffer &buf, QuerySet* point) {
     return std::make_pair(written, nullptr);
 }
 
-void LinkLogStorage::flush_cache() {
-    Lock l(_mutex);
-    if (_cache.need_update_size())
-        _cache.update_all();
-}
-
 void LinkLogStorage::flush_log_file() {
     Lock l(_mutex);
     _logs.flush_to_disk();
@@ -399,8 +395,8 @@ void LinkLogStorage::flush_file_name() {
 }
 
 void LinkLogStorage::flush_index_file() {
-    flush_cache();
     Lock l(_mutex);
+    flush_cache();
     _indexes.impl().flush();
 }
 
@@ -426,6 +422,11 @@ void LinkLogStorage::CacheHelper::update(const Key &key, Value &value) const {
 
 void LinkLogStorage::CacheHelper::erase(const Key &key) const {
     CHECK(_interpreter._indexes.erase(key),);
+}
+
+void LinkLogStorage::flush_cache() {
+    if (_cache.need_update_size())
+        _cache.update_all();
 }
 
 std::string LinkLogStorage::filename_file_name() const {

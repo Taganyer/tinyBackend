@@ -87,7 +87,7 @@ namespace Base {
 
 //------------------------------------------------------------------------------------------------
 
-    /// 检查 T 是否存在调用 before()、after()、error(std::exception_ptr)(这里不能为 exception_ptr &)、destroy()。
+    /// 检查 T 是否存在调用 before()、after()、bool-error(std::exception_ptr)(这里不能为 exception_ptr &)、destroy()。
     template <typename T>
     class CallableExitChecker {
     private:
@@ -312,15 +312,15 @@ namespace Base {
                     try {
                         return ptr(std::forward<Args>(args)...);
                     } catch (...) {
-                        _aspect.error(std::current_exception());
-                        throw;
+                        if (_aspect.error(std::current_exception()))
+                            throw;
                     }
                 } else if (MemberFunPtrCallable<FunPtr, Args...>::callable) {
                     try {
                         return member_FunPtr_invoke(std::forward<FunPtr>(ptr), std::forward<Args>(args)...);
                     } catch (...) {
-                        _aspect.error(std::current_exception());
-                        throw;
+                        if (_aspect.error(std::current_exception()))
+                            throw;
                     }
                 } else {
                     static_assert(CallableChecker<FunPtr, Args...>::common_callable ||
@@ -347,15 +347,15 @@ namespace Base {
                     try {
                         return ptr(std::forward<Args>(args)...);
                     } catch (...) {
-                        _aspect.error(std::current_exception());
-                        throw;
+                        if (_aspect.error(std::current_exception()))
+                            throw;
                     }
                 } else if (MemberFunPtrCallable<FunPtr, Args...>::callable) {
                     try {
                         return member_FunPtr_invoke(std::forward<FunPtr>(ptr), std::forward<Args>(args)...);
                     } catch (...) {
-                        _aspect.error(std::current_exception());
-                        throw;
+                        if (_aspect.error(std::current_exception()))
+                            throw;
                     }
                 } else {
                     static_assert(CallableChecker<FunPtr, Args...>::common_callable ||
@@ -992,7 +992,7 @@ namespace Base {
         /// 当其他种类的 AOP_Object 可以转化为本类时起作用。
         template <typename Object, typename...Args,
                   Implicit<other_cannot_convert_directly<Object, Args...>(),
-                           const AOP<Args...>&, const Object&> = true>
+                           const AOP<Args...>&, const Object&>  = true>
         constexpr AOP_Object(const AOP_Object<Object, Args...> &object)
             noexcept(check_noexcept<const AOP<Args...>&, const Object&>())
             : ParentClass(static_cast<const AOP<Args...>&>(object)),
@@ -1000,7 +1000,7 @@ namespace Base {
 
         template <typename Object, typename...Args,
                   Explicit<other_cannot_convert_directly<Object, Args...>(),
-                           const AOP<Args...>&, const Object&> = 0>
+                           const AOP<Args...>&, const Object&>  = 0>
         constexpr explicit AOP_Object(const AOP_Object<Object, Args...> &object)
             noexcept(check_noexcept<const AOP<Args...>&, const Object&>())
             : ParentClass(static_cast<const AOP<Args...>&>(object)),
@@ -1008,7 +1008,7 @@ namespace Base {
 
         template <typename Object, typename...Args,
                   Implicit<other_cannot_convert_directly<Object, Args...>(),
-                           AOP<Args...>&&, Object&&> = true>
+                           AOP<Args...>&&, Object&&>  = true>
         constexpr AOP_Object(AOP_Object<Object, Args...> &&object)
             noexcept(check_noexcept<AOP<Args...>&&, Object&&>())
             : ParentClass(static_cast<AOP<Args...>&&>(object)),
@@ -1016,7 +1016,7 @@ namespace Base {
 
         template <typename Object, typename...Args,
                   Explicit<other_cannot_convert_directly<Object, Args...>(),
-                           AOP<Args...>&&, Object&&> = 0>
+                           AOP<Args...>&&, Object&&>  = 0>
         constexpr explicit AOP_Object(AOP_Object<Object, Args...> &&object)
             noexcept(check_noexcept<AOP<Args...>&&, Object&&>())
             : ParentClass(static_cast<AOP<Args...>&&>(object)),

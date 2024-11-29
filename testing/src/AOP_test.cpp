@@ -73,10 +73,11 @@ static void AOP_Wrapper_test() {
         };
 
         /// std::exception_ptr & 不起作用。
-        void error(const std::exception_ptr &) {
+        bool error(const std::exception_ptr &) {
 #ifdef AOP_WILL_USE_SOURCE_LOCATION
             cerr << "A1 error in the: " << AOPthreadLoc.function() << endl;
 #endif
+            return true;
         };
     };
 
@@ -105,10 +106,11 @@ static void AOP_Wrapper_test() {
 #endif
         };
 
-        void error(const std::exception_ptr &) const {
+        bool error(const std::exception_ptr &) const {
 #ifdef AOP_WILL_USE_SOURCE_LOCATION
             cerr << "A2 const error in the: " << AOPthreadLoc.function() << endl;
 #endif
+            return false;
         };
     };
 

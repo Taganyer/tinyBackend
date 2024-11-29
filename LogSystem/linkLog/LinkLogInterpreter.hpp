@@ -159,8 +159,6 @@ namespace LogSystem {
 
         std::pair<uint32, QuerySet *> query(Base::RingBuffer &buf, QuerySet* point);
 
-        void flush_cache();
-
         void flush_log_file();
 
         void flush_file_name();
@@ -213,6 +211,8 @@ namespace LogSystem {
         NodeDeletionFile _node_deletion;
 
         Base::LRUCache<CacheHelper> _cache;
+
+        void flush_cache();
 
         [[nodiscard]] std::string filename_file_name() const;
 
