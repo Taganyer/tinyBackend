@@ -19,7 +19,7 @@ UDP_Communicator::UDP_Communicator(InetAddress localAddress):
     }
 }
 
-bool UDP_Communicator::set_timeout(Time_difference timeout) {
+bool UDP_Communicator::set_timeout(TimeDifference timeout) {
     timeval tv = timeout.to_timeval();
     return ops::set_socket_opt(_socket.fd(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 }

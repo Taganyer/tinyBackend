@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include "Base/Exception.hpp"
 #include "Base/Container/List.hpp"
-#include "Base/Time/Time_difference.hpp"
+#include "Base/Time/TimeDifference.hpp"
 
 namespace Base {
 
@@ -45,7 +45,7 @@ namespace Base {
 
         using Value = typename Helper::Value;
 
-        static constexpr Time_difference threshold_time { 1 * SEC_ };
+        static constexpr TimeDifference threshold_time { 1 * SEC_ };
 
         Helper _helper;
 
@@ -93,7 +93,7 @@ namespace Base {
 
             uint32 instantiated_size = 0;
 
-            Time_difference instantiated_time;
+            TimeDifference instantiated_time;
 
             QIter iter;
 

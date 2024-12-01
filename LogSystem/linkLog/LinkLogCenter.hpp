@@ -26,9 +26,9 @@ namespace LogSystem {
 
         static_assert(REMOTE_SOCKET_INPUT_BUFFER_SIZE >= (1 << 16));
 
-        static constexpr Base::Time_difference SERVER_TIMEOUT = Base::operator ""_min(1);
+        static constexpr Base::TimeDifference SERVER_TIMEOUT = Base::operator ""_min(1);
 
-        static constexpr Base::Time_difference ILLEGAL_LOGGER_TIMOUT = Base::operator ""_s(10);
+        static constexpr Base::TimeDifference ILLEGAL_LOGGER_TIMOUT = Base::operator ""_s(10);
 
         static constexpr int32 GET_ACTIVE_TIMEOUT = SERVER_TIMEOUT.to_ms();
 
@@ -65,7 +65,7 @@ namespace LogSystem {
         struct LoggerCheckData {
             LinkNodeID parent;
             LinkNodeType type;
-            Base::Time_difference init_time, parent_init_time;
+            Base::TimeDifference init_time, parent_init_time;
             bool* logger_timout = nullptr;
 
             explicit LoggerCheckData(Register_Logger &logger) :
@@ -90,12 +90,12 @@ namespace LogSystem {
         using CheckMapIter = CheckMap::iterator;
 
         struct TimerData {
-            Base::Time_difference expire_time;
+            Base::TimeDifference expire_time;
             CheckMapIter iter;
             bool* logger_timout = nullptr;
             Address address;
 
-            explicit TimerData(Base::Time_difference expire_time, CheckMapIter iter,
+            explicit TimerData(Base::TimeDifference expire_time, CheckMapIter iter,
                                const Address &address) :
                 expire_time(expire_time), iter(iter), logger_timout(iter->second.logger_timout),
                 address(address) {};

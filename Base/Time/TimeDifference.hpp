@@ -18,7 +18,7 @@ namespace Base {
     constexpr int64 MIN_ = 60 * SEC_;
     constexpr int64 HOUR_ = 60 * MIN_;
 
-    struct Time_difference {
+    struct TimeDifference {
         static constexpr char Time_difference_format[] = "%4d%02d%02d-%02d:%02d:%02d";
 
         static constexpr int32 Time_difference_format_len = 17;
@@ -29,11 +29,11 @@ namespace Base {
 
         int64 nanoseconds = 0;
 
-        Time_difference() = default;
+        TimeDifference() = default;
 
-        constexpr Time_difference(int64 ns) : nanoseconds(ns) {};
+        constexpr explicit TimeDifference(int64 ns) : nanoseconds(ns) {};
 
-        explicit Time_difference(const Time &time);
+        explicit TimeDifference(const Time &time);
 
         constexpr operator int64() const { return nanoseconds; };
 
@@ -57,48 +57,48 @@ namespace Base {
 
         [[nodiscard]] Time to_Time(bool UTC = false) const;
 
-        static Time_difference now();
+        static TimeDifference now();
 
     };
 
-    constexpr Time_difference operator+(const Time_difference &left, const Time_difference &right) {
-        return { left.nanoseconds + right.nanoseconds };
+    constexpr TimeDifference operator+(const TimeDifference &left, const TimeDifference &right) {
+        return TimeDifference{ left.nanoseconds + right.nanoseconds };
     }
 
-    constexpr Time_difference operator-(const Time_difference &left, const Time_difference &right) {
-        return { left.nanoseconds - right.nanoseconds };
+    constexpr TimeDifference operator-(const TimeDifference &left, const TimeDifference &right) {
+        return TimeDifference{ left.nanoseconds - right.nanoseconds };
     }
 
-    constexpr int64 operator ""_ns(uint64 ns) {
-        return (int64) ns;
+    constexpr TimeDifference operator ""_ns(uint64 ns) {
+        return TimeDifference { (int64) ns };
     }
 
-    constexpr int64 operator ""_us(uint64 us) {
-        return (int64) us * US_;
+    constexpr TimeDifference operator ""_us(uint64 us) {
+        return TimeDifference{ (int64) us * US_ };
     }
 
-    constexpr int64 operator ""_ms(uint64 ms) {
-        return (int64) ms * MS_;
+    constexpr TimeDifference operator ""_ms(uint64 ms) {
+        return TimeDifference { (int64) ms * MS_ };
     }
 
-    constexpr int64 operator ""_s(uint64 sec) {
-        return (int64) sec * SEC_;
+    constexpr TimeDifference operator ""_s(uint64 sec) {
+        return TimeDifference{ (int64) sec * SEC_ };
     }
 
-    constexpr int64 operator ""_min(uint64 min) {
-        return (int64) min * MIN_;
+    constexpr TimeDifference operator ""_min(uint64 min) {
+        return TimeDifference{ (int64) min * MIN_ };
     }
 
-    constexpr int64 operator ""_h(uint64 hour) {
-        return (int64) hour * HOUR_;
+    constexpr TimeDifference operator ""_h(uint64 hour) {
+        return TimeDifference{ (int64) hour * HOUR_ };
     }
 
-    Time_difference Unix_to_now();
+    TimeDifference Unix_to_now();
 
-    void sleep(Time_difference time);
+    void sleep(TimeDifference time);
 
     template <typename Fun, typename...Args>
-    Time_difference chronograph(Fun &&fun, Args &&...args) {
+    TimeDifference chronograph(Fun &&fun, Args &&...args) {
         timespec startTime {}, endTime {};
         clock_gettime(CLOCK_REALTIME, &startTime);
         fun(std::forward<Args>(args)...);
@@ -106,12 +106,12 @@ namespace Base {
         int64 ns = SEC_;
         ns *= endTime.tv_sec - startTime.tv_sec;
         ns += endTime.tv_nsec - startTime.tv_nsec;
-        return { ns };
+        return TimeDifference { ns };
     }
 
-    std::string to_string(Time_difference time, bool show_us = true, bool UTC = false);
+    std::string to_string(TimeDifference time, bool show_us = true, bool UTC = false);
 
-    void format(char* dest, Time_difference time, bool show_us = true, bool UTC = false);
+    void format(char* dest, TimeDifference time, bool show_us = true, bool UTC = false);
 
 }
 

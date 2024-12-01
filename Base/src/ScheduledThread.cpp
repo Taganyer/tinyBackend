@@ -6,7 +6,7 @@
 
 using namespace Base;
 
-ScheduledThread::ScheduledThread(Time_difference flush_time) :
+ScheduledThread::ScheduledThread(TimeDifference flush_time) :
     _flush_time(flush_time) {
     _thread = Thread(
         string("ScheduledThread") + std::to_string(CurrentThread::tid()),
@@ -86,7 +86,7 @@ void ScheduledThread::wait_if_no_scheduler() {
     });
 }
 
-bool ScheduledThread::waiting(Time_difference endTime) {
+bool ScheduledThread::waiting(TimeDifference endTime) {
     Lock l(_mutex);
     bool waiting_again = _condition.wait_until(l, endTime.to_timespec());
     _invoking.swap(_ready);

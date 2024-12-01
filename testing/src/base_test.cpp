@@ -167,7 +167,7 @@ namespace Test {
     }
 
     void timer_test() {
-        Time_difference timeout(1500_ms);
+        TimeDifference timeout(1500_ms);
         Timer timer(timeout, [&timer] {
             cout << "invoke" << ' ' << timer.get_timeout() << endl;
         });
@@ -181,7 +181,7 @@ namespace Test {
                total_block = BufferPool::round_size(BufferPool::BLOCK_SIZE << 12),
                max_block = total_block / loop * 4;
 
-        Time_difference total_time;
+        TimeDifference total_time;
         for (int i = 0; i < total_loop; ++i) {
             BufferPool buffer_pool(total_block);
             vector<BufferPool::Buffer> t;
@@ -192,7 +192,7 @@ namespace Test {
 
             // map<char *, uint64> store;
 
-            Time_difference start = Unix_to_now();
+            TimeDifference start = Unix_to_now();
             for (int j = 0; j < loop; ++j) {
                 auto s = engine(seed);
                 total_quires += s;
@@ -208,7 +208,7 @@ namespace Test {
                     t.push_back(std::move(b));
                 }
             }
-            Time_difference end = Unix_to_now();
+            TimeDifference end = Unix_to_now();
             total_time = total_time + end - start;
         }
 
@@ -232,7 +232,7 @@ namespace Test {
         cout << "cost time per BufferPool::get: " <<
             total_time.to_us() / (total_loop * loop) << "us" << endl;
 
-        total_time = 0;
+        total_time.nanoseconds = 0;
         for (int i = 0; i < total_loop; ++i) {
             vector<char *> t;
             t.reserve(loop);
@@ -240,12 +240,12 @@ namespace Test {
             default_random_engine seed(time(nullptr));
             uniform_int_distribution engine(1, (int) max_block);
 
-            Time_difference start = Unix_to_now();
+            TimeDifference start = Unix_to_now();
             for (int j = 0; j < loop; ++j) {
                 auto s = engine(seed);
                 t.push_back(new char[s]);
             }
-            Time_difference end = Unix_to_now();
+            TimeDifference end = Unix_to_now();
             total_time = total_time + end - start;
 
             for (auto p : t) delete[] p;
@@ -266,32 +266,32 @@ namespace Test {
         std::shuffle(arr.begin(), arr.end(), g);
 
         {
-            Time_difference insert_begin = Unix_to_now();
+            TimeDifference insert_begin = Unix_to_now();
             for (auto i : arr) {
                 if (!tree.insert(i, i))
                     cout << i << " insert failed" << endl;
             }
-            Time_difference insert_end = Unix_to_now();
+            TimeDifference insert_end = Unix_to_now();
             cout << "insert: " << (insert_end - insert_begin).to_ms() << " ms" << endl;
         }
 
         std::shuffle(arr.begin(), arr.end(), g);
         {
-            Time_difference search_begin = Unix_to_now();
+            TimeDifference search_begin = Unix_to_now();
             for (auto i : arr) {
                 auto [k, v] = tree.find(i);
                 if (v != i) {
                     cout << i << ": " << k << ' ' << v << endl;
                 }
             }
-            Time_difference search_end = Unix_to_now();
+            TimeDifference search_end = Unix_to_now();
             cout << "common search: " << (search_end - search_begin).to_ms() << " ms" << endl;
         }
 
         {
-            Time_difference search1_begin = Unix_to_now();
+            TimeDifference search1_begin = Unix_to_now();
             auto [results] = tree.search_from_begin();
-            Time_difference search1_end = Unix_to_now();
+            TimeDifference search1_end = Unix_to_now();
             cout << "search from begin: " << (search1_end - search1_begin).to_ms() << " ms" << endl;
             bool _is_sorted = std::is_sorted(results.begin(), results.end(),
                                              [] (const Result_Impl<int, int> &l, const Result_Impl<int, int> &r) {
@@ -305,9 +305,9 @@ namespace Test {
         }
 
         {
-            Time_difference search1_begin = Unix_to_now();
+            TimeDifference search1_begin = Unix_to_now();
             auto [results] = tree.search_from_end();
-            Time_difference search1_end = Unix_to_now();
+            TimeDifference search1_end = Unix_to_now();
             cout << "search from end: " << (search1_end - search1_begin).to_ms() << " ms" << endl;
             bool _is_sorted = std::is_sorted(results.begin(), results.end(),
                                              [] (const Result_Impl<int, int> &l, const Result_Impl<int, int> &r) {
@@ -333,27 +333,27 @@ namespace Test {
         std::shuffle(arr.begin(), arr.end(), g);
 
         {
-            Time_difference erase_begin = Unix_to_now();
+            TimeDifference erase_begin = Unix_to_now();
             for (auto i : arr) {
                 if (!tree.erase(i)) {
                     cout << i << " erase failed" << endl;
                 }
             }
-            Time_difference erase_end = Unix_to_now();
+            TimeDifference erase_end = Unix_to_now();
             cout << "common erase: " << (erase_end - erase_begin).to_ms() << " ms" << endl;
         }
 
         {
-            Time_difference erase1_begin = Unix_to_now();
+            TimeDifference erase1_begin = Unix_to_now();
             tree.erase(0, total_size / 2);
-            Time_difference erase1_end = Unix_to_now();
+            TimeDifference erase1_end = Unix_to_now();
             cout << "range erase: " << (erase1_end - erase1_begin).to_ms() << " ms" << endl;
         }
 
         {
-            Time_difference search1_begin = Unix_to_now();
+            TimeDifference search1_begin = Unix_to_now();
             auto [results] = tree.search_from_end();
-            Time_difference search1_end = Unix_to_now();
+            TimeDifference search1_end = Unix_to_now();
             cout << "search from end: " << (search1_end - search1_begin).to_ms() << " ms" << endl;
             bool _is_sorted = std::is_sorted(results.begin(), results.end(),
                                              [] (const Result_Impl<int, int> &l, const Result_Impl<int, int> &r) {

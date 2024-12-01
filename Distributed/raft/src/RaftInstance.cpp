@@ -14,15 +14,15 @@ using namespace Base;
 
 using namespace Net;
 
-Time_difference RaftInstance::LEADER_SENT_TIMEOUT = 1_s;
+TimeDifference RaftInstance::LEADER_SENT_TIMEOUT = 1_s;
 
-Time_difference RaftInstance::CANDIDATE_RECEIVE_TIMEOUT = 3_s;
+TimeDifference RaftInstance::CANDIDATE_RECEIVE_TIMEOUT = 3_s;
 
-Time_difference RaftInstance::FOLLOWER_RECEIVE_TIMEOUT = 3_s;
+TimeDifference RaftInstance::FOLLOWER_RECEIVE_TIMEOUT = 3_s;
 
-Time_difference RaftInstance::ONLINE_WAIT_TIMEOUT = 2_s;
+TimeDifference RaftInstance::ONLINE_WAIT_TIMEOUT = 2_s;
 
-Time_difference RaftInstance::OFFLINE_WAIT_TIMEOUT = 2_s;
+TimeDifference RaftInstance::OFFLINE_WAIT_TIMEOUT = 2_s;
 
 RaftInstance::RaftInstance(const InetAddress &addr,
                            RaftStateMachine* state_machine, std::string name) :
@@ -134,9 +134,9 @@ std::string RaftInstance::name_state() const {
     return ret;
 }
 
-Time_difference RaftInstance::follower_receive_timeout() const {
-    Time_difference hundredth = FOLLOWER_RECEIVE_TIMEOUT / 100;
-    return { _last_flush_time.nanoseconds
+TimeDifference RaftInstance::follower_receive_timeout() const {
+    TimeDifference hundredth { FOLLOWER_RECEIVE_TIMEOUT / 100 };
+    return TimeDifference { _last_flush_time.nanoseconds
         + hundredth.nanoseconds * (_last_flush_time.nanoseconds % 25 + 76) };
 }
 

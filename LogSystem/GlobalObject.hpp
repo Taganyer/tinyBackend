@@ -22,7 +22,7 @@ inline Base::BufferPool Global_BufferPool(1 << 28);
 #ifdef GLOBAL_SCHEDULED_THREAD
 #include "Base/ScheduledThread.hpp"
 
-constexpr Base::Time_difference Global_ScheduledThread_FlushTime(Base::operator ""_s(1));
+constexpr Base::TimeDifference Global_ScheduledThread_FlushTime(Base::operator ""_s(1));
 inline Base::ScheduledThread Global_ScheduledThread(Global_ScheduledThread_FlushTime);
 /// 解除注释开启全局日志
 #define GLOBAL_LOG

@@ -112,7 +112,7 @@ void RaftTransmitter::affirm_offline(const Address &address) {
 }
 
 RaftTransmitter::Address RaftTransmitter::receive(RaftMessage* message,
-                                                  Time_difference end_time) {
+                                                  TimeDifference end_time) {
     auto time = end_time - Unix_to_now();
     int choose = MSG_DONTWAIT;
     if (time > 0) {

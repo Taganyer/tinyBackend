@@ -11,7 +11,7 @@
 #include <memory>
 #include <functional>
 #include "Base/Condition.hpp"
-#include "Time_difference.hpp"
+#include "TimeDifference.hpp"
 
 namespace Base {
 
@@ -39,7 +39,7 @@ namespace Base {
         void shutdown();
 
         /// 将事件加入队列，同时返回一个事件控制ID。interval 必须大于等于零。
-        EventID put_event(Event fun, Time_difference interval);
+        EventID put_event(Event fun, TimeDifference interval);
 
         [[nodiscard]] bool looping() const { return _run; };
 
@@ -64,7 +64,7 @@ namespace Base {
         class Node {
         public:
 
-            using Pair = std::pair<Time_difference, Event>;
+            using Pair = std::pair<TimeDifference, Event>;
 
             using Ptr = std::shared_ptr<Pair>;
 
@@ -74,17 +74,17 @@ namespace Base {
 
         private:
 
-            Time_difference _now = Unix_to_now();
+            TimeDifference _now = Unix_to_now();
 
             Ptr _ptr;
 
             Node() = default;
 
-            Node(Event fun, Time_difference interval);
+            Node(Event fun, TimeDifference interval);
 
             bool update();
 
-            bool invoke();
+            bool invoke() const;
 
             friend class TimerLoop;
 
@@ -98,10 +98,10 @@ namespace Base {
             ~EventID() = default;
 
             /// 重设间隔时间，线程安全。interval 必须大于等于零。
-            void reset(Time_difference interval);
+            void reset(TimeDifference interval) const;
 
             /// 取消任务，线程安全。
-            void cancel();
+            void cancel() const;
 
             /// 判定任务是否在定时队列中。
             [[nodiscard]] bool expired() const;

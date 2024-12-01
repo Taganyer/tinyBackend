@@ -8,19 +8,18 @@
 #ifdef BASE_CONDITION_HPP
 
 #include "Mutex.hpp"
-#include "Time/TimeStamp.hpp"
-#include "Time/Time_difference.hpp"
+#include "Time/TimeDifference.hpp"
 
 namespace Base {
 
-    class Condition : private NoCopy {
+    class Condition : NoCopy {
     public:
         Condition() {
             CAPI_CHECK(pthread_cond_init(&_cond, nullptr))
         };
 
         Condition(Condition &&other) noexcept: _cond(other._cond) {
-            other._cond = {0};
+            other._cond = {};
         };
 
         ~Condition() {
@@ -48,13 +47,13 @@ namespace Base {
         };
 
         template<typename Mutex>
-        bool wait_for(Lock<Mutex> &lock, Time_difference ns) {
+        bool wait_for(Lock<Mutex> &lock, TimeDifference ns) {
             auto time = (ns + Unix_to_now()).to_timespec();
             return wait_until(lock, time);
         };
 
         template<typename Mutex, typename Fun>
-        bool wait_for(Lock<Mutex> &lock, Time_difference ns, Fun fun) {
+        bool wait_for(Lock<Mutex> &lock, TimeDifference ns, Fun fun) {
             auto time = (ns + Unix_to_now()).to_timespec();
             while (!fun()) {
                 if (!wait_until(lock, time))

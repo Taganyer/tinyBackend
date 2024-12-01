@@ -12,21 +12,21 @@
 #include "Base/Mutex.hpp"
 #include "Base/Thread.hpp"
 #include "RaftTransmitter.hpp"
-#include "Base/Time/Time_difference.hpp"
+#include "Base/Time/TimeDifference.hpp"
 
 namespace Dist {
 
     class RaftInstance {
     public:
-        static Base::Time_difference LEADER_SENT_TIMEOUT;
+        static Base::TimeDifference LEADER_SENT_TIMEOUT;
 
-        static Base::Time_difference CANDIDATE_RECEIVE_TIMEOUT;
+        static Base::TimeDifference CANDIDATE_RECEIVE_TIMEOUT;
 
-        static Base::Time_difference FOLLOWER_RECEIVE_TIMEOUT;
+        static Base::TimeDifference FOLLOWER_RECEIVE_TIMEOUT;
 
-        static Base::Time_difference ONLINE_WAIT_TIMEOUT;
+        static Base::TimeDifference ONLINE_WAIT_TIMEOUT;
 
-        static Base::Time_difference OFFLINE_WAIT_TIMEOUT;
+        static Base::TimeDifference OFFLINE_WAIT_TIMEOUT;
 
         using Address = RaftTransmitter::Address;
 
@@ -67,7 +67,7 @@ namespace Dist {
         State state() const { return _state; };
 
     private:
-        using Peers = std::unordered_map<Net::InetAddress, Base::Time_difference>;
+        using Peers = std::unordered_map<Net::InetAddress, Base::TimeDifference>;
 
         Base::Mutex _mutex;
 
@@ -77,7 +77,7 @@ namespace Dist {
 
         Net::InetAddress _leader {};
 
-        Base::Time_difference _last_flush_time;
+        Base::TimeDifference _last_flush_time;
 
         RaftTransmitter _transmitter;
 
@@ -91,7 +91,7 @@ namespace Dist {
 
         friend class RaftAgent;
 
-        Base::Time_difference follower_receive_timeout() const;
+        Base::TimeDifference follower_receive_timeout() const;
 
         void leader_thread_loop();
 

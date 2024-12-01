@@ -161,7 +161,7 @@ void Reactor::destroy_source() {
 }
 
 void Reactor::remove_timeouts() {
-    Time_difference time = Unix_to_now() - timeout;
+    TimeDifference time = Unix_to_now() - timeout;
     auto iter = _queue.begin(), end = _queue.end();
     while (iter != end && iter->flush_time <= time) {
         auto m = _map.find(iter->fd);

@@ -45,7 +45,7 @@ namespace Dist {
 
         void affirm_offline(const Address &address);
 
-        Address receive(RaftMessage* message, Base::Time_difference end_time);
+        Address receive(RaftMessage* message, Base::TimeDifference end_time);
 
     private:
         Net::UDP_Communicator _sender;

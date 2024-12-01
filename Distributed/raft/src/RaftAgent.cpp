@@ -20,7 +20,7 @@ void RaftAgent::handle_messages_from_follower(RaftInstance &instance,
                                               const RaftMessage &message, const Address &address) {
     assert(instance._state == RaftInstance::Leader);
     if (instance._peers.find(address) != instance._peers.end()) {
-        Time_difference now = Unix_to_now();
+        TimeDifference now = Unix_to_now();
         G_INFO << instance.name_state() << ": Accepting follower " << address.toIpPort()
                 << " response message delay: "
                 << (now - instance._peers[address]).to_ms() << " ms.";
@@ -69,7 +69,7 @@ void RaftAgent::handle_messages_from_leader(RaftInstance &instance, const RaftMe
     if (check_outdated(instance, message, instance._leader))
         return;
     assert(instance._peers.find(instance._leader) != instance._peers.end());
-    Time_difference now = Unix_to_now();
+    TimeDifference now = Unix_to_now();
     G_INFO << instance.name_state() << ": Accepting leader " << instance._leader.toIpPort()
             << " response message delay: "
             << (now - instance._peers[instance._leader]).to_ms() << " ms.";
@@ -98,7 +98,7 @@ void RaftAgent::handle_messages_from_peer(RaftInstance &instance,
     if (check_outdated(instance, message, address))
         return;
     if (instance._peers.find(address) != instance._peers.end()) {
-        Time_difference now = Unix_to_now();
+        TimeDifference now = Unix_to_now();
         G_INFO << instance.name_state() << ": Accepting peer " << address.toIpPort()
                 << " response message delay: "
                 << (now - instance._peers[address]).to_ms() << " ms.";
@@ -199,7 +199,7 @@ bool RaftAgent::handle_message_when_offline(RaftInstance &instance,
 }
 
 bool RaftAgent::end_status_check(bool online, RaftInstance &instance) {
-    Time_difference now = Unix_to_now();
+    TimeDifference now = Unix_to_now();
     bool success = true;
     for (auto &[addr, time] : instance._peers) {
         if (time != 0) {
@@ -308,7 +308,7 @@ bool RaftAgent::accept_online_ack(RaftInstance &instance, const Address &address
         return false;
     }
     if (iter->second != 0) {
-        iter->second = 0;
+        iter->second = TimeDifference { 0 };
         return true;
     }
     return false;
@@ -340,7 +340,7 @@ bool RaftAgent::accept_offline_ack(RaftInstance &instance, const Address &addres
         return false;
     };
     if (iter->second != 0) {
-        iter->second = 0;
+        iter->second = TimeDifference { 0 };
         G_INFO << instance.name_state()
                 << ": Peer " << address.toIpPort() << " agree offline.";
         return true;

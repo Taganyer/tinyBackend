@@ -45,7 +45,7 @@ namespace LogSystem {
 
         static constexpr int32 GET_ACTIVE_TIMEOUT_MS = 500;
 
-        static constexpr Base::Time_difference BUFFER_FLUSH_TIME = Base::operator ""_s(1);
+        static constexpr Base::TimeDifference BUFFER_FLUSH_TIME = Base::operator ""_s(1);
 
         static_assert(GET_ACTIVE_TIMEOUT_MS > 0 && BUFFER_FLUSH_TIME.to_ms() > GET_ACTIVE_TIMEOUT_MS,
                       "Unable to refresh buffers in time");
@@ -82,7 +82,7 @@ namespace LogSystem {
             uint32 index = 0;
             uint32 ref_count = 0;
             Base::BufferPool::Buffer buf;
-            Base::Time_difference last_flush_time;
+            Base::TimeDifference last_flush_time;
         };
 
         using BufferQueue = std::vector<Buffer>;
@@ -92,7 +92,7 @@ namespace LogSystem {
             Type type = Invalid, subtype = Invalid;
             bool created = false, sub_decision_created = false;
             BufferIter buf_iter;
-            Base::Time_difference init_time;
+            Base::TimeDifference init_time;
             std::map<ID, NodeMessage>::iterator parent_iter;
             bool* logger_timout = nullptr;
 
@@ -127,11 +127,11 @@ namespace LogSystem {
         using MapIter = Map::iterator;
 
         struct TimerData {
-            Base::Time_difference expire_time;
+            Base::TimeDifference expire_time;
             MapIter iter;
             bool* logger_timout = nullptr;
 
-            explicit TimerData(Base::Time_difference expire_time, MapIter iter) :
+            explicit TimerData(Base::TimeDifference expire_time, MapIter iter) :
                 expire_time(expire_time), iter(iter), logger_timout(iter->second.logger_timout) {};
 
             TimerData(const TimerData &) = default;
@@ -213,28 +213,28 @@ namespace LogSystem {
 
 
         LinkErrorType register_logger(MapIter parent_iter, Type type, const NodeID &node_id,
-                                      Base::Time_difference timeout);
+                                      Base::TimeDifference timeout);
 
         LinkErrorType register_logger(MapIter parent_iter, Type type, const NodeID &node_id,
-                                      Base::Time_difference timeout, BufferIter &buf_iter,
+                                      Base::TimeDifference timeout, BufferIter &buf_iter,
                                       Register_Logger &logger);
 
         BufferIter get_buffer_iter();
 
         std::pair<LinkErrorType, MapIter>
         create_head_logger(const ServiceID &service, const NodeID &node,
-                           Base::Time_difference timeout, bool is_branch);
+                           Base::TimeDifference timeout, bool is_branch);
 
         std::pair<LinkErrorType, MapIter>
         create_head_logger(const ServiceID &service, const NodeID &node,
-                           Base::Time_difference timeout, bool is_branch,
+                           Base::TimeDifference timeout, bool is_branch,
                            BufferIter &buf_iter, Create_Logger &logger);
 
         std::pair<LinkErrorType, MapIter>
-        create_logger(const ServiceID &service, const NodeID &node, Base::Time_difference timeout);
+        create_logger(const ServiceID &service, const NodeID &node, Base::TimeDifference timeout);
 
         std::pair<LinkErrorType, MapIter>
-        create_logger(const ServiceID &service, const NodeID &node, Base::Time_difference timeout,
+        create_logger(const ServiceID &service, const NodeID &node, Base::TimeDifference timeout,
                       BufferIter &buf_iter, Create_Logger &logger);
 
         void destroy_logger(MapIter iter);

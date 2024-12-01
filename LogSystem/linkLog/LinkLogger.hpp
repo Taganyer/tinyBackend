@@ -30,19 +30,19 @@ namespace LogSystem {
         using NodeID = Server::NodeID;
 
         LinkLogger(LogRank rank, const ServiceID &service, const NodeID &node,
-                   bool is_branch, Base::Time_difference end_timeout, LinkLogServer &server);
+                   bool is_branch, Base::TimeDifference end_timeout, LinkLogServer &server);
 
         LinkLogger(LogRank rank, const ID &head_id,
-                   bool is_branch, Base::Time_difference end_timeout, LinkLogServer &server);
+                   bool is_branch, Base::TimeDifference end_timeout, LinkLogServer &server);
 
         LinkLogger(LogRank rank, const ServiceID &service, const NodeID &node,
-                   Base::Time_difference end_timeout, LinkLogServer &server);
+                   Base::TimeDifference end_timeout, LinkLogServer &server);
 
         LinkLogger(LogRank rank, const ID &complete_id,
-                   Base::Time_difference end_timeout, LinkLogServer &server);
+                   Base::TimeDifference end_timeout, LinkLogServer &server);
 
         LinkLogger(LogRank rank, const LinkLogger &parent, const NodeID &node,
-                   Base::Time_difference end_timeout);
+                   Base::TimeDifference end_timeout);
 
         LinkLogger(LinkLogger &&other) noexcept;
 
@@ -51,19 +51,19 @@ namespace LogSystem {
         void push(LogRank rank, const void* data, uint16 size) const;
 
         void register_child_node(Type type, const NodeID &node_id,
-                                 Base::Time_difference create_timeout) const;
+                                 Base::TimeDifference create_timeout) const;
 
-        void fork(const NodeID &child_node, Base::Time_difference create_timeout) const;
+        void fork(const NodeID &child_node, Base::TimeDifference create_timeout) const;
 
-        void follow(const NodeID &child_node, Base::Time_difference create_timeout) const;
+        void follow(const NodeID &child_node, Base::TimeDifference create_timeout) const;
 
-        void decision(const NodeID &child_node, Base::Time_difference create_timeout) const;
+        void decision(const NodeID &child_node, Base::TimeDifference create_timeout) const;
 
-        void rpc_fork(const NodeID &child_node, Base::Time_difference create_timeout) const;
+        void rpc_fork(const NodeID &child_node, Base::TimeDifference create_timeout) const;
 
-        void rpc_follow(const NodeID &child_node, Base::Time_difference create_timeout) const;
+        void rpc_follow(const NodeID &child_node, Base::TimeDifference create_timeout) const;
 
-        void rpc_decision(const NodeID &child_node, Base::Time_difference create_timeout) const;
+        void rpc_decision(const NodeID &child_node, Base::TimeDifference create_timeout) const;
 
         void close();
 

@@ -1,0 +1,3 @@
+.gitignore
+CMake_config.h
+cmake-build-debug

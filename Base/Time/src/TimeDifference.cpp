@@ -2,14 +2,14 @@
 // Created by taganyer on 24-5-11.
 //
 
-#include "../Time_difference.hpp"
+#include "../TimeDifference.hpp"
 
 namespace Base {
 
-    Time_difference::Time_difference(const Time &time) :
+    TimeDifference::TimeDifference(const Time &time) :
         nanoseconds(mktime((tm *) &time) * SEC_ + time.tm_us * US_) {}
 
-    Time Time_difference::to_Time(bool UTC) const {
+    Time TimeDifference::to_Time(bool UTC) const {
         auto seconds = static_cast<time_t>(nanoseconds / SEC_);
         Time time;
         if (UTC) gmtime_r(&seconds, &time);
@@ -18,20 +18,20 @@ namespace Base {
         return time;
     }
 
-    Time_difference Time_difference::now() {
+    TimeDifference TimeDifference::now() {
         return Unix_to_now();
     }
 
-    Time_difference Unix_to_now() {
+    TimeDifference Unix_to_now() {
         timespec now {};
         clock_gettime(CLOCK_REALTIME, &now);
         int64 ns = SEC_;
         ns *= now.tv_sec;
         ns += now.tv_nsec;
-        return { ns };
+        return TimeDifference { ns };
     }
 
-    void sleep(Time_difference time) {
+    void sleep(TimeDifference time) {
         if (time <= 0) return;
         timespec timespec {};
         timespec.tv_sec = time.nanoseconds / SEC_;
@@ -39,12 +39,12 @@ namespace Base {
         nanosleep(&timespec, nullptr);
     }
 
-    std::string to_string(Time_difference time, bool show_us, bool UTC) {
+    std::string to_string(TimeDifference time, bool show_us, bool UTC) {
         Time Tm = time.to_Time(UTC);
         return to_string(Tm, show_us);
     }
 
-    void format(char* dest, Time_difference time, bool show_us, bool UTC) {
+    void format(char* dest, TimeDifference time, bool show_us, bool UTC) {
         Time Tm = time.to_Time(UTC);
         return format(dest, Tm, show_us);
     }

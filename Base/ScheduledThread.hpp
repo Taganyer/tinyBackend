@@ -12,7 +12,7 @@
 #include "Base/Thread.hpp"
 #include "Base/Condition.hpp"
 #include "Base/Container/List.hpp"
-#include "Base/Time/Time_difference.hpp"
+#include "Base/Time/TimeDifference.hpp"
 
 namespace Base {
 
@@ -45,7 +45,7 @@ namespace Base {
 
     class ScheduledThread : NoCopy {
     public:
-        explicit ScheduledThread(Time_difference flush_time);
+        explicit ScheduledThread(TimeDifference flush_time);
 
         ~ScheduledThread();
 
@@ -79,9 +79,9 @@ namespace Base {
 
         Condition _condition;
 
-        Time_difference _flush_time;
+        TimeDifference _flush_time;
 
-        Time_difference _next_flush_time;
+        TimeDifference _next_flush_time;
 
         Queue _schedulers;
 
@@ -95,7 +95,7 @@ namespace Base {
 
         void wait_if_no_scheduler();
 
-        bool waiting(Time_difference endTime);
+        bool waiting(TimeDifference endTime);
 
         void get_need_flush(std::vector<QueueIter> &need_flush);
 

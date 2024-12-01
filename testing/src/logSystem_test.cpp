@@ -42,7 +42,7 @@ namespace Test {
                 }
             });
         }
-        Time_difference begin = Unix_to_now();
+        TimeDifference begin = Unix_to_now();
         for (auto &t : pool) {
             t.start();
         }
@@ -57,7 +57,7 @@ namespace Test {
     class ServerHandler : public LinkLogServerHandler {
     public:
         void create_head_logger(LinkServiceID service, LinkNodeID node,
-                                Time_difference time) override {
+                                TimeDifference time) override {
             G_INFO << __FUNCTION__ << ' ' << service.data() << '|'
                     << node.data() << " init_time "
                     << to_string(time, true);
@@ -65,28 +65,28 @@ namespace Test {
 
         void register_logger(LinkServiceID service, LinkNodeID node,
                              LinkNodeID parent_node, LinkNodeType type,
-                             Time_difference time, Time_difference expire_time) override {
+                             TimeDifference time, TimeDifference expire_time) override {
             G_INFO << __FUNCTION__ << ' ' << service.data() << '|' << node.data()
                     << " parent " << parent_node.data() << " type " << NodeTypeName(type)
                     << " time " << to_string(time, true);
         };
 
         void create_logger(LinkServiceID service, LinkNodeID node,
-                           Time_difference init_time) override {
+                           TimeDifference init_time) override {
             G_INFO << __FUNCTION__ << ' ' << service.data() << '|'
                     << node.data() << " init_time "
                     << to_string(init_time, true);
         };
 
         void logger_end(LinkServiceID service, LinkNodeID node,
-                        Time_difference end_time) override {
+                        TimeDifference end_time) override {
             G_INFO << __FUNCTION__ << ' ' << service.data() << '|'
                     << node.data() << " end_time "
                     << to_string(end_time, true);
         };
 
         void handling_error(LinkServiceID service, LinkNodeID node,
-                            Time_difference time, LinkErrorType type) override {
+                            TimeDifference time, LinkErrorType type) override {
             G_INFO << __FUNCTION__ << ' ' << service.data() << '|' << node.data()
                     << " time " << to_string(time, true)
                     << " type " << getLinkErrorTypeName(type);
@@ -109,7 +109,7 @@ namespace Test {
     class CenterHandler : public LinkLogCenterHandler {
     public:
         void create_head_logger(const Address &address, LinkServiceID service, LinkNodeID node,
-                                Time_difference time) override {
+                                TimeDifference time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|'
                     << node.data() << " init_time "
@@ -118,7 +118,7 @@ namespace Test {
 
         void register_logger(const Address &address, LinkServiceID service, LinkNodeID node,
                              LinkNodeID parent_node, LinkNodeType type,
-                             Time_difference time, Time_difference expire_time) override {
+                             TimeDifference time, TimeDifference expire_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|' << node.data()
                     << " parent " << parent_node.data() << " type " << NodeTypeName(type)
@@ -126,7 +126,7 @@ namespace Test {
         };
 
         void create_logger(const Address &address, LinkServiceID service, LinkNodeID node,
-                           Time_difference init_time) override {
+                           TimeDifference init_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|'
                     << node.data() << " init_time "
@@ -134,7 +134,7 @@ namespace Test {
         };
 
         void logger_end(const Address &address, LinkServiceID service, LinkNodeID node,
-                        Time_difference end_time) override {
+                        TimeDifference end_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|'
                     << node.data() << " end_time "
@@ -150,19 +150,19 @@ namespace Test {
         };
 
         void handling_error(const Address &address, LinkServiceID service, LinkNodeID node,
-                            Time_difference time, LinkErrorType type) override {
+                            TimeDifference time, LinkErrorType type) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|' << node.data()
                     << " time " << to_string(time, true)
                     << " type " << getLinkErrorTypeName(type);
         };
 
-        void node_online(const Address &address, Time_difference time) override {
+        void node_online(const Address &address, TimeDifference time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << " at " << to_string(time, true);
         };
 
-        void node_offline(const Address &address, Time_difference time) override {
+        void node_offline(const Address &address, TimeDifference time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << " at " << to_string(time, true);
         };
@@ -201,7 +201,7 @@ namespace Test {
     class ReplayHandler : public LinkLogReplayHandler {
     public:
         void create_head_logger(LinkServiceID service, LinkNodeID node,
-                                Time_difference time) override {
+                                TimeDifference time) override {
             G_DEBUG << __FUNCTION__ << ' ' << service.data() << '|'
                     << node.data() << " init_time "
                     << to_string(time, true);
@@ -209,21 +209,21 @@ namespace Test {
 
         void register_logger(LinkServiceID service, LinkNodeID node,
                              LinkNodeID parent_node, LinkNodeType type,
-                             Time_difference time, Time_difference expire_time) override {
+                             TimeDifference time, TimeDifference expire_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << service.data() << '|' << node.data()
                     << " parent " << parent_node.data() << " type " << NodeTypeName(type)
                     << " time " << to_string(time, true);
         };
 
         void create_logger(LinkServiceID service, LinkNodeID node,
-                           Time_difference init_time) override {
+                           TimeDifference init_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << service.data() << '|'
                     << node.data() << " init_time "
                     << to_string(init_time, true);
         };
 
         void logger_end(LinkServiceID service, LinkNodeID node,
-                        Time_difference end_time) override {
+                        TimeDifference end_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << service.data() << '|'
                     << node.data() << " end_time "
                     << to_string(end_time, true);
@@ -237,7 +237,7 @@ namespace Test {
         };
 
         void handling_error(LinkServiceID service, LinkNodeID node,
-                            Time_difference time, LinkErrorType type) override {
+                            TimeDifference time, LinkErrorType type) override {
             G_DEBUG << __FUNCTION__ << ' ' << service.data() << '|' << node.data()
                     << " time " << to_string(time, true)
                     << " type " << getLinkErrorTypeName(type);

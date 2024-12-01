@@ -32,7 +32,7 @@ void TimerLoop::shutdown() {
     _list = {};
 }
 
-TimerLoop::EventID TimerLoop::put_event(Event fun, Time_difference interval) {
+TimerLoop::EventID TimerLoop::put_event(Event fun, TimeDifference interval) {
     assert(interval > 0);
     Lock l(_mutex);
     if (!looping()) return {this, nullptr};
@@ -67,7 +67,7 @@ void TimerLoop::invoke_event() {
     }
 }
 
-TimerLoop::Node::Node(Event fun, Time_difference interval) :
+TimerLoop::Node::Node(Event fun, TimeDifference interval) :
         _ptr(std::make_shared<Pair>(interval, std::move(fun))) {}
 
 bool TimerLoop::Node::update() {
@@ -76,24 +76,24 @@ bool TimerLoop::Node::update() {
     return true;
 }
 
-bool TimerLoop::Node::invoke() {
+bool TimerLoop::Node::invoke() const {
     if (!_ptr || _ptr->first == -1 || !_ptr->second)
         return false;
     _ptr->second();
     return _ptr->first != -1;
 }
 
-void TimerLoop::EventID::reset(Time_difference interval) {
+void TimerLoop::EventID::reset(TimeDifference interval) const {
     assert(interval > 0);
     Lock l(_loop->_mutex);
     auto ptr = _ptr.lock();
     if (ptr) ptr->first = interval;
 }
 
-void TimerLoop::EventID::cancel() {
+void TimerLoop::EventID::cancel() const {
     Lock l(_loop->_mutex);
     auto ptr = _ptr.lock();
-    if (ptr) ptr->first = -1;
+    if (ptr) ptr->first = TimeDifference(-1);
 }
 
 bool TimerLoop::EventID::expired() const {

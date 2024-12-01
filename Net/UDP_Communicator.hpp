@@ -12,7 +12,7 @@
 #include "InetAddress.hpp"
 
 namespace Base {
-    struct Time_difference;
+    struct TimeDifference;
 }
 
 namespace Net {
@@ -25,7 +25,7 @@ namespace Net {
 
         UDP_Communicator(UDP_Communicator &&other) = default;
 
-        bool set_timeout(Base::Time_difference timeout);
+        bool set_timeout(Base::TimeDifference timeout);
 
         Message receive(void* buf, unsigned size, int flag = 0);
 
