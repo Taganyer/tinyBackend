@@ -62,11 +62,11 @@ namespace Base {
     };
 
     constexpr TimeDifference operator+(const TimeDifference &left, const TimeDifference &right) {
-        return TimeDifference{ left.nanoseconds + right.nanoseconds };
+        return TimeDifference { left.nanoseconds + right.nanoseconds };
     }
 
     constexpr TimeDifference operator-(const TimeDifference &left, const TimeDifference &right) {
-        return TimeDifference{ left.nanoseconds - right.nanoseconds };
+        return TimeDifference { left.nanoseconds - right.nanoseconds };
     }
 
     constexpr TimeDifference operator ""_ns(uint64 ns) {
@@ -74,7 +74,7 @@ namespace Base {
     }
 
     constexpr TimeDifference operator ""_us(uint64 us) {
-        return TimeDifference{ (int64) us * US_ };
+        return TimeDifference { (int64) us * US_ };
     }
 
     constexpr TimeDifference operator ""_ms(uint64 ms) {
@@ -82,15 +82,15 @@ namespace Base {
     }
 
     constexpr TimeDifference operator ""_s(uint64 sec) {
-        return TimeDifference{ (int64) sec * SEC_ };
+        return TimeDifference { (int64) sec * SEC_ };
     }
 
     constexpr TimeDifference operator ""_min(uint64 min) {
-        return TimeDifference{ (int64) min * MIN_ };
+        return TimeDifference { (int64) min * MIN_ };
     }
 
     constexpr TimeDifference operator ""_h(uint64 hour) {
-        return TimeDifference{ (int64) hour * HOUR_ };
+        return TimeDifference { (int64) hour * HOUR_ };
     }
 
     TimeDifference Unix_to_now();
