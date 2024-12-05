@@ -27,7 +27,11 @@ namespace Net {
 
         ~Acceptor();
 
+        void close() { _socket.close(); };
+
         [[nodiscard]] Message accept_connection() const;
+
+        [[nodiscard]] const Socket& socket() const { return _socket; };
 
     private:
         Socket _socket;
