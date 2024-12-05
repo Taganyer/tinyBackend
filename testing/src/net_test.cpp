@@ -54,10 +54,9 @@ static void echo_server(Acceptor &acceptor, int client_size, Condition &con, ato
 
         auto link = NetLink::create_NetLinkPtr(std::move(socket));
 
-        link->set_readCallback([]
-        (const Controller &controller) mutable {
-                server_read(controller, controller.input_buffer());
-            });
+        link->set_readCallback([] (const Controller &controller) mutable {
+            server_read(controller, controller.input_buffer());
+        });
 
         link->set_errorCallback([] (error_mark error, const Controller &controller) {
             G_FATAL << '[' << get_error_type_name(error.types) << ']';
