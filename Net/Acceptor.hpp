@@ -19,7 +19,7 @@ namespace Net {
 
         using Message = std::pair<Socket, InetAddress>;
 
-        explicit Acceptor(bool Ipv4, unsigned short target_port, const char *target_ip = nullptr);
+        explicit Acceptor(bool Ipv4, unsigned short target_port, const char* target_ip = nullptr);
 
         Acceptor(bool Ipv4, const InetAddress &target);
 
