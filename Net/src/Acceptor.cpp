@@ -5,19 +5,36 @@
 #include "../../LogSystem/SystemLog.hpp"
 #include "Net/Acceptor.hpp"
 #include "Net/InetAddress.hpp"
-#include "Net/error/errors.hpp"
 
 using namespace Net;
 
 using namespace Base;
 
-int Acceptor::ListenMax = 8192;
+int Acceptor::ListenMax = 512;
+
+Acceptor::Acceptor(bool Ipv4, unsigned short target_port, const char* target_ip):
+    Acceptor(Ipv4, InetAddress(Ipv4, target_ip ? target_ip : Ipv4 ? "0.0.0.0" : "::", target_port)) {}
+
+Acceptor::Acceptor(bool Ipv4, const InetAddress &target) :
+    _socket(Ipv4 ? AF_INET : AF_INET6, SOCK_STREAM) {
+    if (!_socket.setReuseAddr(true)) {
+        G_ERROR << "Acceptor error setting reuse address on socket";
+    }
+    if (_socket.bind(target) && _socket.tcpListen(ListenMax)) {
+        G_TRACE << "Acceptor " << _socket.fd() << " created.";
+    } else {
+        G_FATAL << "Acceptor " << _socket.fd() << " create failed.";
+    }
+}
 
 Acceptor::Acceptor(Socket &&socket) : _socket(std::move(socket)) {
-    if (!_socket.tcpListen(ListenMax)) {
-        G_FATAL << _socket.fd() << " listen failed: " << ops::get_listen_error(errno);
-    } else {
+    if (!_socket.setReuseAddr(true)) {
+        G_ERROR << "Acceptor error setting reuse address on socket";
+    }
+    if (_socket.tcpListen(ListenMax)) {
         G_TRACE << "Acceptor " << _socket.fd() << " created.";
+    } else {
+        G_FATAL << "Acceptor " << _socket.fd() << " create failed.";
     }
 }
 
@@ -28,9 +45,8 @@ Acceptor::~Acceptor() {
 Acceptor::Message Acceptor::accept_connection() const {
     InetAddress address {};
     Socket socket = _socket.tcpAccept(address);
-    if (!socket) return { {}, address };
-    int fd = socket.fd();
-    auto link = NetLink::create_NetLinkPtr(std::move(socket));
-    G_INFO << "Acceptor create NetLink " << fd;
-    return { link, address };
+    if (socket) {
+        G_INFO << "Acceptor create connection " << socket.fd();
+    }
+    return { std::move(socket), address };
 }

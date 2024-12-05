@@ -7,7 +7,7 @@
 
 #ifdef NET_ACCEPTOR_HPP
 
-#include "NetLink.hpp"
+#include "Socket.hpp"
 
 namespace Net {
 
@@ -17,7 +17,11 @@ namespace Net {
     public:
         static int ListenMax;
 
-        using Message = std::pair<NetLink::LinkPtr, InetAddress>;
+        using Message = std::pair<Socket, InetAddress>;
+
+        explicit Acceptor(bool Ipv4, unsigned short target_port, const char *target_ip = nullptr);
+
+        Acceptor(bool Ipv4, const InetAddress &target);
 
         explicit Acceptor(Socket &&socket);
 

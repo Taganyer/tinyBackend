@@ -47,10 +47,12 @@ static void echo_server(Acceptor &acceptor, int client_size, Condition &con, ato
     cout << "common Reactor." << endl;
 
     for (int i = 0; i < client_size; ++i) {
-        auto [link, address] = acceptor.accept_connection();
+        auto [socket, address] = acceptor.accept_connection();
 
-        bool success = link->socket().setReuseAddr(true);
+        bool success = socket.setReuseAddr(true);
         assert(success);
+
+        auto link = NetLink::create_NetLinkPtr(std::move(socket));
 
         link->set_readCallback([]
         (const Controller &controller) mutable {
@@ -113,12 +115,7 @@ static void echo_client(InetAddress &server_address, Condition &con, atomic<int>
 
 void Test::echo() {
     InetAddress server_address(true, "127.0.0.1", 8888);
-
-    Socket server_socket(AF_INET, SOCK_STREAM);
-    bool success = server_socket.bind(server_address) && server_socket.setReuseAddr(true);
-    assert(success);
-
-    Acceptor acceptor(std::move(server_socket));
+    Acceptor acceptor(true, server_address.port());
 
     // Global_Logger.set_rank(LogSystem::WARN);
 

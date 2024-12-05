@@ -22,7 +22,7 @@ namespace Net {
         explicit InetAddress(const sockaddr_in6 &addr6) : _addr6(addr6) {};
 
         /// 会调用 htons 函数，传入主机序。
-        InetAddress(bool IPv4, const char* IP, short port = 0, unsigned short family = -1);
+        InetAddress(bool IPv4, const char* IP, unsigned short port = 0, unsigned short family = -1);
 
         InetAddress& operator=(const InetAddress &) = default;
 
@@ -112,7 +112,7 @@ namespace Net {
         union {
             sockaddr_in _addr;
 
-            sockaddr_in6 _addr6;
+            sockaddr_in6 _addr6 {};
         };
     };
 }
