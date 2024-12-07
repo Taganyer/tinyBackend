@@ -11,7 +11,7 @@ using namespace Base;
 
 
 LinkLogger::LinkLogger(LogRank rank, const ServiceID &service, const NodeID &node,
-                       bool is_branch, TimeDifference end_timeout,
+                       bool is_branch, TimeInterval end_timeout,
                        LinkLogServer &server) :
     _rank(rank), _server(&server) {
     auto [state, iter] = _server->create_head_logger(service, node, end_timeout, is_branch);
@@ -23,12 +23,12 @@ LinkLogger::LinkLogger(LogRank rank, const ServiceID &service, const NodeID &nod
 }
 
 LinkLogger::LinkLogger(LogRank rank, const ID &head_id,
-                       bool is_branch, TimeDifference end_timeout,
+                       bool is_branch, TimeInterval end_timeout,
                        LinkLogServer &server) :
     LinkLogger(rank, head_id.serviceID(), head_id.nodeID(), is_branch, end_timeout, server) {}
 
 LinkLogger::LinkLogger(LogRank rank, const ServiceID &service,
-                       const NodeID &node, TimeDifference end_timeout,
+                       const NodeID &node, TimeInterval end_timeout,
                        LinkLogServer &server) :
     _rank(rank), _server(&server) {
     auto [state, iter] = _server->create_logger(service, node, end_timeout);
@@ -40,11 +40,11 @@ LinkLogger::LinkLogger(LogRank rank, const ServiceID &service,
 }
 
 LinkLogger::LinkLogger(LogRank rank, const ID &complete_id,
-                       TimeDifference end_timeout, LinkLogServer &server):
+                       TimeInterval end_timeout, LinkLogServer &server):
     LinkLogger(rank, complete_id.serviceID(), complete_id.nodeID(), end_timeout, server) {}
 
 LinkLogger::LinkLogger(LogRank rank, const LinkLogger &parent, const NodeID &node,
-                       TimeDifference end_timeout) :
+                       TimeInterval end_timeout) :
     _rank(rank), _server(parent._server) {
     auto [state, iter] = _server->create_logger(parent._iter->first.serviceID(),
                                                 node, end_timeout);
@@ -79,7 +79,7 @@ void LinkLogger::push(LogRank rank, const void* data, uint16 size) const {
 }
 
 void LinkLogger::register_child_node(Type type, const NodeID &node_id,
-                                     TimeDifference create_timeout) const {
+                                     TimeInterval create_timeout) const {
     if (type == BranchHead || type == Head) {
         throw LinkLogRegisterError(_iter->first.serviceID(), node_id, WrongType);
     }
@@ -89,27 +89,27 @@ void LinkLogger::register_child_node(Type type, const NodeID &node_id,
     }
 }
 
-void LinkLogger::fork(const NodeID &child_node, TimeDifference create_timeout) const {
+void LinkLogger::fork(const NodeID &child_node, TimeInterval create_timeout) const {
     register_child_node(Fork, child_node, create_timeout);
 }
 
-void LinkLogger::follow(const NodeID &child_node, TimeDifference create_timeout) const {
+void LinkLogger::follow(const NodeID &child_node, TimeInterval create_timeout) const {
     register_child_node(Follow, child_node, create_timeout);
 }
 
-void LinkLogger::decision(const NodeID &child_node, TimeDifference create_timeout) const {
+void LinkLogger::decision(const NodeID &child_node, TimeInterval create_timeout) const {
     register_child_node(Decision, child_node, create_timeout);
 }
 
-void LinkLogger::rpc_fork(const NodeID &child_node, TimeDifference create_timeout) const {
+void LinkLogger::rpc_fork(const NodeID &child_node, TimeInterval create_timeout) const {
     register_child_node(RpcFork, child_node, create_timeout);
 }
 
-void LinkLogger::rpc_follow(const NodeID &child_node, TimeDifference create_timeout) const {
+void LinkLogger::rpc_follow(const NodeID &child_node, TimeInterval create_timeout) const {
     register_child_node(RpcFollow, child_node, create_timeout);
 }
 
-void LinkLogger::rpc_decision(const NodeID &child_node, TimeDifference create_timeout) const {
+void LinkLogger::rpc_decision(const NodeID &child_node, TimeInterval create_timeout) const {
     register_child_node(RpcDecision, child_node, create_timeout);
 }
 

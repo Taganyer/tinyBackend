@@ -62,17 +62,17 @@ bool Socket::bind(const InetAddress &address) const {
     return true;
 }
 
-bool Socket::tcpListen(int max_size) const {
-    if (!ops::listen(_fd, max_size)) {
-        G_ERROR << "Socket " << _fd << ' ' << ops::get_listen_error(errno);
+bool Socket::connect(const InetAddress &address) const {
+    if (!ops::connect(_fd, ops::sockaddr_cast(address.addr_in_cast()))) {
+        G_ERROR << "Socket " << _fd << ' ' << ops::get_connect_error(errno);
         return false;
     }
     return true;
 }
 
-bool Socket::tcpConnect(const InetAddress &address) const {
-    if (!ops::connect(_fd, ops::sockaddr_cast(address.addr_in_cast()))) {
-        G_ERROR << "Socket " << _fd << ' ' << ops::get_connect_error(errno);
+bool Socket::tcpListen(int max_size) const {
+    if (!ops::listen(_fd, max_size)) {
+        G_ERROR << "Socket " << _fd << ' ' << ops::get_listen_error(errno);
         return false;
     }
     return true;

@@ -8,7 +8,7 @@
 #ifdef BASE_CONDITION_HPP
 
 #include "Mutex.hpp"
-#include "Time/TimeDifference.hpp"
+#include "Time/TimeInterval.hpp"
 
 namespace Base {
 
@@ -47,13 +47,13 @@ namespace Base {
         };
 
         template<typename Mutex>
-        bool wait_for(Lock<Mutex> &lock, TimeDifference ns) {
+        bool wait_for(Lock<Mutex> &lock, TimeInterval ns) {
             auto time = (ns + Unix_to_now()).to_timespec();
             return wait_until(lock, time);
         };
 
         template<typename Mutex, typename Fun>
-        bool wait_for(Lock<Mutex> &lock, TimeDifference ns, Fun fun) {
+        bool wait_for(Lock<Mutex> &lock, TimeInterval ns, Fun fun) {
             auto time = (ns + Unix_to_now()).to_timespec();
             while (!fun()) {
                 if (!wait_until(lock, time))

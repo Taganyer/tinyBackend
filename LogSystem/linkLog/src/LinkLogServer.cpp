@@ -320,7 +320,7 @@ void LinkLogServer::close_thread(WaitQueue &wait_queue, Poller &poller, std::vec
 }
 
 LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
-                                             const NodeID &node_id, TimeDifference timeout) {
+                                             const NodeID &node_id, TimeInterval timeout) {
     BufferIter buf_iter;
     Register_Logger logger;
     auto state = register_logger(parent_iter, type, node_id, timeout, buf_iter, logger);
@@ -336,7 +336,7 @@ LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
 }
 
 LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
-                                             const NodeID &node_id, TimeDifference timeout,
+                                             const NodeID &node_id, TimeInterval timeout,
                                              BufferIter &buf_iter, Register_Logger &logger) {
     Lock l(_mutex);
     buf_iter = parent_iter->second.buf_iter;
@@ -350,7 +350,7 @@ LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
         && parent_iter->second.sub_decision_created)
         return ExtraDecision;
 
-    TimeDifference now = Unix_to_now();
+    TimeInterval now = Unix_to_now();
     if (type <= Decision) {
         auto [new_iter, success] = _nodes.try_emplace(
             ID(parent_iter->first.serviceID(), node_id),
@@ -384,7 +384,7 @@ LinkLogServer::BufferIter LinkLogServer::get_buffer_iter() {
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
 LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
-                                  TimeDifference timeout, bool is_branch) {
+                                  TimeInterval timeout, bool is_branch) {
     BufferIter buf_iter;
     Create_Logger logger;
     auto [state, iter] = create_head_logger(service, node, timeout, is_branch,
@@ -400,7 +400,7 @@ LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
 LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
-                                  TimeDifference timeout, bool is_branch,
+                                  TimeInterval timeout, bool is_branch,
                                   BufferIter &buf_iter, Create_Logger &logger) {
     Lock l(_mutex);
     Type type = is_branch ? BranchHead : Head;
@@ -419,7 +419,7 @@ LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
     LinkLogEncoder::create_logger(
         type, service, node, NodeID(),
         new_iter->second.init_time,
-        TimeDifference(),
+        TimeInterval(),
         &logger, sizeof(Create_Logger));
 
     return std::make_pair(Success, new_iter);
@@ -427,7 +427,7 @@ LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
 LinkLogServer::create_logger(const ServiceID &service, const NodeID &node,
-                             TimeDifference timeout) {
+                             TimeInterval timeout) {
     BufferIter buf_iter;
     Create_Logger logger;
     auto [state, iter] = create_logger(service, node, timeout, buf_iter, logger);
@@ -447,7 +447,7 @@ LinkLogServer::create_logger(const ServiceID &service, const NodeID &node,
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
 LinkLogServer::create_logger(const ServiceID &service, const NodeID &node,
-                             TimeDifference timeout,
+                             TimeInterval timeout,
                              BufferIter &buf_iter, Create_Logger &logger) {
     Lock l(_mutex);
     auto iter = _nodes.find(ID(service, node));
@@ -585,7 +585,7 @@ void LinkLogServer::force_flush(std::vector<BufferIter> &flush_order, WaitQueue 
               [] (BufferIter a, BufferIter b) {
                   return a->last_flush_time < b->last_flush_time;
               });
-    TimeDifference threshold = Unix_to_now() - BUFFER_FLUSH_TIME;
+    TimeInterval threshold = Unix_to_now() - BUFFER_FLUSH_TIME;
 
     for (auto it : flush_order) {
         if (it->last_flush_time <= threshold) {

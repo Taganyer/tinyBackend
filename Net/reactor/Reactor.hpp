@@ -13,7 +13,7 @@
 #include "Net/NetLink.hpp"
 #include "Net/monitors/Event.hpp"
 #include "Base/Container/List.hpp"
-#include "Base/Time/TimeDifference.hpp"
+#include "Base/Time/TimeInterval.hpp"
 
 namespace Net {
 
@@ -29,7 +29,7 @@ namespace Net {
             EPOLL
         };
 
-        explicit Reactor(Base::TimeDifference link_timeout) : timeout(link_timeout) {};
+        explicit Reactor(Base::TimeInterval link_timeout) : timeout(link_timeout) {};
 
         ~Reactor() { stop(); };
 
@@ -59,7 +59,7 @@ namespace Net {
 
     private:
         struct TimerData {
-            Base::TimeDifference flush_time;
+            Base::TimeInterval flush_time;
             int fd;
 
             explicit TimerData(int fd) : flush_time(Base::Unix_to_now()), fd(fd) {};
@@ -86,7 +86,7 @@ namespace Net {
 
         TimerQueue _queue;
 
-        Base::TimeDifference timeout;
+        Base::TimeInterval timeout;
 
         Base::Thread _thread;
 

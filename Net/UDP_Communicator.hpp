@@ -12,7 +12,7 @@
 #include "InetAddress.hpp"
 
 namespace Base {
-    struct TimeDifference;
+    struct TimeInterval;
 }
 
 namespace Net {
@@ -21,15 +21,19 @@ namespace Net {
     public:
         using Message = std::pair<long, InetAddress>;
 
-        explicit UDP_Communicator(InetAddress localAddress);
+        explicit UDP_Communicator(const InetAddress &localAddress);
 
         UDP_Communicator(UDP_Communicator &&other) = default;
 
-        bool set_timeout(Base::TimeDifference timeout);
+        [[nodiscard]] bool connect(const InetAddress &address) const;
 
-        Message receive(void* buf, unsigned size, int flag = 0);
+        [[nodiscard]] bool set_timeout(Base::TimeInterval timeout) const;
 
-        long send(const InetAddress &address, const void* buf, unsigned size, int flag = 0);
+        Message receive(void* buf, unsigned size, int flag = 0) const;
+
+        long send(const void* buf, unsigned size, int flag = 0) const;
+
+        long sendto(const InetAddress &address, const void* buf, unsigned size, int flag = 0) const;
 
         Socket& get_socket() { return _socket; };
 

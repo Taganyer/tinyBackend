@@ -6,7 +6,7 @@
 #define BASE_TIMER_HPP
 
 #include <functional>
-#include "TimeDifference.hpp"
+#include "TimeInterval.hpp"
 
 namespace Base {
 
@@ -37,13 +37,13 @@ namespace Base {
 
         void close_fd();
 
-        [[nodiscard]] TimeDifference get_timeout() const { return _time; };
+        [[nodiscard]] TimeInterval get_timeout() const { return _time; };
 
         [[nodiscard]] int32 get_fd() const { return fd; };
 
     private:
 
-        TimeDifference _time;
+        TimeInterval _time;
 
         Fun _fun;
 

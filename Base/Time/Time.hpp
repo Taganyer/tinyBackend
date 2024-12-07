@@ -22,9 +22,9 @@ namespace Base {
 
         static constexpr int32 Time_us_format_len = 24;
 
-        long tm_us = -1;
+        long tm_us = 0;
 
-        Time() = default;
+        constexpr Time() : tm() {};
 
         static Time now(bool UTC = false);
 

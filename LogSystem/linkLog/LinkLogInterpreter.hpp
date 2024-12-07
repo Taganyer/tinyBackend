@@ -32,31 +32,31 @@ namespace LogSystem {
                                       const LinkServiceID &service_,
                                       const LinkNodeID &node_,
                                       const LinkNodeID &parent_node_,
-                                      Base::TimeDifference time_,
-                                      Base::TimeDifference parent_init_time_,
-                                      Base::TimeDifference expire_time_,
+                                      Base::TimeInterval time_,
+                                      Base::TimeInterval parent_init_time_,
+                                      Base::TimeInterval expire_time_,
                                       void* dest, uint32 limit);
 
         static uint32 create_logger(LinkNodeType type_,
                                     const LinkServiceID &service_,
                                     const LinkNodeID &node_,
                                     const LinkNodeID &parent_node_,
-                                    Base::TimeDifference init_time_,
-                                    Base::TimeDifference parent_init_time_,
+                                    Base::TimeInterval init_time_,
+                                    Base::TimeInterval parent_init_time_,
                                     void* dest, uint32 limit);
 
         static uint32 end_logger(const LinkServiceID &service_,
                                  const LinkNodeID &node_,
-                                 Base::TimeDifference init_time_,
-                                 Base::TimeDifference end_time_,
+                                 Base::TimeInterval init_time_,
+                                 Base::TimeInterval end_time_,
                                  void* dest, uint32 limit);
 
         static bool can_write_log(uint16 size, uint32 limit);
 
         static uint16 write_log(const LinkServiceID &service_,
-                                Base::TimeDifference node_init_time_,
+                                Base::TimeInterval node_init_time_,
                                 const LinkNodeID &node_,
-                                Base::TimeDifference time_,
+                                Base::TimeInterval time_,
                                 LogRank rank_,
                                 const void* data, uint16 size,
                                 void* dest);
@@ -76,7 +76,7 @@ namespace LogSystem {
 
         bool open_new_file();
 
-        [[nodiscard]] std::string get_record_file_name(Base::TimeDifference file_init_time) const;
+        [[nodiscard]] std::string get_record_file_name(Base::TimeInterval file_init_time) const;
 
     };
 
@@ -87,11 +87,11 @@ namespace LogSystem {
 
         using LinkLogWriteFile = Base::oFile;
 
-        using FilenameFile = Base::BPTree<Base::BPTree_impl<Base::TimeDifference, uint32>>;
+        using FilenameFile = Base::BPTree<Base::BPTree_impl<Base::TimeInterval, uint32>>;
 
         using LinkIndexFile = Base::BPTree<Base::BPTree_impl<Index_Key, Index_Value>>;
 
-        using NodeDeletionFile = Base::BPTree<Base::BPTree_impl<Base::TimeDifference, Index_Key>>;
+        using NodeDeletionFile = Base::BPTree<Base::BPTree_impl<Base::TimeInterval, Index_Key>>;
 
         static constexpr uint32 FILENAME_BUFFER_POOL_SIZE = 1 << 16;
 
@@ -105,25 +105,25 @@ namespace LogSystem {
 
         bool create_logger(const LinkServiceID &service,
                            const LinkNodeID &node,
-                           Base::TimeDifference node_init_time);
+                           Base::TimeInterval node_init_time);
 
         void update_logger(const LinkServiceID &service,
                            const LinkNodeID &node,
-                           Base::TimeDifference parent_init_time,
+                           Base::TimeInterval parent_init_time,
                            const LinkNodeID &parent,
                            LinkNodeType type,
-                           Base::TimeDifference node_init_time);
+                           Base::TimeInterval node_init_time);
 
         bool create_logger(const LinkServiceID &service,
                            const LinkNodeID &node,
-                           Base::TimeDifference parent_init_time,
+                           Base::TimeInterval parent_init_time,
                            const LinkNodeID &parent,
                            LinkNodeType type,
-                           Base::TimeDifference node_init_time);
+                           Base::TimeInterval node_init_time);
 
         void end_logger(const LinkServiceID &service,
                         const LinkNodeID &node,
-                        Base::TimeDifference node_init_time);
+                        Base::TimeInterval node_init_time);
 
         void add_record(uint32 size);
 
@@ -136,7 +136,7 @@ namespace LogSystem {
         class QuerySet {
             friend class LinkLogStorage;
 
-            using LocationSet = std::priority_queue<std::pair<Base::TimeDifference, uint32>>;
+            using LocationSet = std::priority_queue<std::pair<Base::TimeInterval, uint32>>;
 
             LinkLogReadFile _file;
 
@@ -144,7 +144,7 @@ namespace LogSystem {
 
             LocationSet _log_location;
 
-            Base::TimeDifference _current_file;
+            Base::TimeInterval _current_file;
 
         };
 
@@ -192,7 +192,7 @@ namespace LogSystem {
         };
 
         struct Record {
-            Base::TimeDifference file = Base::Unix_to_now(), latest_time = file;
+            Base::TimeInterval file = Base::Unix_to_now(), latest_time = file;
             uint32 index = 0, written = 0;
         };
 
@@ -220,11 +220,11 @@ namespace LogSystem {
 
         [[nodiscard]] std::string deletion_file_name() const;
 
-        [[nodiscard]] LinkLogReadFile get_log_file(Base::TimeDifference file_init_time) const;
+        [[nodiscard]] LinkLogReadFile get_log_file(Base::TimeInterval file_init_time) const;
 
-        [[nodiscard]] std::string get_log_name(Base::TimeDifference file_init_time) const;
+        [[nodiscard]] std::string get_log_name(Base::TimeInterval file_init_time) const;
 
-        void open_new_log_file(const Record &record, Base::TimeDifference end_time);
+        void open_new_log_file(const Record &record, Base::TimeInterval end_time);
 
         bool prepare_read_a_log(QuerySet* point, char* msg) const;
 

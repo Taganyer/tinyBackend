@@ -12,13 +12,14 @@
 
 namespace Base {
 
+    constexpr int64 NS_ = 1;
     constexpr int64 US_ = 1000;
     constexpr int64 MS_ = 1000000;
     constexpr int64 SEC_ = 1000000000;
     constexpr int64 MIN_ = 60 * SEC_;
     constexpr int64 HOUR_ = 60 * MIN_;
 
-    struct TimeDifference {
+    struct TimeInterval {
         static constexpr char Time_difference_format[] = "%4d%02d%02d-%02d:%02d:%02d";
 
         static constexpr int32 Time_difference_format_len = 17;
@@ -29,11 +30,15 @@ namespace Base {
 
         int64 nanoseconds = 0;
 
-        TimeDifference() = default;
+        TimeInterval() = default;
 
-        constexpr explicit TimeDifference(int64 ns) : nanoseconds(ns) {};
+        constexpr explicit TimeInterval(int64 ns) : nanoseconds(ns) {};
 
-        explicit TimeDifference(const Time &time);
+        constexpr explicit TimeInterval(timeval tv) : nanoseconds(tv.tv_sec * SEC_ + tv.tv_usec * US_) {};
+
+        constexpr explicit TimeInterval(timespec ts) : nanoseconds(ts.tv_sec * SEC_ + ts.tv_nsec) {};
+
+        explicit TimeInterval(const Time &time);
 
         constexpr operator int64() const { return nanoseconds; };
 
@@ -57,48 +62,48 @@ namespace Base {
 
         [[nodiscard]] Time to_Time(bool UTC = false) const;
 
-        static TimeDifference now();
+        static TimeInterval now();
 
     };
 
-    constexpr TimeDifference operator+(const TimeDifference &left, const TimeDifference &right) {
-        return TimeDifference { left.nanoseconds + right.nanoseconds };
+    constexpr TimeInterval operator+(const TimeInterval &left, const TimeInterval &right) {
+        return TimeInterval { left.nanoseconds + right.nanoseconds };
     }
 
-    constexpr TimeDifference operator-(const TimeDifference &left, const TimeDifference &right) {
-        return TimeDifference { left.nanoseconds - right.nanoseconds };
+    constexpr TimeInterval operator-(const TimeInterval &left, const TimeInterval &right) {
+        return TimeInterval { left.nanoseconds - right.nanoseconds };
     }
 
-    constexpr TimeDifference operator ""_ns(uint64 ns) {
-        return TimeDifference { (int64) ns };
+    constexpr TimeInterval operator ""_ns(uint64 ns) {
+        return TimeInterval { (int64) ns };
     }
 
-    constexpr TimeDifference operator ""_us(uint64 us) {
-        return TimeDifference { (int64) us * US_ };
+    constexpr TimeInterval operator ""_us(uint64 us) {
+        return TimeInterval { (int64) us * US_ };
     }
 
-    constexpr TimeDifference operator ""_ms(uint64 ms) {
-        return TimeDifference { (int64) ms * MS_ };
+    constexpr TimeInterval operator ""_ms(uint64 ms) {
+        return TimeInterval { (int64) ms * MS_ };
     }
 
-    constexpr TimeDifference operator ""_s(uint64 sec) {
-        return TimeDifference { (int64) sec * SEC_ };
+    constexpr TimeInterval operator ""_s(uint64 sec) {
+        return TimeInterval { (int64) sec * SEC_ };
     }
 
-    constexpr TimeDifference operator ""_min(uint64 min) {
-        return TimeDifference { (int64) min * MIN_ };
+    constexpr TimeInterval operator ""_min(uint64 min) {
+        return TimeInterval { (int64) min * MIN_ };
     }
 
-    constexpr TimeDifference operator ""_h(uint64 hour) {
-        return TimeDifference { (int64) hour * HOUR_ };
+    constexpr TimeInterval operator ""_h(uint64 hour) {
+        return TimeInterval { (int64) hour * HOUR_ };
     }
 
-    TimeDifference Unix_to_now();
+    TimeInterval Unix_to_now();
 
-    void sleep(TimeDifference time);
+    void sleep(TimeInterval time);
 
     template <typename Fun, typename...Args>
-    TimeDifference chronograph(Fun &&fun, Args &&...args) {
+    TimeInterval chronograph(Fun &&fun, Args &&...args) {
         timespec startTime {}, endTime {};
         clock_gettime(CLOCK_REALTIME, &startTime);
         fun(std::forward<Args>(args)...);
@@ -106,12 +111,12 @@ namespace Base {
         int64 ns = SEC_;
         ns *= endTime.tv_sec - startTime.tv_sec;
         ns += endTime.tv_nsec - startTime.tv_nsec;
-        return TimeDifference { ns };
+        return TimeInterval { ns };
     }
 
-    std::string to_string(TimeDifference time, bool show_us = true, bool UTC = false);
+    std::string to_string(TimeInterval time, bool show_us = true, bool UTC = false);
 
-    void format(char* dest, TimeDifference time, bool show_us = true, bool UTC = false);
+    void format(char* dest, TimeInterval time, bool show_us = true, bool UTC = false);
 
 }
 

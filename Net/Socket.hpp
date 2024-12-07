@@ -27,7 +27,7 @@ namespace Net {
             other._fd = -1;
         };
 
-        Socket &operator=(Socket &&other) noexcept;
+        Socket& operator=(Socket &&other) noexcept;
 
         ~Socket();
 
@@ -35,9 +35,9 @@ namespace Net {
 
         [[nodiscard]] bool bind(const InetAddress &address) const;
 
-        [[nodiscard]] bool tcpListen(int max_size) const;
+        [[nodiscard]] bool connect(const InetAddress &address) const;
 
-        [[nodiscard]] bool tcpConnect(const InetAddress &address) const;
+        [[nodiscard]] bool tcpListen(int max_size) const;
 
         Socket tcpAccept(InetAddress &address) const;
 
@@ -47,14 +47,10 @@ namespace Net {
         /// Enable/disable SO_KEEPALIVE
         [[nodiscard]] bool setTcpKeepAlive(bool on) const;
 
-        /// Enable/disable SO_REUSEADDR (After a socket is closed,
-        ///                             other sockets are allowed to immediately bind to
-        ///                             the address before the closing.)
+        /// Enable/disable SO_REUSEADDR
         [[nodiscard]] bool setReuseAddr(bool on) const;
 
-        /// Enable/disable SO_REUSEPORT (Multiple processes or threads can be bound to the same port
-        ///                              at the same time. Only one of them can receive incoming connections
-        ///                              or packets from the port at any one time.)
+        /// Enable/disable SO_REUSEPORT
         [[nodiscard]] bool setReusePort(bool on) const;
 
         [[nodiscard]] bool setNonBlock(bool on) const;

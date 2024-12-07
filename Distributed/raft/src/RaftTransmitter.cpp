@@ -28,7 +28,7 @@ void RaftTransmitter::notify_follower(const Address &follower, const std::string
                 << "add_extra_message failed";
         return;
     }
-    if (_sender.send(follower, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(follower, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::probe_follower "
                 << follower.toIpPort() << " send failed";
     }
@@ -37,7 +37,7 @@ void RaftTransmitter::notify_follower(const Address &follower, const std::string
 void RaftTransmitter::respond_leader(const Address &leader) {
     RaftMessage message;
     message.follower_ack(FILLING_PARAMETER);
-    if (_sender.send(leader, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(leader, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::respond_leader "
                 << leader.toIpPort() << " send failed";
     }
@@ -46,7 +46,7 @@ void RaftTransmitter::respond_leader(const Address &leader) {
 void RaftTransmitter::request_vote(const Address &peer) {
     RaftMessage message;
     message.ask_for_vote(FILLING_PARAMETER);
-    if (_sender.send(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::request_vote "
                 << peer.toIpPort() << " send failed";
     }
@@ -55,7 +55,7 @@ void RaftTransmitter::request_vote(const Address &peer) {
 void RaftTransmitter::vote_to(const Address &peer, bool result) {
     RaftMessage message;
     message.vote(FILLING_PARAMETER, result);
-    if (_sender.send(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::vote_to "
                 << peer.toIpPort() << " send failed";
     }
@@ -69,7 +69,7 @@ void RaftTransmitter::request_logs(const Address &address, const std::string &da
                 << "add_extra_message failed";
         return;
     }
-    if (_sender.send(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::request_logs "
                 << address.toIpPort() << " send failed";
     }
@@ -78,7 +78,7 @@ void RaftTransmitter::request_logs(const Address &address, const std::string &da
 void RaftTransmitter::this_one_online(const Address &peer) {
     RaftMessage message;
     message.online(FILLING_PARAMETER);
-    if (_sender.send(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::this_one_online "
                 << peer.toIpPort() << " send failed";
     }
@@ -87,7 +87,7 @@ void RaftTransmitter::this_one_online(const Address &peer) {
 void RaftTransmitter::affirm_online(const Address &address) {
     RaftMessage message;
     message.affirm_online(FILLING_PARAMETER);
-    if (_sender.send(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::affirm_online sent to"
                 << address.toIpPort() << " failed";
     }
@@ -96,7 +96,7 @@ void RaftTransmitter::affirm_online(const Address &address) {
 void RaftTransmitter::this_one_offline(const Address &peer) {
     RaftMessage message;
     message.offline(FILLING_PARAMETER);
-    if (_sender.send(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::this_one_offline "
                 << peer.toIpPort() << " send failed";
     }
@@ -105,19 +105,21 @@ void RaftTransmitter::this_one_offline(const Address &peer) {
 void RaftTransmitter::affirm_offline(const Address &address) {
     RaftMessage message;
     message.affirm_offline(FILLING_PARAMETER);
-    if (_sender.send(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
+    if (_sender.sendto(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
         G_ERROR << _name << ": RaftTransmitter::affirm_offline sent to"
                 << address.toIpPort() << " failed";
     }
 }
 
 RaftTransmitter::Address RaftTransmitter::receive(RaftMessage* message,
-                                                  TimeDifference end_time) {
+                                                  TimeInterval end_time) const {
     auto time = end_time - Unix_to_now();
     int choose = MSG_DONTWAIT;
     if (time > 0) {
         choose = MSG_WAITALL;
-        _sender.set_timeout(time);
+        if (!_sender.set_timeout(time)) {
+            G_ERROR << _name << ": RaftTransmitter::receive set_timeout failed.";
+        }
     }
     auto [len, addr] = _sender.receive(message, MESSAGE_SIZE, choose);
     if (len != MESSAGE_SIZE) return {};

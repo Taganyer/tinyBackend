@@ -9,7 +9,7 @@
 
 #include "LinkLogErrors.hpp"
 #include "LogSystem/LogRank.hpp"
-#include "Base/Time/TimeDifference.hpp"
+#include "Base/Time/TimeInterval.hpp"
 
 
 namespace LogSystem {
@@ -18,10 +18,10 @@ namespace LogSystem {
     public:
         static constexpr uint32 size =
             sizeof(LinkServiceID) +
-            sizeof(Base::TimeDifference) +
+            sizeof(Base::TimeInterval) +
             sizeof(LinkNodeID);
 
-        Index_Key(const LinkServiceID &service_, Base::TimeDifference init_time_,
+        Index_Key(const LinkServiceID &service_, Base::TimeInterval init_time_,
                   const LinkNodeID &node_) {
             service() = service_;
             init_time() = init_time_;
@@ -34,12 +34,12 @@ namespace LogSystem {
             return *(LinkServiceID *) object.data();
         };
 
-        Base::TimeDifference& init_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkServiceID));
+        Base::TimeInterval& init_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkServiceID));
         };
 
         LinkNodeID& node() {
-            return *(LinkNodeID *) (object.data() + sizeof(LinkServiceID) + sizeof(Base::TimeDifference));
+            return *(LinkNodeID *) (object.data() + sizeof(LinkServiceID) + sizeof(Base::TimeInterval));
         };
 
         friend bool operator==(const Index_Key &lhs, const Index_Key &rhs) {
@@ -65,14 +65,14 @@ namespace LogSystem {
     class Index_Value {
     public:
         static constexpr uint32 size =
-            sizeof(Base::TimeDifference) +
+            sizeof(Base::TimeInterval) +
             sizeof(LinkNodeID) +
             sizeof(LinkNodeType) +
-            sizeof(Base::TimeDifference) +
+            sizeof(Base::TimeInterval) +
             sizeof(uint32);
 
-        Index_Value(Base::TimeDifference parent_init_time_, const LinkNodeID &parent_node_,
-                    LinkNodeType type_, Base::TimeDifference latest_file_, uint32 latest_index_) {
+        Index_Value(Base::TimeInterval parent_init_time_, const LinkNodeID &parent_node_,
+                    LinkNodeType type_, Base::TimeInterval latest_file_, uint32 latest_index_) {
             parent_init_time() = parent_init_time_;
             parent_node() = parent_node_;
             type() = type_;
@@ -82,26 +82,26 @@ namespace LogSystem {
 
         Index_Value() = default;
 
-        Base::TimeDifference& parent_init_time() {
-            return *(Base::TimeDifference *) object.data();
+        Base::TimeInterval& parent_init_time() {
+            return *(Base::TimeInterval *) object.data();
         };
 
         LinkNodeID& parent_node() {
-            return *(LinkNodeID *) (object.data() + sizeof(Base::TimeDifference));
+            return *(LinkNodeID *) (object.data() + sizeof(Base::TimeInterval));
         };
 
         LinkNodeType& type() {
-            return *(LinkNodeType *) (object.data() + sizeof(Base::TimeDifference) + sizeof(LinkNodeID));
+            return *(LinkNodeType *) (object.data() + sizeof(Base::TimeInterval) + sizeof(LinkNodeID));
         };
 
-        Base::TimeDifference& latest_file() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(Base::TimeDifference)
+        Base::TimeInterval& latest_file() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(Base::TimeInterval)
                 + sizeof(LinkNodeID) + sizeof(LinkNodeType));
         };
 
         uint32& latest_index() {
-            return *(uint32 *) (object.data() + sizeof(Base::TimeDifference)
-                + sizeof(LinkNodeID) + sizeof(LinkNodeType) + sizeof(Base::TimeDifference));
+            return *(uint32 *) (object.data() + sizeof(Base::TimeInterval)
+                + sizeof(LinkNodeID) + sizeof(LinkNodeType) + sizeof(Base::TimeInterval));
         };
 
         Mark<size> object;
@@ -138,15 +138,15 @@ namespace LogSystem {
             sizeof(LinkServiceID) +
             sizeof(LinkNodeID) +
             sizeof(LinkNodeID) +
-            sizeof(Base::TimeDifference) +
-            sizeof(Base::TimeDifference) +
-            sizeof(Base::TimeDifference);
+            sizeof(Base::TimeInterval) +
+            sizeof(Base::TimeInterval) +
+            sizeof(Base::TimeInterval);
 
         Register_Logger(LinkNodeType type_, const LinkServiceID &service_,
                         const LinkNodeID &node_, const LinkNodeID &parent_node_,
-                        Base::TimeDifference time_,
-                        Base::TimeDifference parent_init_time_,
-                        Base::TimeDifference expire_time_) {
+                        Base::TimeInterval time_,
+                        Base::TimeInterval parent_init_time_,
+                        Base::TimeInterval expire_time_) {
             type() = type_;
             service() = service_;
             node() = node_;
@@ -175,20 +175,20 @@ namespace LogSystem {
                 + sizeof(LinkNodeID));
         };
 
-        Base::TimeDifference& time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
+        Base::TimeInterval& time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
                 + sizeof(LinkNodeID) + sizeof(LinkNodeID));
         };
 
-        Base::TimeDifference& parent_init_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
-                + sizeof(LinkNodeID) + sizeof(LinkNodeID) + sizeof(Base::TimeDifference));
+        Base::TimeInterval& parent_init_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
+                + sizeof(LinkNodeID) + sizeof(LinkNodeID) + sizeof(Base::TimeInterval));
         };
 
-        Base::TimeDifference& expire_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
-                + sizeof(LinkNodeID) + sizeof(LinkNodeID) + sizeof(Base::TimeDifference)
-                + sizeof(Base::TimeDifference));
+        Base::TimeInterval& expire_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
+                + sizeof(LinkNodeID) + sizeof(LinkNodeID) + sizeof(Base::TimeInterval)
+                + sizeof(Base::TimeInterval));
         };
 
         OperationType ot = RegisterLogger;
@@ -204,12 +204,12 @@ namespace LogSystem {
             sizeof(LinkServiceID) +
             sizeof(LinkNodeID) +
             sizeof(LinkNodeID) +
-            sizeof(Base::TimeDifference) +
-            sizeof(Base::TimeDifference);
+            sizeof(Base::TimeInterval) +
+            sizeof(Base::TimeInterval);
 
         Create_Logger(LinkNodeType type_, const LinkServiceID &service_,
                       const LinkNodeID &node_, const LinkNodeID &parent_node_,
-                      Base::TimeDifference init_time_, Base::TimeDifference parent_init_time_) {
+                      Base::TimeInterval init_time_, Base::TimeInterval parent_init_time_) {
             type() = type_;
             service() = service_;
             node() = node_;
@@ -237,14 +237,14 @@ namespace LogSystem {
                 + sizeof(LinkNodeID));
         };
 
-        Base::TimeDifference& init_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
+        Base::TimeInterval& init_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
                 + sizeof(LinkNodeID) + sizeof(LinkNodeID));
         };
 
-        Base::TimeDifference& parent_init_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
-                + sizeof(LinkNodeID) + sizeof(LinkNodeID) + sizeof(Base::TimeDifference));
+        Base::TimeInterval& parent_init_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkNodeType) + sizeof(LinkServiceID)
+                + sizeof(LinkNodeID) + sizeof(LinkNodeID) + sizeof(Base::TimeInterval));
         };
 
         OperationType ot = CreateLogger;
@@ -258,11 +258,11 @@ namespace LogSystem {
         static constexpr uint32 size =
             sizeof(LinkServiceID) +
             sizeof(LinkNodeID) +
-            sizeof(Base::TimeDifference) +
-            sizeof(Base::TimeDifference);
+            sizeof(Base::TimeInterval) +
+            sizeof(Base::TimeInterval);
 
         End_Logger(const LinkServiceID &service_, const LinkNodeID &node_,
-                   Base::TimeDifference init_time_, Base::TimeDifference end_time_) {
+                   Base::TimeInterval init_time_, Base::TimeInterval end_time_) {
             service() = service_;
             node() = node_;
             init_time() = init_time_;
@@ -279,14 +279,14 @@ namespace LogSystem {
             return *(LinkNodeID *) (object.data() + sizeof(LinkServiceID));
         };
 
-        Base::TimeDifference& init_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkServiceID)
+        Base::TimeInterval& init_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkServiceID)
                 + sizeof(LinkNodeID));
         };
 
-        Base::TimeDifference& end_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkServiceID)
-                + sizeof(LinkNodeID) + sizeof(Base::TimeDifference));
+        Base::TimeInterval& end_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkServiceID)
+                + sizeof(LinkNodeID) + sizeof(Base::TimeInterval));
         };
 
         OperationType ot = EndLogger;
@@ -299,14 +299,14 @@ namespace LogSystem {
     public:
         static constexpr uint32 size =
             sizeof(uint16) +
-            sizeof(Base::TimeDifference) +
+            sizeof(Base::TimeInterval) +
             sizeof(uint32) +
             sizeof(Index_Key) +
-            sizeof(Base::TimeDifference) +
+            sizeof(Base::TimeInterval) +
             sizeof(LogRank);
 
-        Link_Log_Header(uint16 log_size_, const LinkServiceID &service_, Base::TimeDifference init_time_,
-                        const LinkNodeID &node_, Base::TimeDifference time_, LogRank rank_) {
+        Link_Log_Header(uint16 log_size_, const LinkServiceID &service_, Base::TimeInterval init_time_,
+                        const LinkNodeID &node_, Base::TimeInterval time_, LogRank rank_) {
             log_size() = log_size_;
             service() = service_;
             init_time() = init_time_;
@@ -321,39 +321,39 @@ namespace LogSystem {
             return *(uint16 *) object.data();
         };
 
-        Base::TimeDifference& latest_file() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(uint16));
+        Base::TimeInterval& latest_file() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(uint16));
         };
 
         uint32& latest_index() {
-            return *(uint32 *) (object.data() + sizeof(uint16) + sizeof(Base::TimeDifference));
+            return *(uint32 *) (object.data() + sizeof(uint16) + sizeof(Base::TimeInterval));
         };
 
         LinkServiceID& service() {
             return *(LinkServiceID *) (object.data() + sizeof(uint16)
-                + sizeof(Base::TimeDifference) + sizeof(uint32));
+                + sizeof(Base::TimeInterval) + sizeof(uint32));
         };
 
-        Base::TimeDifference& init_time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(uint16) + sizeof(Base::TimeDifference)
+        Base::TimeInterval& init_time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(uint16) + sizeof(Base::TimeInterval)
                 + sizeof(uint32) + sizeof(LinkServiceID));
         };
 
         LinkNodeID& node() {
-            return *(LinkNodeID *) (object.data() + sizeof(uint16) + sizeof(Base::TimeDifference)
-                + sizeof(uint32) + sizeof(LinkServiceID) + sizeof(Base::TimeDifference));
+            return *(LinkNodeID *) (object.data() + sizeof(uint16) + sizeof(Base::TimeInterval)
+                + sizeof(uint32) + sizeof(LinkServiceID) + sizeof(Base::TimeInterval));
         };
 
-        Base::TimeDifference& time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(uint16) + sizeof(Base::TimeDifference)
-                + sizeof(uint32) + sizeof(LinkServiceID) + sizeof(Base::TimeDifference)
+        Base::TimeInterval& time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(uint16) + sizeof(Base::TimeInterval)
+                + sizeof(uint32) + sizeof(LinkServiceID) + sizeof(Base::TimeInterval)
                 + sizeof(LinkNodeID));
         };
 
         LogRank& rank() {
-            return *(LogRank *) (object.data() + sizeof(uint16) + sizeof(Base::TimeDifference)
-                + sizeof(uint32) + sizeof(LinkServiceID) + sizeof(Base::TimeDifference)
-                + sizeof(LinkNodeID) + sizeof(Base::TimeDifference));
+            return *(LogRank *) (object.data() + sizeof(uint16) + sizeof(Base::TimeInterval)
+                + sizeof(uint32) + sizeof(LinkServiceID) + sizeof(Base::TimeInterval)
+                + sizeof(LinkNodeID) + sizeof(Base::TimeInterval));
         };
 
         OperationType ot = LinkLog;
@@ -367,11 +367,11 @@ namespace LogSystem {
         static constexpr uint32 size =
             sizeof(LinkServiceID) +
             sizeof(LinkNodeID) +
-            sizeof(Base::TimeDifference) +
+            sizeof(Base::TimeInterval) +
             sizeof(LinkErrorType);
 
         Error_Logger(const LinkServiceID &service_, const LinkNodeID &node_,
-                     Base::TimeDifference time_, LinkErrorType error_type_) {
+                     Base::TimeInterval time_, LinkErrorType error_type_) {
             service() = service_;
             node() = node_;
             time() = time_;
@@ -388,14 +388,14 @@ namespace LogSystem {
             return *(LinkNodeID *) (object.data() + sizeof(LinkServiceID));
         };
 
-        Base::TimeDifference& time() {
-            return *(Base::TimeDifference *) (object.data() + sizeof(LinkServiceID)
+        Base::TimeInterval& time() {
+            return *(Base::TimeInterval *) (object.data() + sizeof(LinkServiceID)
                 + sizeof(LinkNodeID));
         };
 
         LinkErrorType& error_type() {
             return *(LinkErrorType *) (object.data() + sizeof(LinkServiceID) + sizeof(LinkNodeID)
-                + sizeof(Base::TimeDifference));
+                + sizeof(Base::TimeInterval));
         };
 
         OperationType ot = ErrorLogger;
@@ -407,16 +407,16 @@ namespace LogSystem {
     class Node_Offline {
     public:
         static constexpr uint32 size =
-            sizeof(Base::TimeDifference);
+            sizeof(Base::TimeInterval);
 
-        explicit Node_Offline(Base::TimeDifference time_) {
+        explicit Node_Offline(Base::TimeInterval time_) {
             time() = time_;
         };
 
         Node_Offline() = default;
 
-        Base::TimeDifference& time() {
-            return *(Base::TimeDifference *) object.data();
+        Base::TimeInterval& time() {
+            return *(Base::TimeInterval *) object.data();
         };
 
         OperationType ot = NodeOffline;

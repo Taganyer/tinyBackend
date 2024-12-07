@@ -33,7 +33,7 @@ LinkLogCenter::LinkLogCenter(LogHandlerPtr handler, std::string dictionary_path,
 
 bool LinkLogCenter::add_server(const Address &server_address) {
     Socket socket(server_address.is_IPv4() ? AF_INET : AF_INET6, SOCK_STREAM);
-    CHECK(socket.tcpConnect(server_address), return false)
+    CHECK(socket.connect(server_address), return false)
     CHECK(socket.setNonBlock(true), return false)
     CHECK(socket.setTcpNoDelay(true), return false)
 

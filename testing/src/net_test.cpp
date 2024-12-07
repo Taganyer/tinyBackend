@@ -81,7 +81,7 @@ static void echo_server(Acceptor &acceptor, int client_size, Condition &con, ato
 
 static void echo_client(InetAddress &server_address, Condition &con, atomic<int> &count) {
     Socket client_socket(AF_INET, SOCK_STREAM);
-    bool success = client_socket.tcpConnect(server_address);
+    bool success = client_socket.connect(server_address);
     assert(success);
     G_INFO << "client fd: " << client_socket.fd();
 
@@ -160,7 +160,7 @@ void Test::UDP_test() {
             assert(add1 == addr);
             cout << "client get: " << get << " " << buf2 << endl;
             buf2[0] = '\0';
-            long sent = cl.send(add1, buf, strlen(buf) + 1);
+            long sent = cl.sendto(add1, buf, strlen(buf) + 1);
             cout << "client sent: " << sent << endl;
         }
     });
@@ -174,7 +174,7 @@ void Test::UDP_test() {
     char buffer[256] = "hello client!";
     char buffer2[256] {};
     for (int i = 0; i < 10; ++i) {
-        long sent = server.send(add2, buffer, strlen(buffer) + 1);
+        long sent = server.sendto(add2, buffer, strlen(buffer) + 1);
         cout << "server sent: " << sent << endl;
         auto [get, addr] = server.receive(buffer2, 256);
         assert(add2 == addr);

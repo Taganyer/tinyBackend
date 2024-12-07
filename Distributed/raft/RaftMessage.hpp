@@ -8,7 +8,7 @@
 #ifdef DIST_RAFTMESSAGE_HPP
 
 #include "Base/VersionNumber.hpp"
-#include "Base/Time/TimeDifference.hpp"
+#include "Base/Time/TimeInterval.hpp"
 
 namespace Dist {
 
@@ -120,7 +120,7 @@ namespace Dist {
 
         Serial serial_number;
 
-        Base::TimeDifference time_of_departure;
+        Base::TimeInterval time_of_departure;
 
         char extra_data[40] {};
 

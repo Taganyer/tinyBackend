@@ -26,9 +26,9 @@ static constexpr uint16 header_offset0 = sizeof(OperationType);
 
 static constexpr uint16 header_offset1 = sizeof(OperationType) + sizeof(uint16);
 
-static constexpr uint16 header_offset2 = sizeof(OperationType) + sizeof(uint16) + sizeof(TimeDifference);
+static constexpr uint16 header_offset2 = sizeof(OperationType) + sizeof(uint16) + sizeof(TimeInterval);
 
-static constexpr uint16 header_offset3 = sizeof(OperationType) + sizeof(uint16) + sizeof(TimeDifference) + sizeof(
+static constexpr uint16 header_offset3 = sizeof(OperationType) + sizeof(uint16) + sizeof(TimeInterval) + sizeof(
     uint32);
 
 #define CHECK(expr, error_handle) \
@@ -69,9 +69,9 @@ uint32 LinkLogEncoder::register_logger(LinkNodeType type_,
                                        const LinkServiceID &service_,
                                        const LinkNodeID &node_,
                                        const LinkNodeID &parent_node_,
-                                       TimeDifference time_,
-                                       TimeDifference parent_init_time_,
-                                       TimeDifference expire_time_,
+                                       TimeInterval time_,
+                                       TimeInterval parent_init_time_,
+                                       TimeInterval expire_time_,
                                        void* dest, uint32 limit) {
     if (limit < sizeof(Register_Logger)) return 0;
     Register_Logger logger(type_, service_, node_, parent_node_,
@@ -84,8 +84,8 @@ uint32 LinkLogEncoder::create_logger(LinkNodeType type_,
                                      const LinkServiceID &service_,
                                      const LinkNodeID &node_,
                                      const LinkNodeID &parent_node_,
-                                     TimeDifference init_time_,
-                                     TimeDifference parent_init_time_,
+                                     TimeInterval init_time_,
+                                     TimeInterval parent_init_time_,
                                      void* dest, uint32 limit) {
     if (limit < sizeof(Create_Logger)) return 0;
     Create_Logger logger(type_, service_, node_, parent_node_, init_time_, parent_init_time_);
@@ -95,8 +95,8 @@ uint32 LinkLogEncoder::create_logger(LinkNodeType type_,
 
 uint32 LinkLogEncoder::end_logger(const LinkServiceID &service_,
                                   const LinkNodeID &node_,
-                                  TimeDifference init_time_,
-                                  TimeDifference end_time_,
+                                  TimeInterval init_time_,
+                                  TimeInterval end_time_,
                                   void* dest, uint32 limit) {
     if (limit < sizeof(End_Logger)) return 0;
     End_Logger logger(service_, node_, init_time_, end_time_);
@@ -110,9 +110,9 @@ bool LinkLogEncoder::can_write_log(uint16 size, uint32 limit) {
 }
 
 uint16 LinkLogEncoder::write_log(const LinkServiceID &service_,
-                                 TimeDifference node_init_time_,
+                                 TimeInterval node_init_time_,
                                  const LinkNodeID &node_,
-                                 TimeDifference time_,
+                                 TimeInterval time_,
                                  LogRank rank_,
                                  const void* data, uint16 size,
                                  void* dest) {
@@ -140,7 +140,7 @@ bool LinkLogEncoder::open_new_file() {
         remove(_file_names.front().c_str());
         _file_names.erase(_file_names.begin());
     }
-    TimeDifference now = Unix_to_now();
+    TimeInterval now = Unix_to_now();
     std::string filename = get_record_file_name(now);
     _record_file.open(filename.c_str(), true, true);
     if (!_record_file.is_open()) return false;
@@ -149,7 +149,7 @@ bool LinkLogEncoder::open_new_file() {
     return true;
 }
 
-std::string LinkLogEncoder::get_record_file_name(TimeDifference file_init_time) const {
+std::string LinkLogEncoder::get_record_file_name(TimeInterval file_init_time) const {
     std::string path = _dictionary_path
         + to_string(file_init_time, true)
         + record_file_suffix;
@@ -175,15 +175,15 @@ LinkLogStorage::LinkLogStorage(std::string dictionary_path, ScheduledThread &sch
     CHECK(_logs.get_stat(&s), return)
     _records.emplace_back();
     _records.back().file = results.back().key;
-    _records.back().latest_time = TimeDifference { results.back().value };
+    _records.back().latest_time = TimeInterval { results.back().value };
     _records.back().written = _records.back().index = s.st_size;
 }
 
 bool LinkLogStorage::create_logger(const LinkServiceID &service, const LinkNodeID &node,
-                                   TimeDifference node_init_time) {
+                                   TimeInterval node_init_time) {
     Index_Key key(service, node_init_time, node);
     Index_Value val;
-    val.latest_file() = TimeDifference { 0 };
+    val.latest_file() = TimeInterval { 0 };
     val.latest_index() = MAX_UINT;
     Lock l(_mutex);
     CHECK(_indexes.insert(key, val), return false);
@@ -192,10 +192,10 @@ bool LinkLogStorage::create_logger(const LinkServiceID &service, const LinkNodeI
 
 void LinkLogStorage::update_logger(const LinkServiceID &service,
                                    const LinkNodeID &node,
-                                   TimeDifference parent_init_time,
+                                   TimeInterval parent_init_time,
                                    const LinkNodeID &parent,
                                    LinkNodeType type,
-                                   TimeDifference node_init_time) {
+                                   TimeInterval node_init_time) {
     Index_Key key(service, node_init_time, node);
     Lock l(_mutex);
     auto val_ptr = _cache.get(key);
@@ -207,12 +207,12 @@ void LinkLogStorage::update_logger(const LinkServiceID &service,
 
 bool LinkLogStorage::create_logger(const LinkServiceID &service,
                                    const LinkNodeID &node,
-                                   TimeDifference parent_init_time,
+                                   TimeInterval parent_init_time,
                                    const LinkNodeID &parent,
                                    LinkNodeType type,
-                                   TimeDifference node_init_time) {
+                                   TimeInterval node_init_time) {
     Index_Key key(service, node_init_time, node);
-    Index_Value val(parent_init_time, parent, type, TimeDifference {}, MAX_UINT);
+    Index_Value val(parent_init_time, parent, type, TimeInterval {}, MAX_UINT);
     Lock l(_mutex);
     CHECK(_indexes.insert(key, val), return false);
     return true;
@@ -220,7 +220,7 @@ bool LinkLogStorage::create_logger(const LinkServiceID &service,
 
 void LinkLogStorage::end_logger(const LinkServiceID &service,
                                 const LinkNodeID &node,
-                                TimeDifference node_init_time) {
+                                TimeInterval node_init_time) {
     Index_Key key(service, node_init_time, node);
 
     Lock l(_mutex);
@@ -238,7 +238,7 @@ void LinkLogStorage::handle_a_log(Link_Log_Header &header, RingBuffer &buf) {
     Lock l(_mutex);
     Index_Key &key = *(Index_Key *) &header.service();
     auto val_ptr = _cache.get(key);
-    buf.change_written(header_offset1, &val_ptr->latest_file(), sizeof(TimeDifference));
+    buf.change_written(header_offset1, &val_ptr->latest_file(), sizeof(TimeInterval));
     buf.change_written(header_offset2, &val_ptr->latest_index(), sizeof(uint32));
     val_ptr->latest_file() = _records.back().file;
     val_ptr->latest_index() = _records.back().index;
@@ -276,13 +276,13 @@ void LinkLogStorage::delete_oldest_files(uint32 size) {
         CHECK(remove(path.c_str()) == 0,)
     }
     _filename_file.erase(results.front().key,
-                         TimeDifference { results.back().key.nanoseconds + 1 });
+                         TimeInterval { results.back().key.nanoseconds + 1 });
     for (auto [k, v] : results) {
         assert(_filename_file.find(k).key == 0);
     }
     G_INFO << "FileNameIndex erased " << results.size() << " old files.";
 
-    TimeDifference end_time(results.back().value);
+    TimeInterval end_time(results.back().value);
     results = {};
     uint32 delete_size = 0;
     auto [deletions] = _node_deletion.below(end_time, 256);
@@ -291,7 +291,7 @@ void LinkLogStorage::delete_oldest_files(uint32 size) {
             _cache.erase(v);
         }
         _node_deletion.erase(deletions.front().key,
-                             TimeDifference { deletions.back().key.nanoseconds + 1 });
+                             TimeInterval { deletions.back().key.nanoseconds + 1 });
         for (auto [k, v] : deletions) {
             assert(_node_deletion.find(k).key == 0);
         }
@@ -444,20 +444,20 @@ std::string LinkLogStorage::deletion_file_name() const {
 }
 
 LinkLogStorage::LinkLogReadFile
-LinkLogStorage::get_log_file(TimeDifference file_init_time) const {
+LinkLogStorage::get_log_file(TimeInterval file_init_time) const {
     std::string path = get_log_name(file_init_time);
     LinkLogReadFile file(path.c_str(), true);
     return file;
 }
 
-std::string LinkLogStorage::get_log_name(TimeDifference file_init_time) const {
+std::string LinkLogStorage::get_log_name(TimeInterval file_init_time) const {
     std::string path = _dictionary_path
         + to_string(file_init_time, true)
         + link_log_file_suffix;
     return path;
 }
 
-void LinkLogStorage::open_new_log_file(const Record &record, TimeDifference end_time) {
+void LinkLogStorage::open_new_log_file(const Record &record, TimeInterval end_time) {
     auto [results] = _filename_file.search_from_end(1);
     if (!results.empty()) {
         _filename_file.update(results.front().key, end_time);
@@ -505,7 +505,7 @@ int LinkLogStorage::querying_a_log(QuerySet* point, char* ptr,
 
     point->_log_location.pop();
     if (*(uint32 *) (msg + header_offset2) != MAX_UINT) {
-        point->_log_location.emplace(*(TimeDifference *) (msg + header_offset1),
+        point->_log_location.emplace(*(TimeInterval *) (msg + header_offset1),
                                      *(uint32 *) (msg + header_offset2));
     }
     return 0;
@@ -526,7 +526,7 @@ int LinkLogStorage::querying_a_log(QuerySet* point, RingBuffer &buf, uint32 &wri
 
     point->_log_location.pop();
     if (*(uint32 *) (msg + header_offset2) != MAX_UINT) {
-        point->_log_location.emplace(*(TimeDifference *) (msg + header_offset1),
+        point->_log_location.emplace(*(TimeInterval *) (msg + header_offset1),
                                      *(uint32 *) (msg + header_offset2));
     }
     return 0;

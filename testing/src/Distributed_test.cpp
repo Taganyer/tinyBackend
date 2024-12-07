@@ -94,7 +94,7 @@ void Test::raft_test() {
         });
     }
 
-    TimeDifference begin = Unix_to_now();
+    TimeInterval begin = Unix_to_now();
     for (int i = 0; i < nodes_size; ++i) {
         threads[i].start();
     }
@@ -102,6 +102,6 @@ void Test::raft_test() {
     for (int i = 0; i < nodes_size; ++i) {
         threads[i].join();
     }
-    TimeDifference end = Unix_to_now();
+    TimeInterval end = Unix_to_now();
     cout << "Raft Test completed in " << (end - begin).to_ms() << "ms" << endl;
 }

@@ -22,13 +22,13 @@ namespace LogSystem {
     struct Link_Log {
         LinkServiceID service;
 
-        Base::TimeDifference node_init_time;
+        Base::TimeInterval node_init_time;
 
         LinkNodeID node;
 
         LogRank rank = EMPTY;
 
-        Base::TimeDifference time;
+        Base::TimeInterval time;
 
         std::string text;
 
@@ -48,20 +48,20 @@ namespace LogSystem {
         virtual ~LinkLogServerHandler() = default;
 
         virtual void create_head_logger(LinkServiceID service, LinkNodeID node,
-                                        Base::TimeDifference time) = 0;
+                                        Base::TimeInterval time) = 0;
 
         virtual void register_logger(LinkServiceID service, LinkNodeID node,
                                      LinkNodeID parent_node, LinkNodeType type,
-                                     Base::TimeDifference time, Base::TimeDifference expire_time) = 0;
+                                     Base::TimeInterval time, Base::TimeInterval expire_time) = 0;
 
         virtual void create_logger(LinkServiceID service, LinkNodeID node,
-                                   Base::TimeDifference init_time) = 0;
+                                   Base::TimeInterval init_time) = 0;
 
         virtual void logger_end(LinkServiceID service, LinkNodeID node,
-                                Base::TimeDifference end_time) = 0;
+                                Base::TimeInterval end_time) = 0;
 
         virtual void handling_error(LinkServiceID service, LinkNodeID node,
-                                    Base::TimeDifference time, LinkErrorType type) = 0;
+                                    Base::TimeInterval time, LinkErrorType type) = 0;
 
         virtual void center_online(const Address &center_address) = 0;
 
@@ -78,26 +78,26 @@ namespace LogSystem {
         virtual ~LinkLogCenterHandler() = default;
 
         virtual void create_head_logger(const Address &address, LinkServiceID service, LinkNodeID node,
-                                        Base::TimeDifference time) = 0;
+                                        Base::TimeInterval time) = 0;
 
         virtual void register_logger(const Address &address, LinkServiceID service, LinkNodeID node,
                                      LinkNodeID parent_node, LinkNodeType type,
-                                     Base::TimeDifference time, Base::TimeDifference expire_time) = 0;
+                                     Base::TimeInterval time, Base::TimeInterval expire_time) = 0;
 
         virtual void create_logger(const Address &address, LinkServiceID service, LinkNodeID node,
-                                   Base::TimeDifference init_time) = 0;
+                                   Base::TimeInterval init_time) = 0;
 
         virtual void logger_end(const Address &address, LinkServiceID service, LinkNodeID node,
-                                Base::TimeDifference end_time) = 0;
+                                Base::TimeInterval end_time) = 0;
 
         virtual void receive_log(const Address &address, Link_Log log) = 0;
 
         virtual void handling_error(const Address &address, LinkServiceID service, LinkNodeID node,
-                                    Base::TimeDifference time, LinkErrorType type) = 0;
+                                    Base::TimeInterval time, LinkErrorType type) = 0;
 
-        virtual void node_online(const Address &address, Base::TimeDifference time) = 0;
+        virtual void node_online(const Address &address, Base::TimeInterval time) = 0;
 
-        virtual void node_offline(const Address &address, Base::TimeDifference time) = 0;
+        virtual void node_offline(const Address &address, Base::TimeInterval time) = 0;
 
         virtual bool node_timeout(const Address &address) = 0;
 
@@ -120,22 +120,22 @@ namespace LogSystem {
         virtual ~LinkLogReplayHandler() = default;
 
         virtual void create_head_logger(LinkServiceID service, LinkNodeID node,
-                                        Base::TimeDifference time) = 0;
+                                        Base::TimeInterval time) = 0;
 
         virtual void register_logger(LinkServiceID service, LinkNodeID node,
                                      LinkNodeID parent_node, LinkNodeType type,
-                                     Base::TimeDifference time, Base::TimeDifference expire_time) = 0;
+                                     Base::TimeInterval time, Base::TimeInterval expire_time) = 0;
 
         virtual void create_logger(LinkServiceID service, LinkNodeID node,
-                                   Base::TimeDifference init_time) = 0;
+                                   Base::TimeInterval init_time) = 0;
 
         virtual void logger_end(LinkServiceID service, LinkNodeID node,
-                                Base::TimeDifference end_time) = 0;
+                                Base::TimeInterval end_time) = 0;
 
         virtual void receive_log(Link_Log log) = 0;
 
         virtual void handling_error(LinkServiceID service, LinkNodeID node,
-                                    Base::TimeDifference time, LinkErrorType type) = 0;
+                                    Base::TimeInterval time, LinkErrorType type) = 0;
 
     };
 
