@@ -22,19 +22,19 @@ using namespace Net;
             << " in " << __FUNCTION__;
 
 
-LinkLogServer::LinkLogServer(const Address &local_address,
+LinkLogServer::LinkLogServer(const Address &listen_address,
                              ServerHandlerPtr handler,
                              std::string dictionary_path,
                              PartitionRank partition_rank) :
     _pool((1 << partition_rank) * BLOCK_SIZE),
-    _local(local_address.is_IPv4() ? AF_INET : AF_INET6, SOCK_STREAM),
+    _acceptor(listen_address),
     _receiver(Socket(), LOCAL_SOCKET_INPUT_BUFFER_SIZE, 0),
     _center(Socket(), REMOTE_SOCKET_INPUT_BUFFER_SIZE, REMOTE_SOCKET_OUTPUT_BUFFER_SIZE),
     _buffers(1 << (partition_rank - 1)),
     _handler(std::move(handler)),
     _encoder(std::move(dictionary_path)) {
     assert(_handler);
-    if (!create_local_link(local_address)) {
+    if (!create_local_link()) {
         Global_Logger.flush();
         CurrentThread::emergency_exit("LinkLogServer: failed to create link log");
     }
@@ -52,12 +52,8 @@ void LinkLogServer::flush() const {
     _encoder.flush();
 }
 
-bool LinkLogServer::create_local_link(const Address &local_address) {
-    CHECK(local_address.valid(), return false)
-    CHECK(_local.bind(local_address), return false)
-    CHECK(_local.setReuseAddr(true), return false)
-    CHECK(_local.tcpListen(2), return false)
-
+bool LinkLogServer::create_local_link() {
+    CHECK(_acceptor.socket(), return false)
     auto pipe = Socket::create_pipe();
     _receiver.reset_socket(std::move(pipe.read));
     CHECK(_receiver.socket.valid(), return false)
@@ -70,18 +66,16 @@ bool LinkLogServer::create_local_link(const Address &local_address) {
 }
 
 void LinkLogServer::accept_center_link(Poller &poller) {
-    Address address {};
-    _center.reset_socket(_local.tcpAccept(address));
-    CHECK(_center.socket_valid(), return)
-    CHECK(_center.socket.setNonBlock(true),
-          _center.close(); return)
-    Event event { _center.socket.fd() };
+    auto [socket, address] = _acceptor.accept_connection();
+    CHECK(socket, return)
+    CHECK(socket.setNonBlock(true), return)
+    Event event { socket.fd() };
     event.set_read();
     event.set_error();
-    CHECK(poller.add_fd(event),
-          _center.close(); return;)
+    CHECK(poller.add_fd(event), return)
+    poller.remove_fd(_acceptor.socket().fd(), false);
     _handler->center_online(address);
-    poller.remove_fd(_local.fd(), false);
+    _center.reset_socket(std::move(socket));
     G_INFO << "Accepting center link: " << address.toIpPort();
 }
 
@@ -89,10 +83,10 @@ void LinkLogServer::destroy_local_link(Poller &poller) {
     assert(_receiver.socket_valid());
     assert(_receiver.input.readable_len() == 0);
     poller.remove_fd(_receiver.socket.fd(), false);
-    poller.remove_fd(_local.fd(), false);
+    poller.remove_fd(_acceptor.socket().fd(), false);
     _receiver.close();
     _notifier.close();
-    _local.close();
+    _acceptor.close();
 }
 
 void LinkLogServer::destroy_center_link(Poller &poller) {
@@ -101,8 +95,8 @@ void LinkLogServer::destroy_center_link(Poller &poller) {
     poller.remove_fd(_center.socket.fd(), false);
     _center.close();
     _handler->center_offline();
-    if (_local.valid())
-        poller.add_fd(Event { _local.fd(), Event::Read });
+    if (_acceptor.socket())
+        poller.add_fd(Event { _acceptor.socket().fd(), Event::Read });
 }
 
 bool LinkLogServer::safe_notify(const LinkLogMessage &message) const {
@@ -162,7 +156,7 @@ void LinkLogServer::init_thread(Poller &poller, std::vector<BufferIter> &flush_o
     event.set_error();
     poller.set_tid(CurrentThread::tid());
     poller.add_fd(event);
-    event.fd = _local.fd();
+    event.fd = _acceptor.socket().fd();
     poller.add_fd(event);
 
     flush_order.reserve(_buffers.size());
@@ -175,7 +169,7 @@ bool LinkLogServer::accept_message(Poller &poller, std::vector<Event> &events) {
     CHECK(get >= 0, return false);
     bool center_can_send = false;
     for (auto event : events) {
-        if (event.fd == _local.fd()) {
+        if (event.fd == _acceptor.socket().fd()) {
             accept_center_link(poller);
         } else if (event.fd == _receiver.socket.fd()) {
             assert(!event.hasError() && !event.hasHangUp());

@@ -21,13 +21,15 @@ namespace Net {
 
         explicit Acceptor(bool Ipv4, unsigned short target_port, const char* target_ip = nullptr);
 
-        Acceptor(bool Ipv4, const InetAddress &target);
+        explicit Acceptor(const InetAddress &target);
 
         explicit Acceptor(Socket &&socket);
 
+        Acceptor(Acceptor &&other)  noexcept : _socket(std::move(other._socket)) {};
+
         ~Acceptor();
 
-        void close() { _socket.close(); };
+        void close();
 
         [[nodiscard]] Message accept_connection() const;
 

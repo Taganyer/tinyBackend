@@ -269,10 +269,10 @@ namespace Test {
 
     static void link_log_server(const InetAddress &address, int index);
 
-// #define USE_CENTER
-// #define USE_SERVER
+#define USE_CENTER
+#define USE_SERVER
 // #define SEARCH
-#define REPLAY
+// #define REPLAY
 
     void link_log_test() {
         constexpr int servers = 2;
@@ -322,9 +322,7 @@ namespace Test {
 #ifdef REPLAY
         ReplayHandler replay;
         LinkLogCenter::replay_history(replay,
-                                      "/home/taganyer/Code/Clion_project/tinyBackend"
-                                      "/global_logs/link_log_center/20241117-16:42:43.198408.link_log");
-        // 需要填充.link_log的文件路径);
+                                        // 需要填充.link_log的文件路径);
 #endif
     }
 

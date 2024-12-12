@@ -8,7 +8,7 @@
 #ifdef LOGSYSTEM_LINKLOGSERVERE_HPP
 
 #include <map>
-#include "Net/Socket.hpp"
+#include "Net/Acceptor.hpp"
 #include "Net/InetAddress.hpp"
 #include "LinkLogErrors.hpp"
 #include "LinkLogHandler.hpp"
@@ -162,7 +162,9 @@ namespace LogSystem {
 
         Map _nodes;
 
-        Net::Socket _local, _notifier;
+        Net::Acceptor _acceptor;
+
+        Net::Socket _notifier;
 
         Net::TcpMessageAgent _receiver, _center;
 
@@ -176,7 +178,7 @@ namespace LogSystem {
 
         Base::Thread _thread;
 
-        bool create_local_link(const Address &local_address);
+        bool create_local_link();
 
         void accept_center_link(Net::Poller &poller);
 
