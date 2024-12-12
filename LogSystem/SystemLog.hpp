@@ -105,6 +105,8 @@ namespace LogSystem {
 
     class LogStream : Base::NoCopy {
     public:
+        static constexpr uint32 BUFFER_SIZE = 256;
+
         LogStream(SystemLog &log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
@@ -113,23 +115,23 @@ namespace LogSystem {
 
         LogStream& operator<<(const std::string &val) {
             if (_log->get_rank() > _rank) return *this;
-            int temp = val.size() > 256 - _index ? 256 - _index : val.size();
-            memcpy(_message + _index, val.data(), temp);
-            _index += temp;
+            auto len = val.size() > BUFFER_SIZE - _index ? BUFFER_SIZE - _index : val.size();
+            memcpy(_message + _index, val.data(), len);
+            _index += len;
             return *this;
         };
 
         LogStream& operator<<(const std::string_view &val) {
             if (_log->get_rank() > _rank) return *this;
-            auto temp = val.size() > 256 - _index ? 256 - _index : val.size();
-            memcpy(_message + _index, val.data(), temp);
-            _index += temp;
+            auto len = val.size() > BUFFER_SIZE - _index ? BUFFER_SIZE - _index : val.size();
+            memcpy(_message + _index, val.data(), len);
+            _index += len;
             return *this;
         };
 
 #define StreamOperator(type, f) LogStream &operator<<(type val) { \
                 if (_log->get_rank() > _rank) return *this;       \
-                _index += snprintf(_message + _index, 256 - _index, f, val); \
+                _index += snprintf(_message + _index, BUFFER_SIZE - _index, f, val); \
                 return *this;                                     \
         };
 
@@ -158,9 +160,9 @@ namespace LogSystem {
 
         LogRank _rank;
 
-        int _index = 0;
+        uint32 _index = 0;
 
-        char _message[256] {};
+        char _message[BUFFER_SIZE] {};
 
     };
 

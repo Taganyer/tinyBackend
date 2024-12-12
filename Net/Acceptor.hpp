@@ -25,7 +25,7 @@ namespace Net {
 
         explicit Acceptor(Socket &&socket);
 
-        Acceptor(Acceptor &&other)  noexcept : _socket(std::move(other._socket)) {};
+        Acceptor(Acceptor &&other) noexcept : _socket(std::move(other._socket)) {};
 
         ~Acceptor();
 
