@@ -93,9 +93,9 @@ void TCP_Multiplexer::add_channel(std::string verify_message, Channel channel, E
     FD fd(_increase_id[index], index, _socket.fd());
     _channels[index] = new ChannelData(fd, std::move(channel), monitor_event);
     _channels[index]->monitor_event.extra_data = new UnconnectedData(std::move(verify_message),
-                                                             input_buffer_size, output_buffer_size,
-                                                             std::move(create_callback),
-                                                             std::move(reject_callback));
+                                                                     input_buffer_size, output_buffer_size,
+                                                                     std::move(create_callback),
+                                                                     std::move(reject_callback));
     Header header { Connect, 0, input_buffer_size, fd };
     _send_queue.push(header);
 }
@@ -109,7 +109,7 @@ void TCP_Multiplexer::update_channel(Event event) {
     channel_data.monitor_event.event = event.event;
 }
 
-void TCP_Multiplexer::weak_up_channel(int fd, const WeakUpFun& fun) {
+void TCP_Multiplexer::weak_up_channel(int fd, const WeakUpFun &fun) {
     Lock l(_mutex);
     int index = fd & 0xffff;
     if (!_channels[index]) return;

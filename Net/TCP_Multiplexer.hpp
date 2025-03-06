@@ -51,7 +51,7 @@ namespace Net {
 
         void update_channel(Event event);
 
-        void weak_up_channel(int fd, const WeakUpFun& fun);
+        void weak_up_channel(int fd, const WeakUpFun &fun);
 
         /// error_event 和 hang_up_event 可能会在 send_message 和 receive_message 调用。
         /// 会轮询整个数组，调用有事件发生的 Channel。

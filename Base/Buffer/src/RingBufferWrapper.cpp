@@ -28,7 +28,7 @@ uint32 Base::RingBufferWrapper::read(uint32 N, const iovec* array) const {
     return read_len;
 }
 
-uint32 Base::RingBufferWrapper::read(const OutputBuffer& buffer, uint32 size) const {
+uint32 Base::RingBufferWrapper::read(const OutputBuffer &buffer, uint32 size) const {
     if (this == &buffer) return 0;
     if (size > readable_len()) size = readable_len();
     size = buffer.write(read_array(size));
@@ -88,7 +88,7 @@ uint32 Base::RingBufferWrapper::write(uint32 N, const iovec* array) const {
     return written;
 }
 
-uint32 Base::RingBufferWrapper::write(const InputBuffer& buffer, uint32 size) const {
+uint32 Base::RingBufferWrapper::write(const InputBuffer &buffer, uint32 size) const {
     if (this == &buffer) return 0;
     if (size > writable_len()) size = writable_len();
     size = buffer.read(write_array(size));
