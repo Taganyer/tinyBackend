@@ -7,7 +7,6 @@
 
 #ifdef NET_TCP_MULTIPLEXER_HPP
 
-#include <set>
 #include <queue>
 #include <vector>
 #include "Socket.hpp"
@@ -156,8 +155,6 @@ namespace Net {
         };
 
         Base::Mutex _mutex;
-
-        std::set<FD> _close_queue;
 
         std::queue<Header> _send_queue;
 
