@@ -7,14 +7,15 @@
 #include <iostream>
 
 #include "Net/Acceptor.hpp"
-#include "Net/Controller.hpp"
 #include "Net/InetAddress.hpp"
 #include "Net/monitors/Event.hpp"
+#include "Net/Channel.hpp"
 
 #include "Base/File.hpp"
 #include "Net/error/errors.hpp"
 #include "Net/functions/Interface.hpp"
 #include "LogSystem/SystemLog.hpp"
+#include "Net/TcpMessageAgent.hpp"
 #include "Net/UDP_Communicator.hpp"
 #include "Net/reactor/Reactor.hpp"
 
@@ -25,11 +26,13 @@ using namespace Base;
 using namespace std;
 
 
-static void server_read(const Controller &con, RingBuffer &buffer) {
-    uint32 written = con.send(buffer.readable_array());
+static void server_read(MessageAgent &agent) {
+    auto &input = agent.input();
+    auto &output = agent.output();
+    uint32 written = output.write(input, input.readable_len());
     assert(written > 0);
-    buffer.read_advance(buffer.readable_len());
-    assert(buffer.readable_len() == 0);
+    assert(input.readable_len() == 0);
+    agent.send_message();
 }
 
 static void server_close(std::atomic<int> &count, Condition &con) {
@@ -52,25 +55,25 @@ static void echo_server(Acceptor &acceptor, int client_size, Condition &con, ato
         bool success = socket.setReuseAddr(true);
         assert(success);
 
-        auto link = NetLink::create_NetLinkPtr(std::move(socket));
+        auto agent_ptr = std::make_unique<TcpMessageAgent>(std::move(socket), 1024, 1024);
+        Channel channel;
 
-        link->set_readCallback([] (const Controller &controller) mutable {
-            server_read(controller, controller.input_buffer());
+        channel.set_readCallback([] (MessageAgent &agent) mutable {
+            server_read(agent);
         });
 
-        link->set_errorCallback([] (error_mark error, const Controller &controller) {
-            G_FATAL << '[' << get_error_type_name(error.types) << ']';
+        channel.set_errorCallback([] (MessageAgent &agent) {
+            G_FATAL << '[' << get_error_type_name(agent.error.types) << ']';
             return true;
         });
 
-        link->set_closeCallback([&count, &con] (const Controller &controller) mutable {
+        channel.set_closeCallback([&count, &con] (MessageAgent &) mutable {
             server_close(count, con);
         });
 
-        Event event { link->fd() };
+        Event event { agent_ptr->fd() };
         event.set_read();
-        // event.set_write();
-        reactor.add_NetLink(link, event);
+        reactor.add_channel(std::move(agent_ptr), std::move(channel), event);
     }
 
     cout << "accept end." << endl;
@@ -85,7 +88,7 @@ static void echo_client(InetAddress &server_address, Condition &con, atomic<int>
     assert(success);
     G_INFO << "client fd: " << client_socket.fd();
 
-    iFile in("/home/taganyer/Code/Clion_project/test/resource/poem.txt", true);
+    iFile in("", true);
 
     while (in) {
         auto line = in.getline();
@@ -142,12 +145,28 @@ void Test::echo() {
     cout << "total: " << cpu_core_to_client * multiple << " clients cost " << time.to_ms() << "ms" << endl;
 }
 
+void Test::InetAddress_test() {
+    // InetAddress host = InetAddress::getLocalHost();
+    // cout << host.toIpPort() << endl;
+    sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(8888);
+    InetAddress address4(address);
+    cout << address4.toIpPort() << endl;
+    sockaddr_in6 address6;
+    address6.sin6_family = AF_INET6;
+    address6.sin6_addr = in6addr_any;
+    address6.sin6_port = htons(8888);
+
+    InetAddress address6a(address6);
+    cout << address6a.toIpPort() << endl;
+}
+
 void Test::UDP_test() {
-#ifdef USE_IPV4
-    InetAddress add1(true, "127.0.0.1"), add2(true, "127.0.0.1");
-#else
+    // InetAddress add1(true, "127.0.0.1"), add2(true, "127.0.0.1");
     InetAddress add1(false, "::1"), add2(false, "::1");
-#endif
+
     Thread client([&add1, &add2] {
         UDP_Communicator cl(add2);
         add2 = InetAddress::get_InetAddress(cl.get_socket().fd());
@@ -182,4 +201,47 @@ void Test::UDP_test() {
         buffer2[0] = '\0';
     }
     client.join();
+}
+
+void Test::TCP_test() {
+    InetAddress add(true, "127.0.0.1", 8888), add2(true, "127.0.0.1", 8889);
+    Thread client([&add2, add] {
+        Socket client_socket(AF_INET, SOCK_STREAM);
+        bool success = client_socket.bind(add2);
+        assert(success);
+        TimeInterval begin = Unix_to_now();
+        sleep(1);
+        success = client_socket.connect(add);
+        TimeInterval end = Unix_to_now();
+        cout << "client connect: " << (end - begin).to_ms() << "ms" << endl;
+        assert(success);
+        char msg[] = "hello server!";
+        success = ops::write(client_socket.fd(), msg, sizeof(msg)) == sizeof(msg);
+        assert(success);
+        begin = Unix_to_now();
+        client_socket.close();
+        end = Unix_to_now();
+        cout << "client close: " << (end - begin).to_ms() << "ms" << endl;
+    });
+    Socket server_socket(AF_INET, SOCK_STREAM);
+    bool success = server_socket.bind(add);
+    assert(success);
+    success = server_socket.tcpListen(5);
+    assert(success);
+    client.start();
+    sleep(1);
+    TimeInterval begin = Unix_to_now();
+    auto sock = server_socket.tcpAccept(add);
+    TimeInterval end = Unix_to_now();
+    cout << "server accept: " << (end - begin).to_ms() << "ms" << endl;
+    assert(sock.valid());
+    sleep(2);
+    char msg[64] {};
+    int64 size = ops::read(sock.fd(), msg, 64);
+    assert(size > 0);
+    cout << "server recv: " << msg << endl;
+    sleep(1);
+    sock.close();
+    client.join();
+    unordered_map<string, string> map;
 }

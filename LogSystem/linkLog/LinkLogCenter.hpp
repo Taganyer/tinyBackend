@@ -12,6 +12,10 @@
 #include "Net/reactor/Reactor.hpp"
 #include "Net/InetAddress.hpp"
 
+namespace Net {
+    class MessageAgent;
+}
+
 namespace LogSystem {
 
     class LinkLogCenter {
@@ -52,13 +56,13 @@ namespace LogSystem {
 
     private:
         struct NodeData {
-            Net::NetLink::LinkPtr link;
+            Net::Channel channel;
 
-            explicit NodeData(Net::NetLink::LinkPtr link) :
-                link(std::move(link)) {};
+            explicit NodeData(Net::Channel &&ch) :
+                channel(std::move(ch)) {};
         };
 
-        using NodeMap = std::map<Address, NodeData>;
+        using NodeMap = std::map<Address, int>;
 
         using NodeMapIter = NodeMap::iterator;
 
@@ -127,25 +131,25 @@ namespace LogSystem {
 
         Net::Reactor _reactor;
 
-        void handle_read(const Net::Controller &controller);
+        void handle_read(Net::MessageAgent &agent);
 
-        bool handle_error(Net::error_mark mark, const Net::Controller &controller) const;
+        bool handle_error(Net::MessageAgent &agent) const;
 
-        void handle_close(const Net::Controller &controller);
+        void handle_close(Net::MessageAgent &agent);
 
         void check_timeout();
 
-        uint32 handle_register_logger(NodeMapIter iter, Base::RingBuffer &buffer);
+        uint32 handle_register_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
 
-        uint32 handle_create_logger(NodeMapIter iter, Base::RingBuffer &buffer);
+        uint32 handle_create_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
 
-        uint32 handle_end_logger(NodeMapIter iter, Base::RingBuffer &buffer);
+        uint32 handle_end_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
 
-        uint32 handle_log(NodeMapIter iter, Base::RingBuffer &buffer);
+        uint32 handle_log(NodeMapIter iter, const Base::RingBuffer &buffer);
 
-        uint32 handle_error_logger(NodeMapIter iter, Base::RingBuffer &buffer);
+        uint32 handle_error_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
 
-        uint32 handle_remove_server(NodeMapIter iter, const Net::Controller &controller);
+        uint32 handle_remove_server(NodeMapIter iter, Net::MessageAgent &agent);
 
         static uint32 replay_register_logger(LinkLogReplayHandler &handler, Base::RingBuffer &buffer);
 

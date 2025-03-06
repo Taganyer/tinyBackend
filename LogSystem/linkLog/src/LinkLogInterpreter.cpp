@@ -234,7 +234,7 @@ void LinkLogStorage::add_record(uint32 size) {
     _records.back().index += size;
 }
 
-void LinkLogStorage::handle_a_log(Link_Log_Header &header, RingBuffer &buf) {
+void LinkLogStorage::handle_a_log(Link_Log_Header &header, const RingBuffer &buf) {
     Lock l(_mutex);
     Index_Key &key = *(Index_Key *) &header.service();
     auto val_ptr = _cache.get(key);
@@ -245,7 +245,7 @@ void LinkLogStorage::handle_a_log(Link_Log_Header &header, RingBuffer &buf) {
     _cache.put(key, true);
 }
 
-uint32 LinkLogStorage::write_to_file(RingBuffer &buf, uint32 size) {
+uint32 LinkLogStorage::write_to_file(const RingBuffer &buf, uint32 size) {
     assert(buf.readable_len() >= size);
     Lock l(_mutex);
     flush_cache();
@@ -518,7 +518,7 @@ int LinkLogStorage::querying_a_log(QuerySet* point, RingBuffer &buf, uint32 &wri
     uint16 log_size = *(uint16 *) (msg + header_offset0);
     if (log_size + sizeof(Link_Log_Header) > buf.writable_len()) return 1;
 
-    uint32 need_write = log_size + sizeof(Link_Log_Header) - buf.try_write(&msg, header_offset3);
+    uint32 need_write = log_size + sizeof(Link_Log_Header) - buf.try_write(&msg, header_offset3, 0);
     CHECK(point->_file.read(buf.write_array(need_write, header_offset3)) == need_write,
           destroy_query_set(point); return -1)
     point->_pos += need_write;

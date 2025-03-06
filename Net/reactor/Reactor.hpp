@@ -9,9 +9,10 @@
 
 #include <map>
 #include <atomic>
+#include <memory>
 #include "Base/Thread.hpp"
-#include "Net/NetLink.hpp"
-#include "Net/monitors/Event.hpp"
+#include "Net/Channel.hpp"
+#include "Net/MessageAgent.hpp"
 #include "Base/Container/List.hpp"
 #include "Base/Time/TimeInterval.hpp"
 
@@ -29,29 +30,27 @@ namespace Net {
             EPOLL
         };
 
+        using FixedFun = std::function<void()>;
+
+        using WeakUpFun = std::function<void(MessageAgent &, Channel &)>;
+
+        using MessageAgentPtr = std::unique_ptr<MessageAgent>;
+
         explicit Reactor(Base::TimeInterval link_timeout) : timeout(link_timeout) {};
 
         ~Reactor() { stop(); };
-
-        using FixedFun = std::function<void()>;
 
         void start(MOD mod, int monitor_timeoutMS, FixedFun fun = FixedFun());
 
         void stop();
 
-        void add_NetLink(NetLink::LinkPtr &netLink, Event event);
-
-        void remove_NetLink(int fd);
+        void add_channel(MessageAgentPtr &&ptr, Channel channel, Event monitor_event);
 
         void send_to_loop(std::function<void()> fun) const;
 
-        void update_link(Event event);
+        void update_channel(Event monitor_event);
 
-        using WeakUpFun = std::function<void(const Controller &)>;
-
-        void weak_up_link(int fd, WeakUpFun fun);
-
-        void weak_up_all_link(WeakUpFun fun);
+        void weak_up_channel(int fd, WeakUpFun fun);
 
         [[nodiscard]] bool in_reactor_thread() const;
 
@@ -67,22 +66,25 @@ namespace Net {
 
         using TimerQueue = Base::List<TimerData>;
 
-        struct LinkData {
-            NetLink::LinkPtr link;
+        struct ChannelData {
+            MessageAgentPtr agent;
+            Channel channel;
             TimerQueue::Iter timer_iter;
-            Event event;
+            Event monitor_event;
 
-            LinkData(NetLink::LinkPtr link, Event event) :
-                link(std::move(link)), event(event) {};
+            ChannelData(MessageAgentPtr &&ag, Channel &&ch, Event event) :
+                agent(std::move(ag)), channel(std::move(ch)), monitor_event(event) {};
+
+            ChannelData(ChannelData &&) = default;
         };
 
-        using LinkMap = std::map<int, LinkData>;
+        using ChannelMap = std::map<int, ChannelData>;
 
         Monitor* _monitor = nullptr;
 
         EventLoop* _loop = nullptr;
 
-        LinkMap _map;
+        ChannelMap _map;
 
         TimerQueue _queue;
 
@@ -102,7 +104,7 @@ namespace Net {
 
         void create_task(Event* event);
 
-        void erase_link(LinkMap::iterator iter);
+        void erase_channel(ChannelMap::iterator iter);
 
         void close_alive();
 

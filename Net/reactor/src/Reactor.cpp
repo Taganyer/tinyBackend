@@ -5,7 +5,6 @@
 #include "../Reactor.hpp"
 #include "Net/EventLoop.hpp"
 #include "LogSystem/SystemLog.hpp"
-#include "Net/Controller.hpp"
 #include "Net/monitors/Poller.hpp"
 #include "Net/monitors/EPoller.hpp"
 #include "Net/monitors/Selector.hpp"
@@ -48,37 +47,26 @@ void Reactor::stop() {
     G_TRACE << "Reactor stop.";
 }
 
-void Reactor::add_NetLink(NetLink::LinkPtr &netLink, Event event) {
-    assert(running() && netLink->fd() == event.fd);
-    _loop->put_event([this, event, shared = netLink->shared_from_this()] {
-        if (!shared->valid()) return;
-        auto [iter, success] = _map.try_emplace(shared->fd(), shared, event);
+void Reactor::add_channel(MessageAgentPtr &&ptr, Channel channel, Event monitor_event) {
+    assert(running() && ptr->fd() == monitor_event.fd && ptr->fd() > 0);
+    if (!ptr || !ptr->agent_valid()) return;
+    _loop->put_event([this, monitor_event,
+        channel_data = new ChannelData(std::move(ptr), std::move(channel), monitor_event)] {
+        int fd = channel_data->agent->fd();
+        Event _event = monitor_event;
+        auto [iter, success] = _map.try_emplace(fd, std::move(*channel_data));
+        delete channel_data;
         if (success) {
-            Event _event = event;
-            _event.get_extra_data<LinkMap::iterator>() = iter;
+            _event.get_extra_data<ChannelMap::iterator>() = iter;
             if (_monitor->add_fd(_event)) {
-                _queue.insert(_queue.end(), shared->fd());
+                _queue.insert(_queue.end(), fd);
                 iter->second.timer_iter = _queue.tail();
-                G_TRACE << "Reactor add NetLink " << shared->fd();
+                G_TRACE << "Reactor add MessageAgent " << fd;
                 return;
             }
             _map.erase(iter);
         }
-        G_FATAL << "Reactor add NetLink " << shared->fd() << " failed.";
-    });
-}
-
-void Reactor::remove_NetLink(int fd) {
-    assert(running());
-    _loop->put_event([this, fd] {
-        auto iter = _map.find(fd);
-        if (iter == _map.end()) return;
-        auto ptr = iter->second.link;
-        Event event { fd };
-        event.set_NoEvent();
-        Controller controller(*ptr, event, *this, iter->second.event.event);
-        erase_link(iter);
-        ptr->handle_close(controller);
+        G_FATAL << "Reactor add Channel " << fd << " failed.";
     });
 }
 
@@ -87,46 +75,30 @@ void Reactor::send_to_loop(std::function<void()> fun) const {
     _loop->put_event(std::move(fun));
 }
 
-void Reactor::update_link(Event event) {
+void Reactor::update_channel(Event monitor_event) {
     if (!in_reactor_thread()) {
-        _loop->put_event([this, event] {
-            update_link(event);
+        _loop->put_event([this, monitor_event] {
+            update_channel(monitor_event);
         });
         return;
     }
-    auto iter = _map.find(event.fd);
-    if (iter == _map.end() || !iter->second.link->valid()) return;
-    iter->second.event = event;
-    event.get_extra_data<LinkMap::iterator>() = iter;
-    _monitor->update_fd(event);
+    auto iter = _map.find(monitor_event.fd);
+    if (iter == _map.end()) return;
+    assert(iter->second.agent->agent_valid());
+    iter->second.monitor_event = monitor_event;
+    monitor_event.get_extra_data<ChannelMap::iterator>() = iter;
+    _monitor->update_fd(monitor_event);
 }
 
-void Reactor::weak_up_link(int fd, WeakUpFun fun) {
-    _loop->put_event([this, fd, fun_ = std::move(fun)] {
+void Reactor::weak_up_channel(int fd, WeakUpFun fun) {
+    _loop->put_event([this, fd, weak_up_fun = std::move(fun)] {
         auto iter = _map.find(fd);
         if (iter == _map.end()) return;
-        Event event(iter->second.event);
-        Controller controller(*iter->second.link, event,
-                              *this, iter->second.event.event);
-        fun_(controller);
-        if (!event.is_NoEvent()) {
-            event.get_extra_data<LinkMap::iterator>() = iter;
-            create_task(&event);
-        }
-    });
-}
-
-void Reactor::weak_up_all_link(WeakUpFun fun) {
-    _loop->put_event([this, fun_ = std::move(fun)] {
-        for (auto iter = _map.begin(); iter != _map.end(); ++iter) {
-            Event event(iter->second.event);
-            Controller controller(*iter->second.link, event,
-                                  *this, iter->second.event.event);
-            fun_(controller);
-            if (!event.is_NoEvent()) {
-                event.get_extra_data<LinkMap::iterator>() = iter;
-                create_task(&event);
-            }
+        auto &agent = *iter->second.agent;
+        auto &channel = iter->second.channel;
+        weak_up_fun(agent, channel);
+        if (!agent.agent_valid()) {
+            erase_channel(iter);
         }
     });
 }
@@ -164,15 +136,15 @@ void Reactor::remove_timeouts() {
     TimeInterval time = Unix_to_now() - timeout;
     auto iter = _queue.begin(), end = _queue.end();
     while (iter != end && iter->flush_time <= time) {
-        auto m = _map.find(iter->fd);
+        auto tmp = _map.find(iter->fd);
         ++iter;
-        auto ptr = m->second.link;
-        Event event { ptr->fd() };
-        event.set_NoEvent();
-        Controller controller(*ptr, event, *this, m->second.event.event);
-        if (ptr->handle_timeout(controller)) {
-            erase_link(m);
-            ptr->handle_close(controller);
+        auto &agent = *tmp->second.agent;
+        auto &channel = tmp->second.channel;
+        agent.socket_event.set_error();
+        agent.error = { error_types::TimeoutEvent, agent.fd() };
+        channel.invoke_event(agent);
+        if (!agent.agent_valid()) {
+            erase_channel(tmp);
         }
     }
 }
@@ -189,40 +161,24 @@ void Reactor::invoke(int timeoutMS, std::vector<Event> &list) {
 }
 
 void Reactor::create_task(Event* event) {
-    auto iter = event->get_extra_data<LinkMap::iterator>();
+    auto iter = event->get_extra_data<ChannelMap::iterator>();
     assert(iter != _map.end());
     assert(iter->first == event->fd);
 
-    auto ptr = iter->second.link;
-    if (!ptr->valid()) {
-        erase_link(iter);
+    auto &agent = *iter->second.agent;
+    auto &channel = iter->second.channel;
+    agent.socket_event.event = event->event;
+    channel.invoke_event(agent);
+    if (!agent.agent_valid()) {
+        erase_channel(iter);
         return;
     }
-    event->extra_data = iter->second.event.extra_data;
-
-    Controller controller(*ptr, *event, *this, iter->second.event.event);
-
-    if (event->hasError() && !event->hasHangUp())
-        ptr->handle_error({ error_types::ErrorEvent, 0 }, controller);
-
-    if (event->canRead() && !event->hasHangUp())
-        ptr->handle_read(controller);
-
-    if (event->canWrite() && !event->hasHangUp())
-        ptr->handle_write(controller);
-
-    if (event->hasHangUp()) {
-        erase_link(iter);
-        ptr->handle_close(controller);
-        return;
-    }
-
     iter->second.timer_iter->flush_time = Unix_to_now();
     _queue.move_to(_queue.end(), iter->second.timer_iter);
 }
 
-void Reactor::erase_link(LinkMap::iterator iter) {
-    _monitor->remove_fd(iter->first, !iter->second.link->valid());
+void Reactor::erase_channel(ChannelMap::iterator iter) {
+    _monitor->remove_fd(iter->first, !iter->second.agent || !iter->second.agent->agent_valid());
     _queue.erase(iter->second.timer_iter);
     _map.erase(iter);
 }
@@ -231,13 +187,15 @@ void Reactor::close_alive() {
     if (!_map.empty()) {
         G_WARN << "Reactor force remove " << _map.size() << " NetLink.";
         for (auto &[fd, data] : _map) {
-            auto &ptr = data.link;
-            if (!ptr->valid()) continue;
-            Event event { fd, 0 };
-            Controller controller(*ptr, event, *this, data.event.event);
-            ptr->handle_error({ error_types::UnexpectedShutdown, 0 }, controller);
-            if (event.hasHangUp())
-                ptr->handle_close(controller);
+            auto &agent = *data.agent;
+            auto &channel = data.channel;
+            agent.socket_event.set_error();
+            agent.error = { error_types::UnexpectedShutdown, 0 };
+            channel.invoke_event(agent);
+            if (agent.agent_valid()) {
+                agent.socket_event.set_HangUp();
+                channel.invoke_event(agent);
+            }
         }
         _map.clear();
         _queue.erase(_queue.begin(), _queue.end());

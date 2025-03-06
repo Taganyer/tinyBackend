@@ -10,22 +10,20 @@ using namespace Test;
 int main() {
     /// 单个运行以下测试函数
 
-    // AOP_test();
-    //
-    // CurrentThreadTest();
-    // ThreadPool_test();
-    // LinkedThreadPool_test();
-    // timer_test();
-    // BufferPool_test();
-    // BPTree_test();
-    //
     // echo();
-    // UDP_test();
-    //
-    // raft_test();
-    //
+    // Solution::test();
+    // BufferPool_test();
+    // InetAddress_test();
+    // AOP_test();
+    // BlockFile_test();
     // log_test();
+    // BPTree_test();
+    // ThreadPool_test();
+    // LinkedThreadTest();
+    // UDP_test();
+    // raft_test();
     // link_log_test();
+    // TCP_test();
 
     return 0;
 }

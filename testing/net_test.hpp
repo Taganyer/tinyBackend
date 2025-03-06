@@ -11,7 +11,11 @@ namespace Test {
 
     void echo();
 
+    void InetAddress_test();
+
     void UDP_test();
+
+    void TCP_test();
 
 }
 

@@ -6,6 +6,7 @@
 #define AOP_HPP
 #ifdef AOP_HPP
 
+#include <stdexcept>
 #include <exception>
 #include <type_traits>
 #include <bits/move.h>
@@ -87,7 +88,7 @@ namespace Base {
 
 //------------------------------------------------------------------------------------------------
 
-    /// 检查 T 是否存在调用 before()、after()、bool-error(std::exception_ptr)(这里不能为 exception_ptr &)、destroy()。
+    /// 检查 T 是否存在调用 before()、after()、error(std::exception_ptr)、destroy()。
     template <typename T>
     class CallableExitChecker {
     private:
@@ -104,7 +105,7 @@ namespace Base {
         static std::false_type after_test(...);
 
         template <typename U>
-        static auto error_test(int) -> decltype(std::declval<U>().error(std::declval<std::exception_ptr>()),
+        static auto error_test(std::exception_ptr ptr) -> decltype(std::declval<U>().error(ptr),
             std::true_type());
         template <typename U>
         static std::false_type error_test(...);
@@ -120,7 +121,7 @@ namespace Base {
 
         static constexpr bool has_after_callable = decltype(after_test<T>(0))::value;
 
-        static constexpr bool has_error_callable = decltype(error_test<T>(0))::value;
+        static constexpr bool has_error_callable = decltype(error_test<T>(std::declval<std::exception_ptr>()))::value;
 
         static constexpr bool has_destroy_callable = decltype(destroy_test<T>(0))::value;
 
@@ -210,8 +211,11 @@ namespace Base {
                 try {
                     return ParentClass::handle_error(std::forward<Args>(args)...);
                 } catch (...) {
-                    _aspect.error(std::current_exception());
-                    throw;
+                    std::exception_ptr error_ptr = std::current_exception();
+                    _aspect.error(error_ptr);
+                    if (!error_ptr)
+                        throw std::logic_error("std::exception_ptr cannot be nullptr");
+                    rethrow_exception(error_ptr);
                 }
             } else {
                 return ParentClass::handle_error(std::forward<Args>(args)...);
@@ -224,8 +228,11 @@ namespace Base {
                 try {
                     return ParentClass::handle_error(std::forward<Args>(args)...);
                 } catch (...) {
-                    _aspect.error(std::current_exception());
-                    throw;
+                    std::exception_ptr error_ptr = std::current_exception();
+                    _aspect.error(error_ptr);
+                    if (!error_ptr)
+                        throw std::logic_error("std::exception_ptr cannot be nullptr");
+                    rethrow_exception(error_ptr);
                 }
             } else {
                 return ParentClass::handle_error(std::forward<Args>(args)...);
@@ -312,15 +319,21 @@ namespace Base {
                     try {
                         return ptr(std::forward<Args>(args)...);
                     } catch (...) {
-                        if (_aspect.error(std::current_exception()))
-                            throw;
+                        std::exception_ptr error_ptr = std::current_exception();
+                        _aspect.error(error_ptr);
+                        if (!error_ptr)
+                            throw std::logic_error("std::exception_ptr cannot be nullptr");
+                        rethrow_exception(error_ptr);
                     }
                 } else if (MemberFunPtrCallable<FunPtr, Args...>::callable) {
                     try {
                         return member_FunPtr_invoke(std::forward<FunPtr>(ptr), std::forward<Args>(args)...);
                     } catch (...) {
-                        if (_aspect.error(std::current_exception()))
-                            throw;
+                        std::exception_ptr error_ptr = std::current_exception();
+                        _aspect.error(error_ptr);
+                        if (!error_ptr)
+                            throw std::logic_error("std::exception_ptr cannot be nullptr");
+                        rethrow_exception(error_ptr);
                     }
                 } else {
                     static_assert(CallableChecker<FunPtr, Args...>::common_callable ||
@@ -347,15 +360,21 @@ namespace Base {
                     try {
                         return ptr(std::forward<Args>(args)...);
                     } catch (...) {
-                        if (_aspect.error(std::current_exception()))
-                            throw;
+                        std::exception_ptr error_ptr = std::current_exception();
+                        _aspect.error(error_ptr);
+                        if (!error_ptr)
+                            throw std::logic_error("std::exception_ptr cannot be nullptr");
+                        rethrow_exception(error_ptr);
                     }
                 } else if (MemberFunPtrCallable<FunPtr, Args...>::callable) {
                     try {
                         return member_FunPtr_invoke(std::forward<FunPtr>(ptr), std::forward<Args>(args)...);
                     } catch (...) {
-                        if (_aspect.error(std::current_exception()))
-                            throw;
+                        std::exception_ptr error_ptr = std::current_exception();
+                        _aspect.error(error_ptr);
+                        if (!error_ptr)
+                            throw std::logic_error("std::exception_ptr cannot be nullptr");
+                        rethrow_exception(error_ptr);
                     }
                 } else {
                     static_assert(CallableChecker<FunPtr, Args...>::common_callable ||

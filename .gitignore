@@ -1,3 +1,6 @@
 .gitignore
 CMake_config.h
-cmake-build-debug
+
+cmake-build-*
+
+global_logs

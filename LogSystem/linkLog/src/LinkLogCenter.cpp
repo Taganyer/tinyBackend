@@ -5,7 +5,7 @@
 #include "../LinkLogCenter.hpp"
 #include "Net/InetAddress.hpp"
 #include "LogSystem/SystemLog.hpp"
-#include "Net/Controller.hpp"
+#include "Net/TcpMessageAgent.hpp"
 #include "Net/error/error_mark.hpp"
 
 using namespace Base;
@@ -37,30 +37,31 @@ bool LinkLogCenter::add_server(const Address &server_address) {
     CHECK(socket.setNonBlock(true), return false)
     CHECK(socket.setTcpNoDelay(true), return false)
 
-    auto link = NetLink::create_NetLinkPtr(
-        std::move(socket), REMOTE_SOCKET_INPUT_BUFFER_SIZE, 0);
-    link->set_readCallback(
-        [this] (const Controller &controller) {
-            handle_read(controller);
+    auto agent_ptr = std::make_unique<TcpMessageAgent>(std::move(socket),
+                                                       REMOTE_SOCKET_INPUT_BUFFER_SIZE, 0);
+    Channel channel;
+    channel.set_readCallback(
+        [this] (MessageAgent &agent) {
+            handle_read(agent);
         });
 
-    link->set_errorCallback(
-        [this] (error_mark mark, const Controller &controller) {
-            return handle_error(mark, controller);
+    channel.set_errorCallback(
+        [this] (MessageAgent &agent) {
+            return handle_error(agent);
         });
 
-    link->set_closeCallback(
-        [this] (const Controller &controller) {
-            handle_close(controller);
+    channel.set_closeCallback(
+        [this] (MessageAgent &agent) {
+            handle_close(agent);
         });
 
-    auto [iter, success] = _nodes.try_emplace(server_address, link);
+    auto [iter, success] = _nodes.try_emplace(server_address, agent_ptr->fd());
     CHECK(success, return false)
-    Event event { link->fd() };
+    Event event { agent_ptr->fd() };
     event.set_read();
     event.set_error();
-    event.get_extra_data<NodeMapIter>() = iter;
-    _reactor.add_NetLink(link, event);
+    agent_ptr->socket_event.get_extra_data<NodeMapIter>() = iter;
+    _reactor.add_channel(std::move(agent_ptr), std::move(channel), event);
     _handler->node_online(server_address, Unix_to_now());
     return true;
 }
@@ -68,12 +69,14 @@ bool LinkLogCenter::add_server(const Address &server_address) {
 void LinkLogCenter::remove_server(const Address &server_address) {
     auto iter = _nodes.find(server_address);
     if (iter == _nodes.end()) return;
-    _reactor.weak_up_link(iter->second.link->fd(),
-                          [] (const Controller &controller) {
-                              LinkLogMessage message(LinkLogMessage::CentralOffline);
-                              uint32 written = controller.send(&message, sizeof(LinkLogMessage), true);
-                              CHECK(written == sizeof(LinkLogMessage),);
-                          });
+    _reactor.weak_up_channel(iter->second,
+                             [] (MessageAgent &agent, Channel &) {
+                                 LinkLogMessage message(LinkLogMessage::CentralOffline);
+                                 uint32 written = agent.output().fix_write(&message, sizeof(LinkLogMessage));
+                                 CHECK(written == sizeof(LinkLogMessage),);
+                                 agent.send_message();
+                                 agent.close();
+                             });
 }
 
 void LinkLogCenter::search_link(const ServiceID &service, LinkLogSearchHandler &handler,
@@ -133,7 +136,7 @@ uint64 LinkLogCenter::replay_history(LinkLogReplayHandler &handler, const char* 
         uint32 read = 1;
         while (read != 0 && buffer.readable_len() > sizeof(OperationType)) {
             OperationType ot;
-            buffer.try_read(&ot, sizeof(OperationType));
+            buffer.try_read(&ot, sizeof(OperationType), 0);
             switch (ot) {
             case RegisterLogger:
                 read = replay_register_logger(handler, buffer);
@@ -164,15 +167,14 @@ uint64 LinkLogCenter::replay_history(LinkLogReplayHandler &handler, const char* 
     return total_read;
 }
 
-void LinkLogCenter::handle_read(const Controller &controller) {
-    auto iter = controller.current_event().get_extra_data<NodeMapIter>();
-    assert(iter->second.link->valid());
-    auto &buffer = controller.input_buffer();
+void LinkLogCenter::handle_read(MessageAgent &agent) {
+    auto iter = agent.socket_event.get_extra_data<NodeMapIter>();
+    auto &buffer = static_cast<const RingBuffer&>(agent.input());
 
     uint32 read = 1, total_read = 0;
     while (read != 0 && buffer.readable_len() > sizeof(OperationType)) {
         OperationType ot;
-        buffer.try_read(&ot, sizeof(OperationType));
+        buffer.try_read(&ot, sizeof(OperationType), 0);
         switch (ot) {
         case RegisterLogger:
             read = handle_register_logger(iter, buffer);
@@ -190,7 +192,7 @@ void LinkLogCenter::handle_read(const Controller &controller) {
             read = handle_error_logger(iter, buffer);
             break;
         case NodeOffline:
-            read = handle_remove_server(iter, controller);
+            read = handle_remove_server(iter, agent);
             assert(buffer.readable_len() == 0 || read == 0);
             break;
         default:
@@ -204,24 +206,24 @@ void LinkLogCenter::handle_read(const Controller &controller) {
     _storage.write_to_file(buffer, total_read);
 }
 
-bool LinkLogCenter::handle_error(error_mark mark, const Controller &controller) const {
-    auto iter = controller.current_event().get_extra_data<NodeMapIter>();
-    switch (mark.types) {
+bool LinkLogCenter::handle_error(MessageAgent &agent) const {
+    auto iter = agent.socket_event.get_extra_data<NodeMapIter>();
+    switch (agent.error.types) {
     case error_types::TimeoutEvent:
         G_WARN << "LinkLogCenter: service node timeout.";
         return _handler->node_timeout(iter->first);
     default:
-        G_ERROR << "LinkLogCenter: " << get_error_type_name(mark.types)
-                << " " << strerror(mark.codes);
-        _handler->node_error(iter->first, mark);
+        G_ERROR << "LinkLogCenter: " << get_error_type_name(agent.error.types)
+                << " " << strerror(agent.error.codes);
+        _handler->node_error(iter->first, agent.error);
         return true;
     }
 }
 
-void LinkLogCenter::handle_close(const Controller &controller) {
-    auto iter = controller.current_event().get_extra_data<NodeMapIter>();
+void LinkLogCenter::handle_close(MessageAgent &agent) {
+    auto iter = agent.socket_event.get_extra_data<NodeMapIter>();
     _nodes.erase(iter);
-    controller.current_event().get_extra_data<NodeMapIter>() = _nodes.end();
+    agent.socket_event.get_extra_data<NodeMapIter>() = _nodes.end();
 }
 
 void LinkLogCenter::check_timeout() {
@@ -241,7 +243,7 @@ void LinkLogCenter::check_timeout() {
     }
 }
 
-uint32 LinkLogCenter::handle_register_logger(NodeMapIter iter, RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_register_logger(NodeMapIter iter, const RingBuffer &buffer) {
     if (buffer.readable_len() < sizeof(Register_Logger))
         return 0;
     Register_Logger logger;
@@ -265,7 +267,7 @@ uint32 LinkLogCenter::handle_register_logger(NodeMapIter iter, RingBuffer &buffe
     return sizeof(Register_Logger);
 }
 
-uint32 LinkLogCenter::handle_create_logger(NodeMapIter iter, RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_create_logger(NodeMapIter iter, const RingBuffer &buffer) {
     if (buffer.readable_len() < sizeof(Create_Logger))
         return 0;
     Create_Logger logger;
@@ -302,7 +304,7 @@ uint32 LinkLogCenter::handle_create_logger(NodeMapIter iter, RingBuffer &buffer)
     return sizeof(Create_Logger);
 }
 
-uint32 LinkLogCenter::handle_end_logger(NodeMapIter iter, RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_end_logger(NodeMapIter iter, const RingBuffer &buffer) {
     if (buffer.readable_len() < sizeof(End_Logger))
         return 0;
     End_Logger logger;
@@ -313,11 +315,11 @@ uint32 LinkLogCenter::handle_end_logger(NodeMapIter iter, RingBuffer &buffer) {
     return sizeof(End_Logger);
 }
 
-uint32 LinkLogCenter::handle_log(NodeMapIter iter, RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_log(NodeMapIter iter, const RingBuffer &buffer) {
     if (buffer.readable_len() < sizeof(Link_Log_Header))
         return 0;
     Link_Log_Header header;
-    buffer.try_read(&header, sizeof(Link_Log_Header));
+    buffer.try_read(&header, sizeof(Link_Log_Header), 0);
     if (buffer.readable_len() < header.log_size() + sizeof(Link_Log_Header))
         return 0;
 
@@ -331,7 +333,7 @@ uint32 LinkLogCenter::handle_log(NodeMapIter iter, RingBuffer &buffer) {
     return sizeof(Link_Log_Header) + header.log_size();
 }
 
-uint32 LinkLogCenter::handle_error_logger(NodeMapIter iter, RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_error_logger(NodeMapIter iter, const RingBuffer &buffer) {
     if (buffer.readable_len() < sizeof(Error_Logger))
         return 0;
     Error_Logger logger;
@@ -342,13 +344,13 @@ uint32 LinkLogCenter::handle_error_logger(NodeMapIter iter, RingBuffer &buffer) 
     return sizeof(Error_Logger);
 }
 
-uint32 LinkLogCenter::handle_remove_server(NodeMapIter iter, const Controller &controller) {
-    auto &buffer = controller.input_buffer();
+uint32 LinkLogCenter::handle_remove_server(NodeMapIter iter, MessageAgent &agent) {
+    auto &buffer = agent.input();
     if (buffer.readable_len() < sizeof(Node_Offline))
         return 0;
     Node_Offline offline;
     buffer.read(&offline, sizeof(Node_Offline));
-    controller.current_event().set_HangUp();
+    agent.socket_event.set_HangUp();
     _handler->node_offline(iter->first, offline.time());
     _storage.add_record(sizeof(Node_Offline));
     return sizeof(Node_Offline);
@@ -391,7 +393,7 @@ uint32 LinkLogCenter::replay_log(LinkLogReplayHandler &handler, RingBuffer &buff
     if (buffer.readable_len() < sizeof(Link_Log_Header))
         return 0;
     Link_Log_Header header;
-    buffer.try_read(&header, sizeof(Link_Log_Header));
+    buffer.try_read(&header, sizeof(Link_Log_Header), 0);
     if (buffer.readable_len() < header.log_size() + sizeof(Link_Log_Header))
         return 0;
 

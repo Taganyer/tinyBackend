@@ -56,7 +56,7 @@ namespace LogSystem {
 
         friend bool operator>(const Index_Key &lhs, const Index_Key &rhs) {
             return lhs.object > rhs.object;
-        }
+        };
 
         Mark<size> object;
 

@@ -55,9 +55,9 @@ void LinkLogServer::flush() const {
 bool LinkLogServer::create_local_link() {
     CHECK(_acceptor.socket(), return false)
     auto pipe = Socket::create_pipe();
+    CHECK(pipe.read, return false)
+    CHECK(pipe.read.setNonBlock(true), return false)
     _receiver.reset_socket(std::move(pipe.read));
-    CHECK(_receiver.socket.valid(), return false)
-    CHECK(_receiver.socket.setNonBlock(true), return false)
     _notifier = std::move(pipe.write);
     CHECK(_notifier.valid(), return false)
 
@@ -80,9 +80,9 @@ void LinkLogServer::accept_center_link(Poller &poller) {
 }
 
 void LinkLogServer::destroy_local_link(Poller &poller) {
-    assert(_receiver.socket_valid());
-    assert(_receiver.input.readable_len() == 0);
-    poller.remove_fd(_receiver.socket.fd(), false);
+    assert(_receiver.agent_valid());
+    assert(_receiver.input().readable_len() == 0);
+    poller.remove_fd(_receiver.fd(), false);
     poller.remove_fd(_acceptor.socket().fd(), false);
     _receiver.close();
     _notifier.close();
@@ -90,9 +90,9 @@ void LinkLogServer::destroy_local_link(Poller &poller) {
 }
 
 void LinkLogServer::destroy_center_link(Poller &poller) {
-    _center.input.read_advance(_center.input.readable_len());
-    _center.output.read_advance(_center.output.readable_len());
-    poller.remove_fd(_center.socket.fd(), false);
+    _center.input().clear_input();
+    _center.output().clear_output();
+    poller.remove_fd(_center.fd(), false);
     _center.close();
     _handler->center_offline();
     if (_acceptor.socket())
@@ -150,7 +150,7 @@ void LinkLogServer::start_thread() {
 }
 
 void LinkLogServer::init_thread(Poller &poller, std::vector<BufferIter> &flush_order) {
-    Event event { _receiver.socket.fd() };
+    Event event { _receiver.fd() };
     event.set_read();
     event.set_HangUp();
     event.set_error();
@@ -171,19 +171,19 @@ bool LinkLogServer::accept_message(Poller &poller, std::vector<Event> &events) {
     for (auto event : events) {
         if (event.fd == _acceptor.socket().fd()) {
             accept_center_link(poller);
-        } else if (event.fd == _receiver.socket.fd()) {
+        } else if (event.fd == _receiver.fd()) {
             assert(!event.hasError() && !event.hasHangUp());
             assert(event.canRead());
-            bool success = _receiver.receive_message();
-            assert(success);
+            auto received = _receiver.receive_message();
+            assert(received >= 0);
         } else {
             if (event.canRead()) {
-                bool success = _receiver.receive_message();
-                if (unlikely(!success)) {
-                    if (_center.has_hang_up()) {
+                auto received = _receiver.receive_message();
+                if (unlikely(received <= 0)) {
+                    if (_center.socket_event.hasHangUp()) {
                         event.set_HangUp();
                     } else {
-                        CHECK(success,
+                        CHECK(received == 0,
                               _handler->center_error(error_mark { error_types::Read, errno });
                               destroy_center_link(poller);
                               continue)
@@ -192,7 +192,7 @@ bool LinkLogServer::accept_message(Poller &poller, std::vector<Event> &events) {
             }
             if (unlikely(event.hasError())) {
                 G_ERROR << "LinkLogServer: "
-                        << InetAddress::get_InetAddress(_center.socket.fd()).toIpPort()
+                        << InetAddress::get_InetAddress(_center.fd()).toIpPort()
                         << " received an error.";
                 _handler->center_error(error_mark { error_types::ErrorEvent, errno });
                 event.set_HangUp();
@@ -212,8 +212,8 @@ bool LinkLogServer::accept_message(Poller &poller, std::vector<Event> &events) {
 
 bool LinkLogServer::handle_local_message(WaitQueue &wait_queue) {
     LinkLogMessage message;
-    assert(_receiver.socket_valid());
-    while (_receiver.read(&message, sizeof(message), true)) {
+    assert(_receiver.agent_valid());
+    while (_receiver.input().fix_read(&message, sizeof(message))) {
         switch (message.type) {
         case LinkLogMessage::ClearBuffer:
             if (!clear_buffer(message, wait_queue.empty()))
@@ -228,9 +228,9 @@ bool LinkLogServer::handle_local_message(WaitQueue &wait_queue) {
     return false;
 }
 
-void LinkLogServer::handle_remote_message(WaitQueue &wait_queue) {
+void LinkLogServer::handle_remote_message(WaitQueue &wait_queue) const {
     LinkLogMessage message;
-    while (_center.read(&message, sizeof(message), true)) {
+    while (_center.input().fix_read(&message, sizeof(message))) {
         switch (message.type) {
         case LinkLogMessage::CentralOffline:
             wait_queue.emplace(LinkLogMessage::NodeOffline);
@@ -242,8 +242,8 @@ void LinkLogServer::handle_remote_message(WaitQueue &wait_queue) {
 }
 
 void LinkLogServer::send_center_message(WaitQueue &wait_queue, Poller &poller, bool write_notify) {
-    if (_center.socket_valid() && _center.can_send() && write_notify) {
-        CHECK(_center.send_message(),
+    if (_center.agent_valid() && _center.can_send() && write_notify) {
+        CHECK(_center.send_message() > 0,
               _handler->center_error(error_mark { error_types::Write, errno });
               destroy_center_link(poller);)
     };
@@ -270,8 +270,8 @@ void LinkLogServer::send_center_message(WaitQueue &wait_queue, Poller &poller, b
 }
 
 void LinkLogServer::update_center_state(Poller &poller) const {
-    if (_center.socket_valid()) {
-        Event event { _center.socket.fd() };
+    if (_center.agent_valid()) {
+        Event event { _center.fd() };
         event.set_read();
         if (_center.can_send()) {
             event.set_write();
@@ -288,7 +288,7 @@ void LinkLogServer::save_logs(WaitQueue &wait_queue) {
         if (!buf.data() || index == 0) continue;
         auto written = _encoder.write_to_file(buf.data(), index);
         CHECK(written > 0,);
-        if (!_center.socket_valid()) continue;
+        if (!_center.agent_valid()) continue;
         LinkLogMessage message(LinkLogMessage::ClearBuffer);
         message.get<LinkLogMessage::ClearBuffer_>().size = index;
         message.get<LinkLogMessage::ClearBuffer_>().flushed = true;
@@ -301,7 +301,7 @@ void LinkLogServer::close_thread(WaitQueue &wait_queue, Poller &poller, std::vec
     Lock l(_mutex);
     destroy_local_link(poller);
     save_logs(wait_queue);
-    if (_center.socket_valid()) {
+    if (_center.agent_valid()) {
         LinkLogMessage message(LinkLogMessage::NodeOffline);
         wait_queue.push(message);
     }
@@ -310,7 +310,7 @@ void LinkLogServer::close_thread(WaitQueue &wait_queue, Poller &poller, std::vec
         send_center_message(wait_queue, poller, accept_message(poller, events));
     }
 
-    assert(!_center.socket_valid());
+    assert(!_center.agent_valid());
 }
 
 LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
@@ -511,7 +511,7 @@ void LinkLogServer::submit_buffer(Buffer &buf, Lock<Mutex> &lock) {
             message.get<LinkLogMessage::ClearBuffer_>().flushed = true;
             auto written = _encoder.write_to_file(buf.buf.data(), buf.index);
             CHECK(written == buf.index,)
-            if (_center.socket_valid()) {
+            if (_center.agent_valid()) {
                 std::swap(buf.buf, *new_buf);
                 CHECK(safe_notify(message),
                       std::swap(buf.buf, *new_buf);
@@ -539,8 +539,8 @@ bool LinkLogServer::clear_buffer(LinkLogMessage &message, bool can_send) {
         flushed = true;
     }
     if (!can_send) return false;
-    if (_center.socket_valid()) {
-        auto written = _center.indirect_send(buf->data() + begin, size - begin, false);
+    if (_center.agent_valid()) {
+        auto written = _center.output().write(buf->data() + begin, size - begin);
         if (written != size - begin) {
             begin += written;
             return false;
@@ -551,14 +551,14 @@ bool LinkLogServer::clear_buffer(LinkLogMessage &message, bool can_send) {
     return true;
 }
 
-bool LinkLogServer::logger_timeout(const LinkLogMessage &message) {
-    if (!_center.socket_valid()) return true;
-    auto written = _center.indirect_send(message.arr, sizeof(Error_Logger), true);
+bool LinkLogServer::logger_timeout(const LinkLogMessage &message) const {
+    if (!_center.agent_valid()) return true;
+    auto written = _center.output().fix_write(message.arr, sizeof(Error_Logger));
     return written == sizeof(Error_Logger);
 }
 
 bool LinkLogServer::node_offline(LinkLogMessage &message, Poller &poller) {
-    if (!_center.socket_valid()) return true;
+    if (!_center.agent_valid()) return true;
 
     if (message.get<LinkLogMessage::NodeOffline_>().sent) {
         if (!_center.can_send()) {
@@ -567,7 +567,7 @@ bool LinkLogServer::node_offline(LinkLogMessage &message, Poller &poller) {
         }
     } else {
         Node_Offline node_offline(Unix_to_now());
-        auto written = _center.indirect_send(&node_offline, sizeof(Node_Offline), true);
+        auto written = _center.output().fix_write(&node_offline, sizeof(Node_Offline));
         if (written == sizeof(Node_Offline))
             message.get<LinkLogMessage::NodeOffline_>().sent = true;
     }
@@ -586,7 +586,7 @@ void LinkLogServer::force_flush(std::vector<BufferIter> &flush_order, WaitQueue 
             Lock l(it->mutex);
             if (!it->buf || it->index == 0) continue;
             _encoder.write_to_file(it->buf.data(), it->index);
-            if (_center.socket_valid()) {
+            if (_center.agent_valid()) {
                 auto new_buf = new BufferPool::Buffer(std::move(it->buf));
                 LinkLogMessage message(LinkLogMessage::ClearBuffer);
                 message.get<LinkLogMessage::ClearBuffer_>().size = it->index;
@@ -610,7 +610,7 @@ void LinkLogServer::check_timeout(WaitQueue &wait_queue) {
         if (timer.check_timeout()) {
             auto iter = timer.iter;
             if (iter->second.created) {
-                if (_center.socket_valid()) {
+                if (_center.agent_valid()) {
                     LinkLogMessage msg(LinkLogMessage::TimeOut);
                     auto &time_out = msg.get<LinkLogMessage::TimeOut_>().time_out;
                     time_out.ot = ErrorLogger;
@@ -624,7 +624,7 @@ void LinkLogServer::check_timeout(WaitQueue &wait_queue) {
                                          timer.expire_time, EndTimeOut);
             } else {
                 if (iter->second.type != Decision) {
-                    if (_center.socket_valid()) {
+                    if (_center.agent_valid()) {
                         LinkLogMessage msg(LinkLogMessage::TimeOut);
                         auto &time_out = msg.get<LinkLogMessage::TimeOut_>().time_out;
                         time_out.ot = ErrorLogger;

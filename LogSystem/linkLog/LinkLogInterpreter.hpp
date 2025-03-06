@@ -127,9 +127,9 @@ namespace LogSystem {
 
         void add_record(uint32 size);
 
-        void handle_a_log(Link_Log_Header &header, Base::RingBuffer &buf);
+        void handle_a_log(Link_Log_Header &header, const Base::RingBuffer &buf);
 
-        uint32 write_to_file(Base::RingBuffer &buf, uint32 size);
+        uint32 write_to_file(const Base::RingBuffer &buf, uint32 size);
 
         void delete_oldest_files(uint32 size);
 

@@ -7,108 +7,57 @@
 
 #ifdef NET_TCPMESSAGEAGENT_HPP
 
-#include <cerrno>
 #include "Socket.hpp"
+#include "MessageAgent.hpp"
 #include "Base/Buffer/RingBuffer.hpp"
 #include "Net/functions/Interface.hpp"
 
 namespace Net {
 
-    class TcpMessageAgent {
+    class TcpMessageAgent : public MessageAgent {
     public:
         using Buffer = Base::RingBuffer;
 
         TcpMessageAgent(Socket &&sock, uint32 input_size, uint32 output_size);
 
-        uint32 read(void* dest, uint32 size, bool fixed);
+        ~TcpMessageAgent() override = default;
 
-        template <std::size_t N>
-        uint32 read(const Base::BufferArray<N> &dest, bool fixed);
+        [[nodiscard]] uint32 can_receive() const override { return _input.writable_len(); };
 
-        [[nodiscard]] bool can_receive() const { return input.writable_len() > 0; };
+        [[nodiscard]] uint32 can_send() const override { return _output.readable_len(); };
 
-        [[nodiscard]] bool can_send() const { return output.readable_len() > 0; };
+        int64 send_message() override;
 
-        int64 direct_send(const void* data, uint32 size);
+        int64 receive_message() override;
 
-        template <std::size_t N>
-        int64 direct_send(const Base::BufferArray<N> &data);
+        const Base::InputBuffer& input() const override { return _input; };
 
-        uint32 indirect_send(const void* data, uint32 size, bool fixed);
-
-        template <std::size_t N>
-        uint32 indirect_send(const Base::BufferArray<N> &data, bool fixed);
-
-        bool send_message();
-
-        bool receive_message();
+        const Base::OutputBuffer& output() const override { return _output; };
 
         void reset_socket(Socket &&sock);
 
-        void close();
+        void close() override;
 
-        [[nodiscard]] bool socket_valid() const { return socket.valid(); };
+        const Socket& get_socket() const { return _socket; };
 
-        [[nodiscard]] bool has_hang_up() const { return socket_hang_up; };
+        [[nodiscard]] int fd() const override { return _socket.fd(); };
 
-        [[nodiscard]] uint32 unread_size() const { return input.readable_len(); };
+        [[nodiscard]] bool agent_valid() const override { return _socket.valid(); };
 
-        [[nodiscard]] uint32 remaining_input_size() const { return input.writable_len(); };
+        [[nodiscard]] uint32 unread_size() const { return _input.readable_len(); };
 
-        [[nodiscard]] uint32 unsent_size() const { return output.readable_len(); };
+        [[nodiscard]] uint32 remaining_input_size() const { return _input.writable_len(); };
 
-        [[nodiscard]] uint32 remaining_output_size() const { return output.writable_len(); };
+        [[nodiscard]] uint32 unsent_size() const { return _output.readable_len(); };
 
-        Socket socket;
+        [[nodiscard]] uint32 remaining_output_size() const { return _output.writable_len(); };
 
-    private:
-        bool socket_hang_up = false;
+    protected:
+        Socket _socket;
 
-    public:
-        Buffer input, output;
+        Buffer _input, _output;
 
     };
-
-    template <std::size_t N>
-    uint32 TcpMessageAgent::read(const Base::BufferArray<N> &dest, bool fixed) {
-        if (fixed) {
-            uint32 total_size = 0;
-            for (auto [ptr, size] : dest) total_size += size;
-            if (input.readable_len() < total_size)
-                return 0;
-        }
-        return input.read(dest);
-    }
-
-    template <std::size_t N>
-    int64 TcpMessageAgent::direct_send(const Base::BufferArray<N> &data) {
-        if (can_send())
-            return indirect_send(data, false);
-        auto result = ops::writev(socket.fd(), data.data(), data.size());
-        if (result == 0) {
-            socket_hang_up = true;
-            return -1;
-        }
-        if (result < 0) {
-            result = 0;
-            if (errno != EWOULDBLOCK)
-                return -1;
-        }
-        auto new_data = data + result;
-        result += output.write(new_data);
-        return result;
-    }
-
-    template <std::size_t N>
-    uint32 TcpMessageAgent::indirect_send(const Base::BufferArray<N> &data, bool fixed) {
-        if (fixed) {
-            uint32 total_size = 0;
-            for (auto [ptr, size] : data) total_size += size;
-            if (output.writable_len() < total_size)
-                return 0;
-        }
-        return output.write(data);
-    }
 
 }
 

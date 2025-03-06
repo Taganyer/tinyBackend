@@ -65,7 +65,7 @@ namespace LogSystem {
             Level5 = 6
         };
 
-        LinkLogServer(const Address &local_address,
+        LinkLogServer(const Address &listen_address,
                       ServerHandlerPtr handler,
                       std::string dictionary_path,
                       PartitionRank partition_rank = Level2);
@@ -203,7 +203,7 @@ namespace LogSystem {
 
         bool handle_local_message(WaitQueue &wait_queue);
 
-        void handle_remote_message(WaitQueue &wait_queue);
+        void handle_remote_message(WaitQueue &wait_queue) const;
 
         void send_center_message(WaitQueue &wait_queue, Net::Poller &poller, bool write_notify);
 
@@ -248,7 +248,7 @@ namespace LogSystem {
 
         bool clear_buffer(LinkLogMessage &message, bool can_send);
 
-        bool logger_timeout(const LinkLogMessage &message);
+        bool logger_timeout(const LinkLogMessage &message) const;
 
         bool node_offline(LinkLogMessage &message, Net::Poller &poller);
 

@@ -39,8 +39,8 @@ Acceptor::~Acceptor() {
 
 void Acceptor::close() {
     if (!_socket) return;
-    _socket.close();
     G_TRACE << "Acceptor " << _socket.fd() << " close.";
+    _socket.close();
 }
 
 Acceptor::Message Acceptor::accept_connection() const {
