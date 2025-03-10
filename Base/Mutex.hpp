@@ -38,11 +38,10 @@ namespace Base {
 
     class Condition;
 
-    template<typename Mutex>
+    template <typename Mutex>
     class Lock : NoCopy {
     public:
-
-        Lock(Mutex &lock) : _lock(lock) {
+        explicit Lock(Mutex &lock) : _lock(lock) {
             _lock.lock();
         };
 
@@ -51,7 +50,6 @@ namespace Base {
         };
 
     private:
-
         Mutex &_lock;
 
         friend class Condition;
@@ -61,14 +59,13 @@ namespace Base {
 
     class Mutex : NoCopy {
     public:
-
         Mutex() {
             CAPI_CHECK(pthread_mutex_init(&_lock, nullptr))
         };
 
         Mutex(Mutex &&other) noexcept: _lock(other._lock),
-                                       _owner_thread(other._owner_thread) {
-            other._lock = {0};
+            _owner_thread(other._owner_thread) {
+            other._lock = { 0 };
             other._owner_thread = 0;
         };
 
@@ -106,12 +103,9 @@ namespace Base {
         };
 
     private:
-
-        pthread_mutex_t _lock;
+        pthread_mutex_t _lock {};
 
         pthread_t _owner_thread = 0;
-
-        friend class Lock<Mutex>;
 
         friend class Condition;
 
@@ -120,14 +114,13 @@ namespace Base {
 
     class SpinMutex : NoCopy {
     public:
-
         SpinMutex() {
             CAPI_CHECK(pthread_spin_init(&_lock, PTHREAD_PROCESS_PRIVATE))
         };
 
         SpinMutex(SpinMutex &&other) noexcept: _lock(other._lock),
-                                               _owner_thread(other._owner_thread) {
-            other._lock = {0};
+            _owner_thread(other._owner_thread) {
+            other._lock = { 0 };
             other._owner_thread = 0;
         };
 
@@ -165,12 +158,59 @@ namespace Base {
         };
 
     private:
-
-        pthread_spinlock_t _lock;
+        pthread_spinlock_t _lock {};
 
         pthread_t _owner_thread = 0;
 
-        friend class Lock<SpinMutex>;
+        friend class Condition;
+
+    };
+
+    template <typename Mutex>
+    class ReentrantMutex : Mutex {
+    public:
+        ReentrantMutex() = default;
+
+        ReentrantMutex(ReentrantMutex &&other) noexcept:
+            Mutex(std::move(other)), _counter(other._counter) {
+            other._counter = 0;
+        };
+
+        ~ReentrantMutex() = default;
+
+        void lock() {
+            if (!Mutex::is_owner()) Mutex::lock();
+            ++_counter;
+        };
+
+        bool try_lock() {
+            if (Mutex::is_owner()) {
+                ++_counter;
+                return true;
+            }
+            if (Mutex::try_lock()) {
+                ++_counter;
+                return true;
+            }
+            return false;
+        };
+
+        void unlock() {
+            if (!Mutex::is_owner()) return;
+            if (--_counter == 0) Mutex::unlock();
+        };
+
+
+        [[nodiscard]] bool is_owner() const {
+            return Mutex::is_owner();
+        };
+
+        [[nodiscard]] pthread_t owner() const {
+            return Mutex::owner();
+        };
+
+    private:
+        uint32 _counter = 0;
 
         friend class Condition;
 

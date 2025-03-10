@@ -12,6 +12,7 @@ using namespace Net;
 
 
 void Channel::invoke_event(MessageAgent &agent) const {
+    agent.set_running_thread();
     while (!agent.socket_event.is_NoEvent()) {
         if (agent.socket_event.hasError()) {
             handle_error(agent);

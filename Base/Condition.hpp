@@ -34,25 +34,25 @@ namespace Base {
             CAPI_CHECK(pthread_cond_broadcast(&_cond))
         };
 
-        template<typename Mutex>
+        template <typename Mutex>
         void wait(Lock<Mutex> &lock) {
             lock._lock._owner_thread = 0;
             CAPI_CHECK(pthread_cond_wait(&_cond, &lock._lock._lock))
             lock._lock._owner_thread = CurrentThread::tid();
         };
 
-        template<typename Mutex, typename Fun>
+        template <typename Mutex, typename Fun>
         void wait(Lock<Mutex> &lock, Fun fun) {
             while (!fun()) wait(lock);
         };
 
-        template<typename Mutex>
+        template <typename Mutex>
         bool wait_for(Lock<Mutex> &lock, TimeInterval ns) {
             auto time = (ns + Unix_to_now()).to_timespec();
             return wait_until(lock, time);
         };
 
-        template<typename Mutex, typename Fun>
+        template <typename Mutex, typename Fun>
         bool wait_for(Lock<Mutex> &lock, TimeInterval ns, Fun fun) {
             auto time = (ns + Unix_to_now()).to_timespec();
             while (!fun()) {
@@ -62,7 +62,7 @@ namespace Base {
             return true;
         }
 
-        template<typename Mutex, typename Fun>
+        template <typename Mutex, typename Fun>
         bool wait_until(Lock<Mutex> &lock, const timespec &endTime, Fun fun) {
             while (!fun()) {
                 if (!wait_until(lock, endTime))
@@ -80,8 +80,7 @@ namespace Base {
         }
 
     private:
-
-        pthread_cond_t _cond;
+        pthread_cond_t _cond {};
 
     };
 

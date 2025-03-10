@@ -7,10 +7,12 @@
 
 #ifdef NET_MESSAGEAGENT_HPP
 
+#include <cassert>
 #include "monitors/Event.hpp"
 #include "error/error_mark.hpp"
 #include "Base/Buffer/InputBuffer.hpp"
 #include "Base/Buffer/OutputBuffer.hpp"
+#include "Base/Detail/CurrentThread.hpp"
 
 namespace Net {
 
@@ -32,6 +34,16 @@ namespace Net {
 
         virtual void close() = 0;
 
+        /// 设置 MessageAgent 在当前线程可以运行。
+        void set_running_thread() {
+            _running_thread = Base::CurrentThread::tid();
+        };
+
+        /// 此函数的主要目的是警告并检测可能存在的不合理的多线程访问情况。
+        void assert_thread_safe() const {
+            assert(Base::CurrentThread::tid() == _running_thread);
+        };
+
         [[nodiscard]] virtual const Base::InputBuffer& input() const = 0;
 
         [[nodiscard]] virtual const Base::OutputBuffer& output() const = 0;
@@ -47,6 +59,9 @@ namespace Net {
         Event socket_event {};
 
         error_mark error {};
+
+    protected:
+        pthread_t _running_thread {};
 
     };
 }

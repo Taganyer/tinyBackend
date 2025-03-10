@@ -17,6 +17,7 @@
 namespace Net {
 
     /// 所有函数调用线程安全。
+    /// 注意潜在的死锁问题，如果一个 Channel 不能及时读取处理数据，将会阻塞其他所有 Channel 的数据读取。
     class TCP_Multiplexer : public TcpMessageAgent {
     public:
         static constexpr uint64 FAIL = MAX_ULLONG;
@@ -82,59 +83,7 @@ namespace Net {
             uint32 socket_fd = 0;
         };
 
-        struct UnconnectedData {
-            UnconnectedData(std::string verify_message,
-                            uint32 input_buffer_size,
-                            uint32 output_buffer_size,
-                            CreateCallback create_callback,
-                            RejectCallback reject_callback) :
-                verify_message(std::move(verify_message)),
-                input_buffer_size(input_buffer_size),
-                output_buffer_size(output_buffer_size),
-                create_callback(std::move(create_callback)),
-                reject_callback(std::move(reject_callback)) {};
-
-            std::string verify_message;
-            uint32 input_buffer_size, output_buffer_size;
-            CreateCallback create_callback;
-            RejectCallback reject_callback;
-        };
-
-        struct ChannelData : MessageAgent {
-            explicit ChannelData(FD fd, Channel &&ch, Event event) :
-                self(fd), channel(std::move(ch)), monitor_event(event) {};
-
-            explicit ChannelData(FD fd, FD other, uint32 window, Channel &&ch,
-                                 uint32 input_size, uint32 output_size) :
-                self(fd), other(other), other_window(window), channel(std::move(ch)),
-                input_buffer(input_size), output_buffer(output_size) {};
-
-            int64 receive_message() override;
-
-            int64 send_message() override;
-
-            void close() override;
-
-            [[nodiscard]] const Base::InputBuffer& input() const override { return input_buffer; };
-
-            [[nodiscard]] const Base::OutputBuffer& output() const override { return output_buffer; };
-
-            /// 这里的 fd 无法注册到 Reactor 中。
-            [[nodiscard]] int fd() const override { return (self.id << 16) + self.index; };
-
-            [[nodiscard]] bool agent_valid() const override { return other != FD(); };
-
-            [[nodiscard]] uint32 can_receive() const override { return input_buffer.writable_len(); };
-
-            [[nodiscard]] uint32 can_send() const override { return output_buffer.readable_len(); };
-
-            FD self, other;
-            uint32 other_window = 0;
-            bool active_closer = false, passive_closer = false;
-            Channel channel;
-            Base::RingBuffer input_buffer { 0 }, output_buffer { 0 };
-            Event monitor_event;
-        };
+        struct ChannelData;
 
         enum Operation {
             Null,
@@ -154,7 +103,7 @@ namespace Net {
             FD fd;
         };
 
-        Base::Mutex _mutex;
+        Base::ReentrantMutex<Base::Mutex> _mutex;
 
         std::queue<Header> _send_queue;
 
@@ -165,8 +114,6 @@ namespace Net {
         std::vector<uint16> _increase_id;
 
         AcceptCallback _accept_callback;
-
-        int64 send_message_unsafe();
 
         void handle_Sent();
 

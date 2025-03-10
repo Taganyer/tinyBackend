@@ -96,6 +96,7 @@ void Reactor::weak_up_channel(int fd, WeakUpFun fun) {
         if (iter == _map.end()) return;
         auto &agent = *iter->second.agent;
         auto &channel = iter->second.channel;
+        agent.set_running_thread();
         weak_up_fun(agent, channel);
         if (!agent.agent_valid()) {
             erase_channel(iter);

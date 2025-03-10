@@ -7,6 +7,7 @@
 
 #ifdef NET_TCPMESSAGEAGENT_HPP
 
+
 #include "Socket.hpp"
 #include "MessageAgent.hpp"
 #include "Base/Buffer/RingBuffer.hpp"
@@ -30,15 +31,24 @@ namespace Net {
 
         int64 receive_message() override;
 
-        const Base::InputBuffer& input() const override { return _input; };
-
-        const Base::OutputBuffer& output() const override { return _output; };
-
         void reset_socket(Socket &&sock);
 
         void close() override;
 
-        const Socket& get_socket() const { return _socket; };
+        const Base::InputBuffer& input() const override {
+            assert_thread_safe();
+            return _input;
+        };
+
+        const Base::OutputBuffer& output() const override {
+            assert_thread_safe();
+            return _output;
+        };
+
+        const Socket& get_socket() const {
+            assert_thread_safe();
+            return _socket;
+        };
 
         [[nodiscard]] int fd() const override { return _socket.fd(); };
 

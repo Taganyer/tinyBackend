@@ -12,6 +12,7 @@ TcpMessageAgent::TcpMessageAgent(Socket &&sock, uint32 input_size, uint32 output
     _socket(std::move(sock)), _input(input_size), _output(output_size) {}
 
 int64 TcpMessageAgent::send_message() {
+    assert_thread_safe();
     if (_output.readable_len() == 0)
         return 0;
     auto array = _output.readable_array();
@@ -22,6 +23,7 @@ int64 TcpMessageAgent::send_message() {
 }
 
 int64 TcpMessageAgent::receive_message() {
+    assert_thread_safe();
     if (_input.writable_len() == 0)
         return 0;
     auto array = _input.writable_array();
@@ -32,12 +34,13 @@ int64 TcpMessageAgent::receive_message() {
     return read;
 }
 
-void TcpMessageAgent::reset_socket(Socket&& sock) {
+void TcpMessageAgent::reset_socket(Socket &&sock) {
     close();
     _socket = std::move(sock);
 }
 
 void TcpMessageAgent::close() {
+    assert_thread_safe();
     _input.read_advance(_input.readable_len());
     _output.read_advance(_output.readable_len());
     _socket.close();
