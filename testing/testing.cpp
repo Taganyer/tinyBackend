@@ -1,8 +1,8 @@
-#include "testing/AOP_test.hpp"
-#include "testing/net_test.hpp"
-#include "testing/base_test.hpp"
-#include "testing/logSystem_test.hpp"
-#include "testing/Distributed_test.hpp"
+#include "AOP_test.hpp"
+#include "net_test.hpp"
+#include "base_test.hpp"
+#include "logSystem_test.hpp"
+#include "Distributed_test.hpp"
 
 
 using namespace Test;
@@ -17,7 +17,7 @@ int main() {
     // AOP_test();
     // BlockFile_test();
     // log_test();
-    // BPTree_test();
+    BPTree_test();
     // ThreadPool_test();
     // LinkedThreadTest();
     // UDP_test();

@@ -6,7 +6,9 @@
 
 #define PROJECT_ROOT_DIR "@PROJECT_ROOT_DIR@"
 
-#define PROJECT_GLOBAL_LOG_PATH PROJECT_ROOT_DIR "/global_logs"
+#define LOG_PATH "@LOG_PATH"
+
+#define PROJECT_GLOBAL_LOG_PATH LOG_PATH "/global_logs"
 
 #endif
 

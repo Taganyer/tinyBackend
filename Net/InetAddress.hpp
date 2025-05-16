@@ -82,7 +82,7 @@ namespace Net {
 
         [[nodiscard]] sa_family_t family() const { return _addr.sin_family; };
 
-        [[nodiscard]] unsigned short port() const { return _addr.sin_port; };
+        [[nodiscard]] unsigned short port() const { return ntohs(_addr.sin_port); };
 
         [[nodiscard]] const sockaddr_in* addr_in_cast() const { return &_addr; };
 
