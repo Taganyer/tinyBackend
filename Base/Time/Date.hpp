@@ -5,7 +5,7 @@
 #ifndef BASE_DATE_HPP
 #define BASE_DATE_HPP
 
-#include "../Detail/config.hpp"
+#include "Base/Detail/config.hpp"
 #include <string>
 
 struct tm;

@@ -9,31 +9,62 @@ set(CMAKE_CXX_STANDARD 17)
 # 设置编译器优化级别
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 
-set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "Project root directory")
+set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Project root directory")
 
-set(LOG_PATH ${CMAKE_CURRENT_SOURCE_DIR}/global_logs CACHE INTERNAL "Project log directory")
+set(CMAKE_INSTALL_PREFIX "/home/taganyer/Code/Clion_project/tinyBackend/install" CACHE PATH "Install prefix" FORCE)
 
-# 生成配置头文件
-configure_file(CMake_config.h.in "$CACHE{PROJECT_ROOT_DIR}/CMake_config.h")
+#if (NOT DEFINED CMAKE_INSTALL_PREFIX)
+#    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Install prefix" FORCE)
+#endif ()
 
-# 添加子库
+if (NOT DEFINED LOG_PATH)
+    set(LOG_PATH ${CMAKE_CURRENT_SOURCE_DIR}/global_logs CACHE PATH "Project log directory" FORCE)
+endif ()
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/CMake_config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/CMake_config.h")
+
+# 设置安装路径
+set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME} CACHE PATH "Project includes directory" FORCE)
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME} CACHE PATH "Project library directory" FORCE)
+set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME} CACHE PATH "Project run time directory" FORCE)
+set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME} CACHE PATH "Project cmake config directory" FORCE)
+
+set(ADD_TESTING OFF CACHE BOOL "Enable testing components")
+set(ADD_AOP OFF CACHE BOOL "Enable AOP components")
+set(ADD_DISTRIBUTED OFF CACHE BOOL "Enable distributed components")
+
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.12)
+    cmake_parse_arguments(
+            ARG "" "" "ADD_TESTING;ADD_AOP;ADD_DISTRIBUTED" ${CMAKE_ARGV}
+    )
+    if (ARG_ADD_TESTING)
+        set(ADD_TESTING ${ARG_ADD_TESTING} FORCE)
+    endif ()
+    if (ARG_ADD_AOP)
+        set(ADD_AOP ${ARG_ADD_AOP} FORCE)
+    endif ()
+    if (ARG_ADD_DISTRIBUTED)
+        set(ADD_DISTRIBUTED ${ARG_ADD_DISTRIBUTED} FORCE)
+    endif ()
+endif ()
+
+set(Base_VERSION 1.0 CACHE STRING "Base Version")
 add_subdirectory(Base)
 
-add_subdirectory(Net)
-
+set(LogSystem_VERSION 1.0 CACHE STRING "LogSystem Version")
 add_subdirectory(LogSystem)
 
-add_subdirectory(AOP)
+set(Net_VERSION 1.0 CACHE STRING "Net Version")
+add_subdirectory(Net)
 
-add_subdirectory(Distributed)
+if (ADD_AOP)
+    add_subdirectory(AOP)
+endif ()
 
-add_library(${PROJECT_NAME} CMake_config.h)
+if (ADD_DISTRIBUTED)
+    add_subdirectory(Distributed)
+endif ()
 
-# 链接子库
-target_link_libraries(${PROJECT_NAME} Base Net)
-
-target_link_libraries(${PROJECT_NAME} LogSystem)
-
-target_link_libraries(${PROJECT_NAME} AOP)
-
-target_link_libraries(${PROJECT_NAME} Distributed)
+if (ADD_TESTING)
+    add_subdirectory(testing)
+endif ()
