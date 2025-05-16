@@ -25,7 +25,7 @@ namespace Base {
 
         explicit constexpr TimeStamp(int64 us_SE) : _us_SE(us_SE) {};
 
-        explicit constexpr TimeStamp(const timeval &tv) : _us_SE(expand_tv(tv)) {};
+        explicit TimeStamp(const timeval &tv) : _us_SE(expand_tv(tv)) {};
 
         explicit TimeStamp(const Time &time);
 

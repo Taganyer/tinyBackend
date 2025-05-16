@@ -3,13 +3,9 @@ project(AOP CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-FILE(GLOB_RECURSE SRC_LIST "*.cpp")
-
-FILE(GLOB_RECURSE HEAD_LIST "*.hpp")
-
-add_library(${PROJECT_NAME} STATIC ${SRC_LIST} ${HEAD_LIST})
-
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
-
-# 链接 Base 库
-target_link_libraries(${PROJECT_NAME} PRIVATE Base PRIVATE LogSystem)
+# 安装头文件，保持目录结构
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+        DESTINATION ${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}
+        FILES_MATCHING
+        PATTERN "*.hpp"
+        PATTERN "CMakeFiles" EXCLUDE)

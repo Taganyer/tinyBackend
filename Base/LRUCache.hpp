@@ -14,6 +14,7 @@
 #include "Base/Exception.hpp"
 #include "Base/Container/List.hpp"
 #include "Base/Time/TimeInterval.hpp"
+#include "Base/Detail/PlainAny.hpp"
 
 namespace Base {
 
@@ -49,14 +50,14 @@ namespace Base {
 
         Helper _helper;
 
-        template <typename...Args>
-        explicit LRUCache(Args &&...args) : _helper(std::forward<Args>(args)...) {};
+        template <typename... Args>
+        explicit LRUCache(Args&&... args) : _helper(std::forward<Args>(args)...) {};
 
         ~LRUCache();
 
-        Value* get(const Key &key);
+        Value* get(const Key& key);
 
-        void put(const Key &key, bool need_update);
+        void put(const Key& key, bool need_update);
 
         void update_one();
 
@@ -65,25 +66,15 @@ namespace Base {
         template <typename Cmp>
         void update_all_with_order(Cmp cmp);
 
-        void remove(const Key &key);
+        void remove(const Key& key);
 
-        void erase(const Key &key);
+        void erase(const Key& key);
 
         [[nodiscard]] uint32 need_update_size() const { return _obsolete.size(); };
 
         [[nodiscard]] uint32 total_size() const { return _map.size(); };
 
     private:
-        struct Node;
-
-        using Map = std::unordered_map<Key, Node>;
-
-        using MapIter = typename Map::iterator;
-
-        using Queue = List<MapIter>;
-
-        using QIter = typename Queue::Iter;
-
         struct Node {
             Value value;
 
@@ -95,18 +86,26 @@ namespace Base {
 
             TimeInterval instantiated_time;
 
-            QIter iter;
+            PlainAny<8, 8> iter;
 
-            QIter obsolete_iter;
+            PlainAny<8, 8> obsolete_iter;
 
-            template <typename...Args>
-            explicit Node(Args &&...args) : value(std::forward<Args>(args)...) {};
+            template <typename... Args>
+            explicit Node(Args&&... args) : value(std::forward<Args>(args)...) {};
 
-            Node(const Node &) = default;
+            Node(const Node&) = default;
 
-            Node(Node &&other) = default;
+            Node(Node&& other) = default;
 
         };
+
+        using Map = std::unordered_map<Key, Node>;
+
+        using MapIter = typename Map::iterator;
+
+        using Queue = List<MapIter>;
+
+        using QIter = typename Queue::Iter;
 
         Map _map;
 
@@ -120,7 +119,7 @@ namespace Base {
 
         void put_change(MapIter iter);
 
-        void reserve_space(const Key &key);
+        void reserve_space(const Key& key);
 
         struct FunChecker {
         private:
@@ -153,7 +152,7 @@ namespace Base {
 
     template <typename Helper>
     LRUCache<Helper>::~LRUCache() {
-        for (auto &[key, node] : _map) {
+        for (auto& [key, node] : _map) {
             if (node.instantiated_size != 0) {
                 std::fprintf(stderr, "LRUCache might be cause invalid reference.");
                 std::terminate();
@@ -168,7 +167,7 @@ namespace Base {
 
     template <typename Helper>
     typename LRUCache<Helper>::Value*
-    LRUCache<Helper>::get(const Key &key) {
+    LRUCache<Helper>::get(const Key& key) {
         if (auto iter = _map.find(key); iter != _map.end()) {
             get_change(iter);
             return &iter->second.value;
@@ -176,14 +175,14 @@ namespace Base {
         reserve_space(key);
         auto [iter, success] = _map.emplace(key, _helper.create(key));
         assert(success);
-        auto &[_, node] = *iter;
+        auto& [_, node] = *iter;
         ++node.instantiated_size;
         node.instantiated_time = Unix_to_now();
         return &node.value;
     }
 
     template <typename Helper>
-    void LRUCache<Helper>::put(const Key &key, bool need_update) {
+    void LRUCache<Helper>::put(const Key& key, bool need_update) {
         auto iter = _map.find(key);
         assert(iter != _map.end());
         if (need_update)
@@ -196,10 +195,10 @@ namespace Base {
         if (_obsolete.size() > 0) {
             QIter iter = _obsolete.begin();
             MapIter map_iter = *iter;
-            auto &[key, node] = *map_iter;
+            auto& [key, node] = *map_iter;
             assert(node.need_update);
             assert(node.instantiated_size == 0);
-            assert(node.obsolete_iter == iter);
+            assert(static_cast<QIter>(node.obsolete_iter) == iter);
             _helper.update(key, node.value);
             node.need_update = false;
             _obsolete.erase(iter);
@@ -211,7 +210,7 @@ namespace Base {
     void LRUCache<Helper>::update_all() {
         for (QIter iter = _obsolete.begin(); iter != _obsolete.end(); ++iter) {
             MapIter map_iter = *iter;
-            auto &[key, node] = *map_iter;
+            auto& [key, node] = *map_iter;
             assert(node.need_update);
             assert(node.instantiated_size == 0);
             _helper.update(key, node.value);
@@ -232,7 +231,7 @@ namespace Base {
                       return cmp(a->first, b->first);
                   });
         for (auto map_iter : arr) {
-            auto &[key, node] = *map_iter;
+            auto& [key, node] = *map_iter;
             assert(node.need_update);
             assert(node.instantiated_size == 0);
             _helper.update(key, node.value);
@@ -248,13 +247,13 @@ namespace Base {
         if (iter == _map.end())
             throw Exception("LRUCache: key not found.");
 
-        auto &[_, node] = *iter;
+        auto& [_, node] = *iter;
         assert(node.instantiated_size == 0);
 
         if (node.need_update) {
             _helper.update(key, node.value);
-            assert(node.obsolete_iter != _obsolete.end());
-            _obsolete.erase(node.obsolete_iter);
+            assert(static_cast<QIter>(node.obsolete_iter) != _obsolete.end());
+            _obsolete.erase(static_cast<QIter>(node.obsolete_iter));
         }
 
         if constexpr (FunChecker::has_release_callable) {
@@ -262,16 +261,16 @@ namespace Base {
         }
 
         if (node.is_persistent) {
-            assert(node.iter != _persistent.end());
-            _persistent.erase(node.iter);
+            assert(static_cast<QIter>(node.iter) != _persistent.end());
+            _persistent.erase(static_cast<QIter>(node.iter));
         } else {
-            assert(node.iter != _temporary.end());
-            _temporary.erase(node.iter);
+            assert(static_cast<QIter>(node.iter) != _temporary.end());
+            _temporary.erase(static_cast<QIter>(node.iter));
         }
         _map.erase(iter);
     }
 
-    template <typename Helper> void LRUCache<Helper>::erase(const Key &key) {
+    template <typename Helper> void LRUCache<Helper>::erase(const Key& key) {
         auto iter = _map.find(key);
         if (iter == _map.end()) {
             if constexpr (FunChecker::has_erase_callable) {
@@ -286,51 +285,50 @@ namespace Base {
             _helper.erase(key);
         }
 
-        auto &[_, node] = *iter;
+        auto& [_, node] = *iter;
         assert(node.instantiated_size == 0);
 
         if (node.need_update) {
-            assert(node.obsolete_iter != _obsolete.end());
-            _obsolete.erase(node.obsolete_iter);
+            assert(static_cast<QIter>(node.obsolete_iter) != _obsolete.end());
+            _obsolete.erase(static_cast<QIter>(node.obsolete_iter));
         }
 
         if (node.is_persistent) {
-            assert(node.iter != _persistent.end());
-            _persistent.erase(node.iter);
+            assert(static_cast<QIter>(node.iter) != _persistent.end());
+            _persistent.erase(static_cast<QIter>(node.iter));
         } else {
-            assert(node.iter != _temporary.end());
-            _temporary.erase(node.iter);
+            assert(static_cast<QIter>(node.iter) != _temporary.end());
+            _temporary.erase(static_cast<QIter>(node.iter));
         }
         _map.erase(iter);
     }
 
     template <typename Helper>
     void LRUCache<Helper>::get_change(MapIter iter) {
-        auto &[key, node] = *iter;
+        auto& [key, node] = *iter;
         if (++node.instantiated_size > 1) return;
         if (node.is_persistent) {
-            assert(node.iter != _persistent.end());
-            _persistent.erase(node.iter);
-            node.iter = _persistent.end();
+            assert(static_cast<QIter>(node.iter) != _persistent.end());
+            _persistent.erase(static_cast<QIter>(node.iter));
+            static_cast<QIter&>(node.iter) = _persistent.end();
         } else {
-            assert(node.iter != _temporary.end());
-            _temporary.erase(node.iter);
+            assert(static_cast<QIter>(node.iter) != _temporary.end());
+            _temporary.erase(static_cast<QIter>(node.iter));
             node.iter = _temporary.end();
         }
 
-        if (node.obsolete_iter != _obsolete.end()) {
+        if (static_cast<QIter>(node.obsolete_iter) != _obsolete.end()) {
             assert(node.need_update);
-            _obsolete.erase(node.obsolete_iter);
+            _obsolete.erase(static_cast<QIter>(node.obsolete_iter));
             node.obsolete_iter = _obsolete.end();
         }
     }
 
     template <typename Helper>
     void LRUCache<Helper>::put_change(MapIter iter) {
-        auto &[key, node] = *iter;
+        auto& [key, node] = *iter;
         if (--node.instantiated_size > 0) return;
-        if (node.is_persistent
-            || Unix_to_now() - node.instantiated_time >= threshold_time) {
+        if (node.is_persistent || Unix_to_now() - node.instantiated_time >= threshold_time) {
             node.is_persistent = true;
             node.iter = _persistent.insert(_persistent.end(), iter);
         } else {
@@ -338,18 +336,18 @@ namespace Base {
         }
 
         if (node.need_update) {
-            assert(node.obsolete_iter == _obsolete.end());
+            assert(static_cast<QIter>(node.obsolete_iter) == _obsolete.end());
             node.obsolete_iter = _obsolete.insert(_obsolete.end(), iter);
         }
     }
 
     template <typename Helper>
-    void LRUCache<Helper>::reserve_space(const Key &key) {
+    void LRUCache<Helper>::reserve_space(const Key& key) {
         if (_helper.can_create(key)) return;
         QIter iter = _temporary.begin();
         while (iter != _temporary.end() && !_helper.can_create(key)) {
             MapIter map_iter = *iter;
-            auto &[key, node] = *map_iter;
+            auto& [key, node] = *map_iter;
             if (!node.need_update) {
                 _temporary.erase(iter++);
                 if constexpr (FunChecker::has_release_callable) {
@@ -365,13 +363,13 @@ namespace Base {
         iter = _temporary.begin();
         while (iter != _temporary.end() && !_helper.can_create(key)) {
             MapIter map_iter = *iter;
-            auto &[key, node] = *map_iter;
+            auto& [key, node] = *map_iter;
             assert(node.need_update);
             _helper.update(key, node.value);
             if constexpr (FunChecker::has_release_callable) {
                 _helper.release(key, node.value);
             }
-            _obsolete.erase(node.obsolete_iter);
+            _obsolete.erase(static_cast<QIter>(node.obsolete_iter));
             _temporary.erase(iter++);
             _map.erase(map_iter);
         }
@@ -380,10 +378,10 @@ namespace Base {
         iter = _persistent.begin();
         while (iter != _persistent.end() && !_helper.can_create(key)) {
             MapIter map_iter = *iter;
-            auto &[key, node] = *map_iter;
+            auto& [key, node] = *map_iter;
             if (node.need_update) {
                 _helper.update(key, node.value);
-                _obsolete.erase(node.obsolete_iter);
+                _obsolete.erase(static_cast<QIter>(node.obsolete_iter));
             }
             if constexpr (FunChecker::has_release_callable) {
                 _helper.release(key, node.value);

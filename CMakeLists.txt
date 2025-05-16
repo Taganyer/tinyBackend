@@ -29,9 +29,9 @@ set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME} CACHE PATH "Proj
 set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME} CACHE PATH "Project run time directory" FORCE)
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME} CACHE PATH "Project cmake config directory" FORCE)
 
-set(ADD_TESTING OFF CACHE BOOL "Enable testing components")
-set(ADD_AOP OFF CACHE BOOL "Enable AOP components")
-set(ADD_DISTRIBUTED OFF CACHE BOOL "Enable distributed components")
+set(ADD_TESTING OFF CACHE BOOL "Enable testing components" FORCE)
+set(ADD_AOP ON CACHE BOOL "Enable AOP components" FORCE)
+set(ADD_DISTRIBUTED ON CACHE BOOL "Enable distributed components" FORCE)
 
 if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.12)
     cmake_parse_arguments(

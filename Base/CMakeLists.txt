@@ -20,9 +20,10 @@ target_include_directories(${PROJECT_NAME}
 # 安装头文件，保持目录结构
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION ${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}
+        OPTIONAL
         FILES_MATCHING
         PATTERN "*.hpp"
-        PATTERN "CMakeLists.txt" EXCLUDE)
+        PATTERN "CMakeFiles" EXCLUDE)
 
 # 安装目标，设置NAMESPACE为TinyBackend::${PROJECT_NAME}
 install(TARGETS ${PROJECT_NAME}
@@ -46,9 +47,10 @@ install(EXPORT ${PROJECT_NAME}Targets
 )
 
 # 配置和安装包配置文件
-configure_file(${PROJECT_NAME}Config.cmake.in ${PROJECT_NAME}Config.cmake @ONLY)
+configure_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY)
 install(FILES
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Version.cmake"
         DESTINATION ${INSTALL_CONFIG_DIR}
 )
