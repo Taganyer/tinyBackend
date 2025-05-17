@@ -6,7 +6,7 @@
 #define BASE_LIST_HPP
 
 #include <utility>
-#include "Base/Detail/config.hpp"
+#include "tinyBackend/Base/Detail/config.hpp"
 
 namespace Base {
 
@@ -15,9 +15,9 @@ namespace Base {
     public:
         List() = default;
 
-        List(const List &other);
+        List(const List& other);
 
-        List(List &&other) noexcept;
+        List(List&& other) noexcept;
 
         ~List();
 
@@ -31,10 +31,10 @@ namespace Base {
 
         Iter end() { return { nullptr }; };
 
-        template <typename...Args>
-        Iter insert(Iter dest, Args &&...args);
+        template <typename... Args>
+        Iter insert(Iter dest, Args&&... args);
 
-        Iter insert(Iter dest, Val &&val);
+        Iter insert(Iter dest, Val&& val);
 
         void move_to(Iter dest, Iter target);
 
@@ -49,8 +49,8 @@ namespace Base {
     private:
         struct Node;
 
-        Node* _head = nullptr;
-        Node* _tail = nullptr;
+        Node *_head = nullptr;
+        Node *_tail = nullptr;
 
         uint64 _size = 0;
 
@@ -60,13 +60,13 @@ namespace Base {
     template <typename Data>
     struct List<Data>::Node {
 
-        template <typename...Args>
-        Node(Args...args) : _data(std::forward<Args>(args)...) {};
+        template <typename... Args>
+        Node(Args... args) : _data(std::forward<Args>(args)...) {};
 
         Data _data;
 
-        Node* _prev = nullptr;
-        Node* _next = nullptr;
+        Node *_prev = nullptr;
+        Node *_next = nullptr;
 
     };
 
@@ -75,7 +75,7 @@ namespace Base {
     public:
         Iter() = default;
 
-        Iter(Node* node) : _ptr(node) {};
+        Iter(Node *node) : _ptr(node) {};
 
         Data& operator*() { return _ptr->_data; };
 
@@ -107,12 +107,12 @@ namespace Base {
             return temp;
         };
 
-        bool operator==(const Iter &other) const { return _ptr == other._ptr; };
+        bool operator==(const Iter& other) const { return _ptr == other._ptr; };
 
-        bool operator!=(const Iter &other) const { return _ptr != other._ptr; };
+        bool operator!=(const Iter& other) const { return _ptr != other._ptr; };
 
     private:
-        Node* _ptr = nullptr;
+        Node *_ptr = nullptr;
 
         friend class List;
 
@@ -121,13 +121,13 @@ namespace Base {
     template <typename Data>
     class List<Data>::Val {
     public:
-        Val(const Val &) = delete;
+        Val(const Val&) = delete;
 
-        Val(Val &&other) noexcept: _ptr(other._ptr) { other._ptr = nullptr; };
+        Val(Val&& other) noexcept: _ptr(other._ptr) { other._ptr = nullptr; };
 
         ~Val() { delete _ptr; };
 
-        explicit Val(Node* node) : _ptr(node) {};
+        explicit Val(Node *node) : _ptr(node) {};
 
         Data& operator*() { return _ptr->_data; };
 
@@ -138,7 +138,7 @@ namespace Base {
         const Data& operator->() const { return _ptr->_data; };
 
     private:
-        Node* _ptr = nullptr;
+        Node *_ptr = nullptr;
 
         friend class List;
 
@@ -146,9 +146,9 @@ namespace Base {
 
 
     template <typename Data>
-    List<Data>::List(const List &other) : _size(other.size()) {
+    List<Data>::List(const List& other) : _size(other.size()) {
         Iter iter = other.begin(), end = other.end();
-        Node* temp,* last = nullptr;
+        Node *temp, *last = nullptr;
         while (iter != end) {
             temp = new Node(*iter);
             if (!last) {
@@ -164,7 +164,7 @@ namespace Base {
     }
 
     template <typename Data>
-    List<Data>::List(List &&other) noexcept :
+    List<Data>::List(List&& other) noexcept :
         _head(other._head), _tail(other._tail), _size(other._size) {
         other._head = other._tail = nullptr;
         other._size = 0;
@@ -173,16 +173,16 @@ namespace Base {
     template <typename Data>
     List<Data>::~List() {
         while (_head) {
-            Node* temp = _head;
+            Node *temp = _head;
             _head = _head->_next;
             delete temp;
         }
     }
 
     template <typename Data>
-    template <typename...Args>
+    template <typename... Args>
     typename List<Data>::Iter
-    List<Data>::insert(Iter dest, Args &&...args) {
+    List<Data>::insert(Iter dest, Args&&... args) {
         auto ptr = new Node(std::forward<Args>(args)...);
         if (dest._ptr) {
             ptr->_prev = dest._ptr->_prev;

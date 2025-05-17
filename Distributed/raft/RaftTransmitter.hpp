@@ -7,9 +7,9 @@
 
 #ifdef DIST_RAFTTRANSMITTER_HPP
 
-#include "Net/UDP_Communicator.hpp"
 #include "RaftStateMachine.hpp"
-#include "Base/VersionNumber.hpp"
+#include "tinyBackend/Base/VersionNumber.hpp"
+#include "tinyBackend/Net/UDP_Communicator.hpp"
 
 
 namespace Dist {
@@ -24,28 +24,28 @@ namespace Dist {
 
         using Serial = Base::VersionNumber64;
 
-        explicit RaftTransmitter(const Address &local_address, RaftStateMachine* machine,
+        explicit RaftTransmitter(const Address& local_address, RaftStateMachine *machine,
                                  std::string name);
 
-        void notify_follower(const Address &follower, const std::string &data);
+        void notify_follower(const Address& follower, const std::string& data);
 
-        void respond_leader(const Address &leader);
+        void respond_leader(const Address& leader);
 
-        void request_vote(const Address &peer);
+        void request_vote(const Address& peer);
 
-        void vote_to(const Address &peer, bool result);
+        void vote_to(const Address& peer, bool result);
 
-        void request_logs(const Address &address, const std::string &data);
+        void request_logs(const Address& address, const std::string& data);
 
-        void this_one_online(const Address &peer);
+        void this_one_online(const Address& peer);
 
-        void affirm_online(const Address &address);
+        void affirm_online(const Address& address);
 
-        void this_one_offline(const Address &peer);
+        void this_one_offline(const Address& peer);
 
-        void affirm_offline(const Address &address);
+        void affirm_offline(const Address& address);
 
-        Address receive(RaftMessage* message, Base::TimeInterval end_time) const;
+        Address receive(RaftMessage *message, Base::TimeInterval end_time) const;
 
     private:
         Net::UDP_Communicator _sender;
@@ -55,7 +55,7 @@ namespace Dist {
 
         Serial serial_number;
 
-        RaftStateMachine* machine;
+        RaftStateMachine *machine;
 
         std::string _name;
 

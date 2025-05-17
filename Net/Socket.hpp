@@ -5,7 +5,7 @@
 #ifndef NET_SOCKET_HPP
 #define NET_SOCKET_HPP
 
-#include "Base/Detail/NoCopy.hpp"
+#include "tinyBackend/Base/Detail/NoCopy.hpp"
 
 #define IGNORE_SIGPIPE
 
@@ -23,23 +23,23 @@ namespace Net {
 
         Socket(int domain, int type, int protocol = 0);
 
-        Socket(Socket &&other) noexcept: _fd(other._fd) {
+        Socket(Socket&& other) noexcept: _fd(other._fd) {
             other._fd = -1;
         };
 
-        Socket& operator=(Socket &&other) noexcept;
+        Socket& operator=(Socket&& other) noexcept;
 
         ~Socket();
 
         void close();
 
-        [[nodiscard]] bool bind(const InetAddress &address) const;
+        [[nodiscard]] bool bind(const InetAddress& address) const;
 
-        [[nodiscard]] bool connect(const InetAddress &address) const;
+        [[nodiscard]] bool connect(const InetAddress& address) const;
 
         [[nodiscard]] bool tcpListen(int max_size) const;
 
-        Socket tcpAccept(InetAddress &address) const;
+        Socket tcpAccept(InetAddress& address) const;
 
         /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
         [[nodiscard]] bool setTcpNoDelay(bool on) const;
@@ -59,9 +59,9 @@ namespace Net {
 
         [[nodiscard]] bool shutdown_TcpWrite() const;
 
-        bool TcpInfo(tcp_info* info) const;
+        bool TcpInfo(tcp_info *info) const;
 
-        bool TcpInfo(char* buf, int len) const;
+        bool TcpInfo(char *buf, int len) const;
 
         operator bool() const { return _fd > 0; };
 
@@ -87,7 +87,7 @@ namespace Net {
 
         PipePair(Socket read, Socket write);
 
-        PipePair(PipePair &&other) noexcept = default;
+        PipePair(PipePair&& other) noexcept = default;
 
     };
 }

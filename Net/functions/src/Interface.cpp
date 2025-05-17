@@ -3,11 +3,12 @@
 //
 
 #include "../Interface.hpp"
-#include "Base/SystemLog.hpp"
 
+#include <fcntl.h>
 #include <iconv.h>
 #include <sys/sendfile.h>
-#include <fcntl.h>
+
+#include "tinyBackend/Base/SystemLog.hpp"
 
 using namespace Net;
 
@@ -77,20 +78,20 @@ namespace Net::ops {
     }
 
     sockaddr_in6 getLocalAddr(int fd) {
-        sockaddr_in6 addr{};
+        sockaddr_in6 addr {};
         memset(&addr, 0, sizeof addr);
         if (auto len = static_cast<socklen_t>(sizeof addr);
-                ::getsockname(fd, sockaddr_cast(&addr), &len) < 0) {
+        ::getsockname(fd, sockaddr_cast(&addr), &len) < 0) {
             G_ERROR << "sockets::getLocalAddr";
         }
         return addr;
     }
 
     sockaddr_in6 getPeerAddr(int fd) {
-        sockaddr_in6 addr{};
+        sockaddr_in6 addr {};
         memset(&addr, 0, sizeof addr);
         if (auto len = static_cast<socklen_t>(sizeof addr);
-                ::getpeername(fd, sockaddr_cast(&addr), &len) < 0) {
+        ::getpeername(fd, sockaddr_cast(&addr), &len) < 0) {
             G_ERROR << "sockets::getPeerAddr";
         }
         return addr;
@@ -103,10 +104,10 @@ namespace Net::ops {
             const sockaddr_in *laddr4 = (sockaddr_in *) &localAddr;
             const sockaddr_in *raddr4 = (sockaddr_in *) &peerAddr;
             return laddr4->sin_port == raddr4->sin_port
-                   && laddr4->sin_addr.s_addr == raddr4->sin_addr.s_addr;
+                && laddr4->sin_addr.s_addr == raddr4->sin_addr.s_addr;
         } else if (localAddr.sin6_family == AF_INET6) {
             return localAddr.sin6_port == peerAddr.sin6_port
-                   && memcmp(&localAddr.sin6_addr, &peerAddr.sin6_addr, sizeof localAddr.sin6_addr) == 0;
+                && memcmp(&localAddr.sin6_addr, &peerAddr.sin6_addr, sizeof localAddr.sin6_addr) == 0;
         } else {
             return false;
         }

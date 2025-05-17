@@ -8,8 +8,8 @@
 #ifdef LOGSYSTEM_LINKLOGOPERATION_HPP
 
 #include "LinkLogErrors.hpp"
-#include "Base/LogRank.hpp"
-#include "Base/Time/TimeInterval.hpp"
+#include "tinyBackend/Base/LogRank.hpp"
+#include "tinyBackend/Base/Time/TimeInterval.hpp"
 
 
 namespace LogSystem {
@@ -21,8 +21,8 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(LinkNodeID);
 
-        Index_Key(const LinkServiceID &service_, Base::TimeInterval init_time_,
-                  const LinkNodeID &node_) {
+        Index_Key(const LinkServiceID& service_, Base::TimeInterval init_time_,
+                  const LinkNodeID& node_) {
             service() = service_;
             init_time() = init_time_;
             node() = node_;
@@ -42,19 +42,19 @@ namespace LogSystem {
             return *(LinkNodeID *) (object.data() + sizeof(LinkServiceID) + sizeof(Base::TimeInterval));
         };
 
-        friend bool operator==(const Index_Key &lhs, const Index_Key &rhs) {
+        friend bool operator==(const Index_Key& lhs, const Index_Key& rhs) {
             return rhs.object == lhs.object;
         };
 
-        friend bool operator!=(const Index_Key &lhs, const Index_Key &rhs) {
+        friend bool operator!=(const Index_Key& lhs, const Index_Key& rhs) {
             return lhs.object != rhs.object;
         };
 
-        friend bool operator<(const Index_Key &lhs, const Index_Key &rhs) {
+        friend bool operator<(const Index_Key& lhs, const Index_Key& rhs) {
             return lhs.object < rhs.object;
         };
 
-        friend bool operator>(const Index_Key &lhs, const Index_Key &rhs) {
+        friend bool operator>(const Index_Key& lhs, const Index_Key& rhs) {
             return lhs.object > rhs.object;
         };
 
@@ -71,7 +71,7 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(uint32);
 
-        Index_Value(Base::TimeInterval parent_init_time_, const LinkNodeID &parent_node_,
+        Index_Value(Base::TimeInterval parent_init_time_, const LinkNodeID& parent_node_,
                     LinkNodeType type_, Base::TimeInterval latest_file_, uint32 latest_index_) {
             parent_init_time() = parent_init_time_;
             parent_node() = parent_node_;
@@ -119,7 +119,7 @@ namespace LogSystem {
     };
 
     inline const char* getOperationTypeName(OperationType type) {
-        constexpr const char* name[] {
+        constexpr const char *name[] {
             "Null",
             "RegisterLogger",
             "CreateLogger",
@@ -142,8 +142,8 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(Base::TimeInterval);
 
-        Register_Logger(LinkNodeType type_, const LinkServiceID &service_,
-                        const LinkNodeID &node_, const LinkNodeID &parent_node_,
+        Register_Logger(LinkNodeType type_, const LinkServiceID& service_,
+                        const LinkNodeID& node_, const LinkNodeID& parent_node_,
                         Base::TimeInterval time_,
                         Base::TimeInterval parent_init_time_,
                         Base::TimeInterval expire_time_) {
@@ -207,8 +207,8 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(Base::TimeInterval);
 
-        Create_Logger(LinkNodeType type_, const LinkServiceID &service_,
-                      const LinkNodeID &node_, const LinkNodeID &parent_node_,
+        Create_Logger(LinkNodeType type_, const LinkServiceID& service_,
+                      const LinkNodeID& node_, const LinkNodeID& parent_node_,
                       Base::TimeInterval init_time_, Base::TimeInterval parent_init_time_) {
             type() = type_;
             service() = service_;
@@ -261,7 +261,7 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(Base::TimeInterval);
 
-        End_Logger(const LinkServiceID &service_, const LinkNodeID &node_,
+        End_Logger(const LinkServiceID& service_, const LinkNodeID& node_,
                    Base::TimeInterval init_time_, Base::TimeInterval end_time_) {
             service() = service_;
             node() = node_;
@@ -305,8 +305,8 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(LogRank);
 
-        Link_Log_Header(uint16 log_size_, const LinkServiceID &service_, Base::TimeInterval init_time_,
-                        const LinkNodeID &node_, Base::TimeInterval time_, LogRank rank_) {
+        Link_Log_Header(uint16 log_size_, const LinkServiceID& service_, Base::TimeInterval init_time_,
+                        const LinkNodeID& node_, Base::TimeInterval time_, LogRank rank_) {
             log_size() = log_size_;
             service() = service_;
             init_time() = init_time_;
@@ -370,7 +370,7 @@ namespace LogSystem {
             sizeof(Base::TimeInterval) +
             sizeof(LinkErrorType);
 
-        Error_Logger(const LinkServiceID &service_, const LinkNodeID &node_,
+        Error_Logger(const LinkServiceID& service_, const LinkNodeID& node_,
                      Base::TimeInterval time_, LinkErrorType error_type_) {
             service() = service_;
             node() = node_;
@@ -431,7 +431,7 @@ namespace std {
 
     template <>
     struct hash<LogSystem::Index_Key> {
-        size_t operator()(const LogSystem::Index_Key &key) const noexcept {
+        size_t operator()(const LogSystem::Index_Key& key) const noexcept {
             return _Hash_impl::hash(&key, LogSystem::Index_Key::size);
         };
     };

@@ -41,7 +41,7 @@ namespace Base {
     template <typename Mutex>
     class Lock : NoCopy {
     public:
-        explicit Lock(Mutex &lock) : _lock(lock) {
+        explicit Lock(Mutex& lock) : _lock(lock) {
             _lock.lock();
         };
 
@@ -50,7 +50,7 @@ namespace Base {
         };
 
     private:
-        Mutex &_lock;
+        Mutex& _lock;
 
         friend class Condition;
 
@@ -63,7 +63,7 @@ namespace Base {
             CAPI_CHECK(pthread_mutex_init(&_lock, nullptr))
         };
 
-        Mutex(Mutex &&other) noexcept: _lock(other._lock),
+        Mutex(Mutex&& other) noexcept: _lock(other._lock),
             _owner_thread(other._owner_thread) {
             other._lock = { 0 };
             other._owner_thread = 0;
@@ -118,7 +118,7 @@ namespace Base {
             CAPI_CHECK(pthread_spin_init(&_lock, PTHREAD_PROCESS_PRIVATE))
         };
 
-        SpinMutex(SpinMutex &&other) noexcept: _lock(other._lock),
+        SpinMutex(SpinMutex&& other) noexcept: _lock(other._lock),
             _owner_thread(other._owner_thread) {
             other._lock = { 0 };
             other._owner_thread = 0;
@@ -171,7 +171,7 @@ namespace Base {
     public:
         ReentrantMutex() = default;
 
-        ReentrantMutex(ReentrantMutex &&other) noexcept:
+        ReentrantMutex(ReentrantMutex&& other) noexcept:
             Mutex(std::move(other)), _counter(other._counter) {
             other._counter = 0;
         };

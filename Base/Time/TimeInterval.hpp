@@ -8,7 +8,7 @@
 #ifdef BASE_TIME_DIFFERENCE_HPP
 
 #include <utility>
-#include "Base/Time/Time.hpp"
+#include "tinyBackend/Base/Time/Time.hpp"
 
 namespace Base {
 
@@ -38,7 +38,7 @@ namespace Base {
 
         constexpr explicit TimeInterval(timespec ts) : nanoseconds(ts.tv_sec * SEC_ + ts.tv_nsec) {};
 
-        explicit TimeInterval(const Time &time);
+        explicit TimeInterval(const Time& time);
 
         constexpr operator int64() const { return nanoseconds; };
 
@@ -66,11 +66,11 @@ namespace Base {
 
     };
 
-    constexpr TimeInterval operator+(const TimeInterval &left, const TimeInterval &right) {
+    constexpr TimeInterval operator+(const TimeInterval& left, const TimeInterval& right) {
         return TimeInterval { left.nanoseconds + right.nanoseconds };
     }
 
-    constexpr TimeInterval operator-(const TimeInterval &left, const TimeInterval &right) {
+    constexpr TimeInterval operator-(const TimeInterval& left, const TimeInterval& right) {
         return TimeInterval { left.nanoseconds - right.nanoseconds };
     }
 
@@ -102,8 +102,8 @@ namespace Base {
 
     void sleep(TimeInterval time);
 
-    template <typename Fun, typename...Args>
-    TimeInterval chronograph(Fun &&fun, Args &&...args) {
+    template <typename Fun, typename... Args>
+    TimeInterval chronograph(Fun&& fun, Args&&... args) {
         timespec startTime {}, endTime {};
         clock_gettime(CLOCK_REALTIME, &startTime);
         fun(std::forward<Args>(args)...);
@@ -116,7 +116,7 @@ namespace Base {
 
     std::string to_string(TimeInterval time, bool show_us = true, bool UTC = false);
 
-    void format(char* dest, TimeInterval time, bool show_us = true, bool UTC = false);
+    void format(char *dest, TimeInterval time, bool show_us = true, bool UTC = false);
 
 }
 

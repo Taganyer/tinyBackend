@@ -7,6 +7,9 @@
 
 #ifdef DISTRIBUTED_RAFTSTATEMACHINE_HPP
 
+#include <string>
+#include "tinyBackend/Net/InetAddress.hpp"
+
 namespace Dist {
 
     class RaftMessage;
@@ -19,19 +22,19 @@ namespace Dist {
 
         virtual ~RaftStateMachine() = default;
 
-        virtual bool can_be_leader(const Address &sender_address,
-                                   const RaftMessage &message) = 0;
+        virtual bool can_be_leader(const Address& sender_address,
+                                   const RaftMessage& message) = 0;
 
-        virtual std::string leader_notify_message(const Address &follower_address) = 0;
+        virtual std::string leader_notify_message(const Address& follower_address) = 0;
 
-        virtual bool need_synchronize_from(const Address &sender_address,
-                                           const RaftMessage &message) = 0;
+        virtual bool need_synchronize_from(const Address& sender_address,
+                                           const RaftMessage& message) = 0;
 
-        virtual std::string ready_to_receiving(const Address &sender_address,
-                                               const RaftMessage &message) = 0;
+        virtual std::string ready_to_receiving(const Address& sender_address,
+                                               const RaftMessage& message) = 0;
 
-        virtual void ready_to_send_to(const Address &receiver_address,
-                                      const RaftMessage &message) = 0;
+        virtual void ready_to_send_to(const Address& receiver_address,
+                                      const RaftMessage& message) = 0;
 
         virtual void update_log() = 0;
     };

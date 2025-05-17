@@ -8,11 +8,11 @@
 #ifdef NET_MESSAGEAGENT_HPP
 
 #include <cassert>
-#include "monitors/Event.hpp"
 #include "error/error_mark.hpp"
-#include "Base/Buffer/InputBuffer.hpp"
-#include "Base/Buffer/OutputBuffer.hpp"
-#include "Base/Detail/CurrentThread.hpp"
+#include "monitors/Event.hpp"
+#include "tinyBackend/Base/Buffer/InputBuffer.hpp"
+#include "tinyBackend/Base/Buffer/OutputBuffer.hpp"
+#include "tinyBackend/Base/Detail/CurrentThread.hpp"
 
 namespace Net {
 
@@ -20,7 +20,7 @@ namespace Net {
     public:
         MessageAgent() = default;
 
-        MessageAgent(MessageAgent &&other) noexcept :
+        MessageAgent(MessageAgent&& other) noexcept :
             socket_event(other.socket_event), error(other.error) {
             other.socket_event = {};
             other.error = {};

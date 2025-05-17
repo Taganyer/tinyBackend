@@ -15,9 +15,9 @@ namespace Base {
     public:
         VersionNumber64() = default;
 
-        VersionNumber64(const VersionNumber64 &) = default;
+        VersionNumber64(const VersionNumber64&) = default;
 
-        VersionNumber64& operator=(const VersionNumber64 &) = default;
+        VersionNumber64& operator=(const VersionNumber64&) = default;
 
         explicit VersionNumber64(uint64 version) : _version(version) {};
 
@@ -86,9 +86,9 @@ namespace Base {
     public:
         VersionNumber32() = default;
 
-        VersionNumber32(const VersionNumber32 &) = default;
+        VersionNumber32(const VersionNumber32&) = default;
 
-        VersionNumber32& operator=(const VersionNumber32 &) = default;
+        VersionNumber32& operator=(const VersionNumber32&) = default;
 
         explicit VersionNumber32(uint32 version) : _version(version) {};
 

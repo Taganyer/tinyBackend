@@ -9,9 +9,9 @@
 
 #include "LogRank.hpp"
 #include "GlobalObject.hpp"
-#include "Base/Detail/oFile.hpp"
-#include "Base/ScheduledThread.hpp"
-#include "Base/Buffer/BufferPool.hpp"
+#include "tinyBackend/Base/Detail/oFile.hpp"
+#include "tinyBackend/Base/ScheduledThread.hpp"
+#include "tinyBackend/Base/Buffer/BufferPool.hpp"
 
 namespace LogSystem {
 
@@ -23,13 +23,13 @@ namespace LogSystem {
 
     class SystemLog : Base::NoCopy {
     public:
-        SystemLog(Base::ScheduledThread &thread, Base::BufferPool &buffer_pool,
+        SystemLog(Base::ScheduledThread& thread, Base::BufferPool& buffer_pool,
                   std::string dictionary_path, LogRank rank,
                   uint64 file_limit_size = FILE_LIMIT, uint64 buffer_limit_size = LOG_BUFFER_SIZE);
 
         ~SystemLog();
 
-        void push(LogRank rank, const void* ptr, uint64 size) const;
+        void push(LogRank rank, const void *ptr, uint64 size) const;
 
         LogStream stream(LogRank rank);
 
@@ -42,9 +42,9 @@ namespace LogSystem {
     private:
         class LogBuffer {
         public:
-            explicit LogBuffer(Base::BufferPool::Buffer &&buffer) : _buffer(std::move(buffer)) {};
+            explicit LogBuffer(Base::BufferPool::Buffer&& buffer) : _buffer(std::move(buffer)) {};
 
-            uint64 append(LogRank rank, const Base::Time &time, const void* ptr, uint64 size);
+            uint64 append(LogRank rank, const Base::Time& time, const void *ptr, uint64 size);
 
             void clear() { _index = 0; };
 
@@ -64,11 +64,11 @@ namespace LogSystem {
         public:
             Base::Mutex IO_lock;
 
-            LogBuffer* _buffer = nullptr;
+            LogBuffer *_buffer = nullptr;
 
-            Base::ScheduledThread* _thread;
+            Base::ScheduledThread *_thread;
 
-            LogScheduler(Base::ScheduledThread* thread, std::string dictionary_path, uint64 limit_size);
+            LogScheduler(Base::ScheduledThread *thread, std::string dictionary_path, uint64 limit_size);
 
         private:
             uint64 current_size = 0, limit_size;
@@ -79,9 +79,9 @@ namespace LogSystem {
 
             void open_new_file();
 
-            void write_to_file(const LogBuffer* logBuffer);
+            void write_to_file(const LogBuffer *logBuffer);
 
-            void invoke(void* buffer_ptr) override;
+            void invoke(void *buffer_ptr) override;
 
             void force_invoke() override;
 
@@ -94,7 +94,7 @@ namespace LogSystem {
 
         LogRank outputRank;
 
-        Base::BufferPool* _bufferPool;
+        Base::BufferPool *_bufferPool;
 
         uint64 _buffer_size;
 
@@ -107,13 +107,13 @@ namespace LogSystem {
     public:
         static constexpr uint32 BUFFER_SIZE = 256;
 
-        LogStream(SystemLog &log, LogRank rank) : _log(&log), _rank(rank) {};
+        LogStream(SystemLog& log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LogStream() {
             _log->push(_rank, _message, _index);
         };
 
-        LogStream& operator<<(const std::string &val) {
+        LogStream& operator<<(const std::string& val) {
             if (_log->get_rank() > _rank) return *this;
             auto len = val.size() > BUFFER_SIZE - _index ? BUFFER_SIZE - _index : val.size();
             memcpy(_message + _index, val.data(), len);
@@ -121,7 +121,7 @@ namespace LogSystem {
             return *this;
         };
 
-        LogStream& operator<<(const std::string_view &val) {
+        LogStream& operator<<(const std::string_view& val) {
             if (_log->get_rank() > _rank) return *this;
             auto len = val.size() > BUFFER_SIZE - _index ? BUFFER_SIZE - _index : val.size();
             memcpy(_message + _index, val.data(), len);
@@ -156,7 +156,7 @@ namespace LogSystem {
 #undef StreamOperator
 
     private:
-        SystemLog* _log;
+        SystemLog *_log;
 
         LogRank _rank;
 

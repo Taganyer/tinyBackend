@@ -19,17 +19,17 @@ namespace Base {
 
         ~LinkedThreadPool();
 
-        template <typename Fun_, typename...Args>
-        void submit_to_top(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        void submit_to_top(Fun_&& fun, Args&&... args);
 
-        template <typename Fun_, typename...Args>
-        auto submit_to_top_with_future(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        auto submit_to_top_with_future(Fun_&& fun, Args&&... args);
 
-        template <typename Fun_, typename...Args>
-        void submit_to_back(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        void submit_to_back(Fun_&& fun, Args&&... args);
 
-        template <typename Fun_, typename...Args>
-        auto submit_to_back_with_future(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        auto submit_to_back_with_future(Fun_&& fun, Args&&... args);
 
         void stop();
 
@@ -89,11 +89,11 @@ namespace Base {
             };
         };
 
-        template <typename Fun_, typename...Args>
-        void create_fun(List::Iter dest, Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        void create_fun(List::Iter dest, Fun_&& fun, Args&&... args);
 
-        template <typename Fun_, typename...Args>
-        auto create_fun_with_future(List::Iter dest, Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        auto create_fun_with_future(List::Iter dest, Fun_&& fun, Args&&... args);
 
     };
 
@@ -101,8 +101,8 @@ namespace Base {
 
 namespace Base {
 
-    template <typename Fun_, typename...Args>
-    void LinkedThreadPool::submit_to_top(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    void LinkedThreadPool::submit_to_top(Fun_&& fun, Args&&... args) {
         Lock l(_lock);
         _submit.wait(l, joinable_fun());
         if (stopping())
@@ -112,8 +112,8 @@ namespace Base {
                           std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template <typename Fun_, typename...Args>
-    auto LinkedThreadPool::submit_to_top_with_future(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    auto LinkedThreadPool::submit_to_top_with_future(Fun_&& fun, Args&&... args) {
         Lock l(_lock);
         _submit.wait(l, joinable_fun());
         if (stopping())
@@ -123,8 +123,8 @@ namespace Base {
                                       std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template <typename Fun_, typename...Args>
-    void LinkedThreadPool::submit_to_back(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    void LinkedThreadPool::submit_to_back(Fun_&& fun, Args&&... args) {
         Lock l(_lock);
         _submit.wait(l, joinable_fun());
         if (stopping())
@@ -134,8 +134,8 @@ namespace Base {
                           std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template <typename Fun_, typename...Args>
-    auto LinkedThreadPool::submit_to_back_with_future(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    auto LinkedThreadPool::submit_to_back_with_future(Fun_&& fun, Args&&... args) {
         Lock l(_lock);
         _submit.wait(l, joinable_fun());
         if (stopping())
@@ -145,8 +145,8 @@ namespace Base {
                                       std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template <typename Fun_, typename...Args>
-    void LinkedThreadPool::create_fun(List::Iter dest, Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    void LinkedThreadPool::create_fun(List::Iter dest, Fun_&& fun, Args&&... args) {
         _list.insert_after(
             dest, [f = std::function<void()>
                 (std::forward<Fun_>(fun), std::forward<Args>(args)...)] (bool kill) {
@@ -155,8 +155,8 @@ namespace Base {
             });
     }
 
-    template <typename Fun_, typename...Args>
-    auto LinkedThreadPool::create_fun_with_future(List::Iter dest, Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    auto LinkedThreadPool::create_fun_with_future(List::Iter dest, Fun_&& fun, Args&&... args) {
         using Result_Type = std::result_of_t<Fun_(Args...)>;
         auto ptr = new Detail::AsyncFun<Result_Type, Fun_, Args...>(std::forward<Fun_>(fun),
                                                                     std::forward<Args>(args)...);

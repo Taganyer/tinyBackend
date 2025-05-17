@@ -3,7 +3,8 @@
 //
 
 #include "../EventLoop.hpp"
-#include "Base/SystemLog.hpp"
+
+#include "tinyBackend/Base/SystemLog.hpp"
 
 using namespace Net;
 
@@ -39,7 +40,7 @@ void EventLoop::loop() {
             _distributor();
         loop_begin();
         if (_queue.size() > 0) {
-            for (const auto &event : _queue)
+            for (const auto& event : _queue)
                 if (event) event();
             G_TRACE << "EventLoop " << _tid << " invoke " << _queue.size() << " events";
         }

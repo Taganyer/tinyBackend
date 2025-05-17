@@ -66,7 +66,7 @@ namespace Dist {
 
         static bool accept_offline_ack(INSTANCE_ARG, ADDRESS_ARG);
 
-        static void error_type(const char* fun, INSTANCE_ARG, MESSAGE_ARG, ADDRESS_ARG);
+        static void error_type(const char *fun, INSTANCE_ARG, MESSAGE_ARG, ADDRESS_ARG);
 
         static bool check_outdated(INSTANCE_ARG, MESSAGE_ARG, ADDRESS_ARG);
 

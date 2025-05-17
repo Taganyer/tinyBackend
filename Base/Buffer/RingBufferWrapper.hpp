@@ -14,28 +14,28 @@ namespace Base {
 
     class RingBufferWrapper : public InputBuffer, public OutputBuffer {
     public:
-        RingBufferWrapper(char* buf, uint32 size) :
+        RingBufferWrapper(char *buf, uint32 size) :
             InputBuffer(buf), OutputBuffer(buf), _buffer(buf), _size(size) {};
 
-        RingBufferWrapper(RingBufferWrapper &&other) noexcept :
+        RingBufferWrapper(RingBufferWrapper&& other) noexcept :
             InputBuffer(std::move(other)), OutputBuffer(std::move(other)),
             _buffer(other._buffer), _readable(other._readable), _size(other._size) {
             other._buffer = nullptr;
             other._readable = other._size = 0;
         };
 
-        uint32 read(void* dest, uint32 size) const override;
+        uint32 read(void *dest, uint32 size) const override;
 
-        uint32 read(uint32 N, const iovec* array) const override;
+        uint32 read(uint32 N, const iovec *array) const override;
 
         uint32 read(const OutputBuffer& buffer, uint32 size) const override;
 
-        uint32 fix_read(void* dest, uint32 size) const override {
+        uint32 fix_read(void *dest, uint32 size) const override {
             if (readable_len() < size) return 0;
             return read(dest, size);
         };
 
-        uint32 fix_read(uint32 N, const iovec* array) const override {
+        uint32 fix_read(uint32 N, const iovec *array) const override {
             uint64 size = 0;
             for (uint32 i = 0; i < N; ++i) size += array[i].iov_len;
             if (readable_len() < size) return 0;
@@ -48,36 +48,36 @@ namespace Base {
         };
 
         template <std::size_t N>
-        uint32 read(const BufferArray<N> &array) const {
+        uint32 read(const BufferArray<N>& array) const {
             return read(N, array.data());
         };
 
         template <std::size_t N>
-        uint32 fix_read(const BufferArray<N> &array) const {
+        uint32 fix_read(const BufferArray<N>& array) const {
             return fix_read(N, array.data());
         };
 
-        uint32 try_read(void* dest, uint32 size, uint32 offset) const override;
+        uint32 try_read(void *dest, uint32 size, uint32 offset) const override;
 
-        uint32 try_read(uint32 N, const iovec* array, uint32 offset) const override;
+        uint32 try_read(uint32 N, const iovec *array, uint32 offset) const override;
 
         template <std::size_t N>
-        uint32 try_read(const BufferArray<N> &array, uint32 offset = 0) const {
+        uint32 try_read(const BufferArray<N>& array, uint32 offset = 0) const {
             return try_read(N, array.data(), offset);
         };
 
-        uint32 write(const void* target, uint32 size) const override;
+        uint32 write(const void *target, uint32 size) const override;
 
-        uint32 write(uint32 N, const iovec* array) const override;
+        uint32 write(uint32 N, const iovec *array) const override;
 
         uint32 write(const InputBuffer& buffer, uint32 size) const override;
 
-        uint32 fix_write(const void* target, uint32 size) const override {
+        uint32 fix_write(const void *target, uint32 size) const override {
             if (writable_len() < size) return 0;
             return write(target, size);
         };
 
-        uint32 fix_write(uint32 N, const iovec* array) const override {
+        uint32 fix_write(uint32 N, const iovec *array) const override {
             uint64 size = 0;
             for (uint32 i = 0; i < N; ++i) size += array[i].iov_len;
             if (writable_len() < size) return 0;
@@ -90,30 +90,30 @@ namespace Base {
         };
 
         template <std::size_t N>
-        uint32 write(const BufferArray<N> &array) const {
+        uint32 write(const BufferArray<N>& array) const {
             return write(N, array.data());
         };
 
         template <std::size_t N>
-        uint32 fix_write(const BufferArray<N> &array) const {
+        uint32 fix_write(const BufferArray<N>& array) const {
             return fix_write(N, array.data());
         };
 
-        uint32 try_write(const void* target, uint32 size, uint32 offset) const override;
+        uint32 try_write(const void *target, uint32 size, uint32 offset) const override;
 
-        uint32 try_write(uint32 N, const iovec* array, uint32 offset) const override;
+        uint32 try_write(uint32 N, const iovec *array, uint32 offset) const override;
 
         template <std::size_t N>
-        uint32 try_write(const BufferArray<N> &array, uint32 offset = 0) const {
+        uint32 try_write(const BufferArray<N>& array, uint32 offset = 0) const {
             return try_write(array.data(), N, offset);
         };
 
-        uint32 change_written(uint32 offset, const void* data, uint32 size) const;
+        uint32 change_written(uint32 offset, const void *data, uint32 size) const;
 
-        uint32 change_written(uint32 offset, uint32 N, const iovec* array) const;
+        uint32 change_written(uint32 offset, uint32 N, const iovec *array) const;
 
         template <std::size_t N>
-        uint32 change_written(uint32 offset, const BufferArray<N> &array) const {
+        uint32 change_written(uint32 offset, const BufferArray<N>& array) const {
             return change_written(offset, N, array.data());
         };
 
@@ -167,10 +167,10 @@ namespace Base {
         [[nodiscard]] bool empty() const { return _read == _write && _readable == 0; };
 
     protected:
-        char* resize(char* buf, uint32 size);
+        char* resize(char *buf, uint32 size);
 
     private:
-        char* _buffer = nullptr;
+        char *_buffer = nullptr;
         mutable uint32 _readable = 0;
         uint32 _size = 0;
     };

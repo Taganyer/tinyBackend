@@ -2,13 +2,13 @@
 // Created by taganyer on 3/9/24.
 //
 
+#include "../Socket.hpp"
 #include <fcntl.h>
 #include <netinet/tcp.h>
-#include "../Socket.hpp"
-#include "Net/InetAddress.hpp"
-#include "Net/error/errors.hpp"
-#include "Base/SystemLog.hpp"
-#include "Net/functions/Interface.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Net/InetAddress.hpp"
+#include "tinyBackend/Net/error/errors.hpp"
+#include "tinyBackend/Net/functions/Interface.hpp"
 
 #ifdef IGNORE_SIGPIPE
 #include <csignal>
@@ -26,7 +26,7 @@ Socket::Socket(int domain, int type, int protocol) :
     }
 }
 
-Socket& Socket::operator=(Socket &&other) noexcept {
+Socket& Socket::operator=(Socket&& other) noexcept {
     if (_fd > 0) {
         if (ops::close(_fd)) {
             G_INFO << "socket close " << _fd;
@@ -54,7 +54,7 @@ void Socket::close() {
     }
 }
 
-bool Socket::bind(const InetAddress &address) const {
+bool Socket::bind(const InetAddress& address) const {
     if (!ops::bind(_fd, ops::sockaddr_cast(address.addr_in_cast()))) {
         G_ERROR << _fd << ' ' << ops::get_bind_error(errno);
         return false;
@@ -62,7 +62,7 @@ bool Socket::bind(const InetAddress &address) const {
     return true;
 }
 
-bool Socket::connect(const InetAddress &address) const {
+bool Socket::connect(const InetAddress& address) const {
     if (!ops::connect(_fd, ops::sockaddr_cast(address.addr_in_cast()))) {
         G_ERROR << "Socket " << _fd << ' ' << ops::get_connect_error(errno);
         return false;
@@ -78,7 +78,7 @@ bool Socket::tcpListen(int max_size) const {
     return true;
 }
 
-Socket Socket::tcpAccept(InetAddress &address) const {
+Socket Socket::tcpAccept(InetAddress& address) const {
     int fd = ops::accept(_fd, address.addr6_in_cast());
     if (fd < 0)
         G_ERROR << "Socket " << _fd << ' ' << ops::get_accept_error(errno);
@@ -155,13 +155,13 @@ bool Socket::shutdown_TcpWrite() const {
     return true;
 }
 
-bool Socket::TcpInfo(tcp_info* info) const {
+bool Socket::TcpInfo(tcp_info *info) const {
     socklen_t len = sizeof(tcp_info);
     memset(info, 0, len);
     return ::getsockopt(_fd, SOL_TCP, TCP_INFO, info, &len) == 0;
 }
 
-bool Socket::TcpInfo(char* buf, int len) const {
+bool Socket::TcpInfo(char *buf, int len) const {
     tcp_info info {};
     if (!TcpInfo(&info)) {
         G_ERROR << "Socket " << _fd << ' ' << ops::get_socket_opt_error(errno);

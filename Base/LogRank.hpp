@@ -22,7 +22,7 @@ namespace LogSystem {
     };
 
     inline const char* LogRankName(LogRank rank) {
-        constexpr const char* names[] = {
+        constexpr const char *names[] = {
             "TRACE",
             "DEBUG",
             "INFO",
@@ -34,8 +34,8 @@ namespace LogSystem {
         return names[rank];
     }
 
-    inline int rank_toString(char* ptr, LogRank rank) {
-        constexpr const char* store[] {
+    inline int rank_toString(char *ptr, LogRank rank) {
+        constexpr const char *store[] {
             "TRACE:",
             "DEBUG:",
             "INFO :",

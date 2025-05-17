@@ -18,7 +18,7 @@ namespace Base {
             CAPI_CHECK(pthread_cond_init(&_cond, nullptr))
         };
 
-        Condition(Condition &&other) noexcept: _cond(other._cond) {
+        Condition(Condition&& other) noexcept: _cond(other._cond) {
             other._cond = {};
         };
 
@@ -35,25 +35,25 @@ namespace Base {
         };
 
         template <typename Mutex>
-        void wait(Lock<Mutex> &lock) {
+        void wait(Lock<Mutex>& lock) {
             lock._lock._owner_thread = 0;
             CAPI_CHECK(pthread_cond_wait(&_cond, &lock._lock._lock))
             lock._lock._owner_thread = CurrentThread::tid();
         };
 
         template <typename Mutex, typename Fun>
-        void wait(Lock<Mutex> &lock, Fun fun) {
+        void wait(Lock<Mutex>& lock, Fun fun) {
             while (!fun()) wait(lock);
         };
 
         template <typename Mutex>
-        bool wait_for(Lock<Mutex> &lock, TimeInterval ns) {
+        bool wait_for(Lock<Mutex>& lock, TimeInterval ns) {
             auto time = (ns + Unix_to_now()).to_timespec();
             return wait_until(lock, time);
         };
 
         template <typename Mutex, typename Fun>
-        bool wait_for(Lock<Mutex> &lock, TimeInterval ns, Fun fun) {
+        bool wait_for(Lock<Mutex>& lock, TimeInterval ns, Fun fun) {
             auto time = (ns + Unix_to_now()).to_timespec();
             while (!fun()) {
                 if (!wait_until(lock, time))
@@ -63,7 +63,7 @@ namespace Base {
         }
 
         template <typename Mutex, typename Fun>
-        bool wait_until(Lock<Mutex> &lock, const timespec &endTime, Fun fun) {
+        bool wait_until(Lock<Mutex>& lock, const timespec& endTime, Fun fun) {
             while (!fun()) {
                 if (!wait_until(lock, endTime))
                     return fun();
@@ -72,7 +72,7 @@ namespace Base {
         }
 
         /// 未超时返回 true
-        bool wait_until(Lock<Mutex> &lock, const timespec &endTime) {
+        bool wait_until(Lock<Mutex>& lock, const timespec& endTime) {
             lock._lock._owner_thread = 0;
             int t = pthread_cond_timedwait(&_cond, &lock._lock._lock, &endTime);
             lock._lock._owner_thread = CurrentThread::tid();

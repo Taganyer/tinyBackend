@@ -14,7 +14,7 @@ namespace Net {
     public:
         ~Selector() override;
 
-        int get_aliveEvent(int timeoutMS, EventList &list) override;
+        int get_aliveEvent(int timeoutMS, EventList& list) override;
 
         bool add_fd(Event event) override;
 
@@ -40,7 +40,7 @@ namespace Net {
 
         void init_fd_set();
 
-        void fill_events(EventList &list);
+        void fill_events(EventList& list);
 
         EventList::iterator find_fd(int fd);
 

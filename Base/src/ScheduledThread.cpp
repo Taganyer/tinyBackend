@@ -31,7 +31,7 @@ ScheduledThread::~ScheduledThread() {
     shutdown_thread();
 }
 
-void ScheduledThread::add_scheduler(const ObjectPtr &ptr) {
+void ScheduledThread::add_scheduler(const ObjectPtr& ptr) {
     Lock l(_mutex);
     if (shutdown.load(std::memory_order_acquire)) return;
     _schedulers.insert(_schedulers.end(), ptr);
@@ -39,14 +39,14 @@ void ScheduledThread::add_scheduler(const ObjectPtr &ptr) {
     _condition.notify_one();
 }
 
-void ScheduledThread::remove_scheduler(const ObjectPtr &ptr) {
+void ScheduledThread::remove_scheduler(const ObjectPtr& ptr) {
     Lock l(_mutex);
     if (shutdown.load(std::memory_order_acquire)) return;
     ptr->shutdown = true;
     ptr->need_flush = false;
 }
 
-void ScheduledThread::remove_scheduler_and_invoke(const ObjectPtr &ptr, void* arg) {
+void ScheduledThread::remove_scheduler_and_invoke(const ObjectPtr& ptr, void *arg) {
     Lock l(_mutex);
     if (shutdown.load(std::memory_order_acquire)) return;
     _ready.push_back(Task { ptr->self_location, arg });
@@ -56,7 +56,7 @@ void ScheduledThread::remove_scheduler_and_invoke(const ObjectPtr &ptr, void* ar
     _condition.notify_one();
 }
 
-void ScheduledThread::submit_task(Scheduler &scheduler, void* arg) {
+void ScheduledThread::submit_task(Scheduler& scheduler, void *arg) {
     Lock l(_mutex);
     _ready.push_back(Task { scheduler.self_location, arg });
     scheduler.need_flush = false;
@@ -93,7 +93,7 @@ bool ScheduledThread::waiting(TimeInterval endTime) {
     return waiting_again && !shutdown.load(std::memory_order_consume);
 }
 
-void ScheduledThread::get_need_flush(std::vector<QueueIter> &need_flush) {
+void ScheduledThread::get_need_flush(std::vector<QueueIter>& need_flush) {
     Lock l(_mutex);
     auto iter = _schedulers.begin(), end = _schedulers.end();
     while (iter != end) {
@@ -103,7 +103,7 @@ void ScheduledThread::get_need_flush(std::vector<QueueIter> &need_flush) {
     }
 }
 
-void ScheduledThread::flush_need(std::vector<QueueIter> &need_flush) {
+void ScheduledThread::flush_need(std::vector<QueueIter>& need_flush) {
     for (auto iter : need_flush) {
         if (likely((*iter)->waiting_tasks.load(std::memory_order_acquire) == 0)) {
             (*iter)->force_invoke();
@@ -115,7 +115,7 @@ void ScheduledThread::flush_need(std::vector<QueueIter> &need_flush) {
     need_flush.clear();
 }
 
-void ScheduledThread::set_need_flush(std::vector<QueueIter> &need_flush) {
+void ScheduledThread::set_need_flush(std::vector<QueueIter>& need_flush) {
     Lock l(_mutex);
     if (need_flush.capacity() > _schedulers.size() * 4)
         need_flush.resize(_schedulers.size() * 4);

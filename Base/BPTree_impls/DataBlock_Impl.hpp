@@ -22,33 +22,33 @@ namespace Base {
         static constexpr uint32 KeySize = size_helper<Key>::size;
 
     public:
-        explicit DataBlock_Impl(Impl_Scheduler &impl);
+        explicit DataBlock_Impl(Impl_Scheduler& impl);
 
-        explicit DataBlock_Impl(Impl_Scheduler &impl, uint32 index);
+        explicit DataBlock_Impl(Impl_Scheduler& impl, uint32 index);
 
-        explicit DataBlock_Impl(Impl_Scheduler &impl, uint32 index, void* buf);
+        explicit DataBlock_Impl(Impl_Scheduler& impl, uint32 index, void *buf);
 
-        DataBlock_Impl(DataBlock_Impl &&other) noexcept;
+        DataBlock_Impl(DataBlock_Impl&& other) noexcept;
 
         ~DataBlock_Impl();
 
-        void insert(const Iter &pos, const Key &key, const Value &value);
+        void insert(const Iter& pos, const Key& key, const Value& value);
 
-        bool update(const Iter &pos, const Value &value);
+        bool update(const Iter& pos, const Value& value);
 
-        bool erase(const Iter &iter);
+        bool erase(const Iter& iter);
 
-        void erase(const Iter &begin, const Iter &end);
+        void erase(const Iter& begin, const Iter& end);
 
-        void merge(const DataBlock_Impl &other);
+        void merge(const DataBlock_Impl& other);
 
-        void split(DataBlock_Impl &new_block, const Key &key, const Value &value);
+        void split(DataBlock_Impl& new_block, const Key& key, const Value& value);
 
-        void average(DataBlock_Impl &other);
+        void average(DataBlock_Impl& other);
 
-        int merge_keep_average(const DataBlock_Impl &other) const;
+        int merge_keep_average(const DataBlock_Impl& other) const;
 
-        Iter lower_bound(const Key &key) const;
+        Iter lower_bound(const Key& key) const;
 
         void to_prev();
 
@@ -62,25 +62,25 @@ namespace Base {
 
         [[nodiscard]] Iter self_iter() const;
 
-        [[nodiscard]] bool can_insert(const Value &value) const;
+        [[nodiscard]] bool can_insert(const Value& value) const;
 
         [[nodiscard]] bool have_prev() const;
 
         [[nodiscard]] bool have_next() const;
 
-        static bool data_size_check(const Value &value);
+        static bool data_size_check(const Value& value);
 
-        static Key* get_key(void* buf, uint32 offset);
+        static Key* get_key(void *buf, uint32 offset);
 
-        static Value* get_value(void* buf, uint32 offset);
+        static Value* get_value(void *buf, uint32 offset);
 
-        static const Key* get_key(const void* buf, uint32 offset);
+        static const Key* get_key(const void *buf, uint32 offset);
 
-        static const Value* get_value(const void* buf, uint32 offset);
+        static const Value* get_value(const void *buf, uint32 offset);
 
-        static uint32 get_offset(const void* buf, uint32 from, int n);
+        static uint32 get_offset(const void *buf, uint32 from, int n);
 
-        static void erase_block(Impl_Scheduler &impl, uint32 index);
+        static void erase_block(Impl_Scheduler& impl, uint32 index);
 
     private:
         uint32 _index = 0;
@@ -89,20 +89,20 @@ namespace Base {
 
         Interpreter::DataBlockHelper _helper;
 
-        Impl_Scheduler* _impl = nullptr;
+        Impl_Scheduler *_impl = nullptr;
 
         static void check_is_DataBlock(const void *buffer) {
             if (unlikely(!Interpreter::is_data_block(buffer)))
                 throw BPTreeRuntimeError("Attempting to transform non-DataBlock to DataBlock.");
         };
 
-        static void move_other_block_data(DataBlock_Impl &dest, uint32 dest_pos,
-                                          DataBlock_Impl &src, uint32 src_pos, uint32 size);
+        static void move_other_block_data(DataBlock_Impl& dest, uint32 dest_pos,
+                                          DataBlock_Impl& src, uint32 src_pos, uint32 size);
 
     };
 
     template <typename Key, typename Value>
-    DataBlock_Impl<Key, Value>::DataBlock_Impl(Impl_Scheduler &impl) : _impl(&impl) {
+    DataBlock_Impl<Key, Value>::DataBlock_Impl(Impl_Scheduler& impl) : _impl(&impl) {
         auto [i, p] = impl.get_block();
         _index = i;
         _helper.buffer = p;
@@ -113,14 +113,14 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    DataBlock_Impl<Key, Value>::DataBlock_Impl(Impl_Scheduler &impl, uint32 index) :
+    DataBlock_Impl<Key, Value>::DataBlock_Impl(Impl_Scheduler& impl, uint32 index) :
         _index(index), _impl(&impl) {
         _helper.buffer = impl.get_block(index, true);
         check_is_DataBlock(_helper.buffer);
     }
 
     template <typename Key, typename Value>
-    DataBlock_Impl<Key, Value>::DataBlock_Impl(Impl_Scheduler &impl, uint32 index, void* buf) :
+    DataBlock_Impl<Key, Value>::DataBlock_Impl(Impl_Scheduler& impl, uint32 index, void *buf) :
         _index(index), _impl(&impl) {
         _helper.buffer = buf;
         _helper.set_to_data_block();
@@ -128,7 +128,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    DataBlock_Impl<Key, Value>::DataBlock_Impl(DataBlock_Impl &&other) noexcept :
+    DataBlock_Impl<Key, Value>::DataBlock_Impl(DataBlock_Impl&& other) noexcept :
         _index(other._index), _need_update(other._need_update),
         _helper(other._helper), _impl(other._impl) {
         other._need_put_back = false;
@@ -141,7 +141,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::insert(const Iter &pos, const Key &key, const Value &value) {
+    void DataBlock_Impl<Key, Value>::insert(const Iter& pos, const Key& key, const Value& value) {
         _need_update = true;
         uint32 value_size = ValueChecker::get_size(value);
         auto dest = Interpreter::move_ptr(_helper.buffer, pos._index_or_offset);
@@ -153,8 +153,8 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    bool DataBlock_Impl<Key, Value>::update(const Iter &pos, const Value &value) {
-        Value* val = get_value(_helper.buffer, pos._index_or_offset);
+    bool DataBlock_Impl<Key, Value>::update(const Iter& pos, const Value& value) {
+        Value *val = get_value(_helper.buffer, pos._index_or_offset);
         int32 old_size = ValueChecker::get_size(*val), new_size = ValueChecker::get_size(value);
         if (new_size != old_size) {
             if (new_size - old_size > Interpreter::BLOCK_SIZE - *_helper.get_size() - DataBlockHelper::BeginPos)
@@ -171,7 +171,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    bool DataBlock_Impl<Key, Value>::erase(const Iter &iter) {
+    bool DataBlock_Impl<Key, Value>::erase(const Iter& iter) {
         _need_update = true;
         uint32 pair_size = KeySize + ValueChecker::get_size(iter.value());
         auto dest = Interpreter::move_ptr(_helper.buffer, iter._index_or_offset);
@@ -183,7 +183,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::erase(const Iter &begin, const Iter &end) {
+    void DataBlock_Impl<Key, Value>::erase(const Iter& begin, const Iter& end) {
         _need_update = true;
         auto dest = Interpreter::move_ptr(_helper.buffer, begin._index_or_offset),
              src = Interpreter::move_ptr(_helper.buffer, end._index_or_offset);
@@ -193,7 +193,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::merge(const DataBlock_Impl &other) {
+    void DataBlock_Impl<Key, Value>::merge(const DataBlock_Impl& other) {
         _need_update = true;
         auto dest = Interpreter::move_ptr(_helper.buffer, *_helper.get_size()
                                           + DataBlockHelper::BeginPos);
@@ -204,7 +204,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::split(DataBlock_Impl &new_block, const Key &key, const Value &value) {
+    void DataBlock_Impl<Key, Value>::split(DataBlock_Impl& new_block, const Key& key, const Value& value) {
         _need_update = true;
         new_block._need_update = true;
         if constexpr (ValueChecker::is_fixed) {
@@ -217,14 +217,14 @@ namespace Base {
                 move_other_block_data(new_block, DataBlockHelper::BeginPos,
                                       *this, this_size + DataBlockHelper::BeginPos - move_size, move_size);
                 Iter pos { false, true, target_pos * pair_size + DataBlockHelper::BeginPos,
-                    _helper.buffer };
+                           _helper.buffer };
                 insert(pos, key, value);
             } else {
                 uint32 move_size = this_size - target_size * pair_size;
                 move_other_block_data(new_block, DataBlockHelper::BeginPos,
                                       *this, this_size + DataBlockHelper::BeginPos - move_size, move_size);
                 Iter pos { false, true, (target_pos - target_size) * pair_size + DataBlockHelper::BeginPos,
-                    new_block._helper.buffer };
+                           new_block._helper.buffer };
                 new_block.insert(pos, key, value);
             }
         } else {
@@ -259,7 +259,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::average(DataBlock_Impl &other) {
+    void DataBlock_Impl<Key, Value>::average(DataBlock_Impl& other) {
         if (*_helper.get_size() > *other._helper.get_size()) {
             if constexpr (ValueChecker::is_fixed) {
                 constexpr uint32 pair_size = KeySize + size_helper<Value>::size;
@@ -301,7 +301,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    int DataBlock_Impl<Key, Value>::merge_keep_average(const DataBlock_Impl &other) const {
+    int DataBlock_Impl<Key, Value>::merge_keep_average(const DataBlock_Impl& other) const {
         constexpr uint32 MaxBlockSize = Interpreter::BLOCK_SIZE - DataBlockHelper::BeginPos;
         uint32 this_size = *_helper.get_size(), other_size = *other._helper.get_size();
         if (this_size + other_size <= MaxBlockSize) return 1;
@@ -312,7 +312,7 @@ namespace Base {
 
     template <typename Key, typename Value>
     typename DataBlock_Impl<Key, Value>::Iter
-    DataBlock_Impl<Key, Value>::lower_bound(const Key &key) const {
+    DataBlock_Impl<Key, Value>::lower_bound(const Key& key) const {
         uint32 begin = DataBlockHelper::BeginPos, end = begin + *_helper.get_size();
         if constexpr (ValueChecker::is_fixed) {
             constexpr uint32 len = KeySize + size_helper<Value>::size;
@@ -375,7 +375,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    bool DataBlock_Impl<Key, Value>::can_insert(const Value &value) const {
+    bool DataBlock_Impl<Key, Value>::can_insert(const Value& value) const {
         uint32 size = KeySize + ValueChecker::get_size(value);
         return *_helper.get_size() + size + DataBlockHelper::BeginPos <= Interpreter::BLOCK_SIZE;
     }
@@ -391,7 +391,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    bool DataBlock_Impl<Key, Value>::data_size_check(const Value &value) {
+    bool DataBlock_Impl<Key, Value>::data_size_check(const Value& value) {
         if constexpr (ValueChecker::is_fixed) {
             constexpr uint32 size = size_helper<Value>::size > Interpreter::PTR_SIZE
                                         ? size_helper<Value>::size : Interpreter::PTR_SIZE
@@ -408,33 +408,33 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    Key* DataBlock_Impl<Key, Value>::get_key(void* buf, uint32 offset) {
+    Key* DataBlock_Impl<Key, Value>::get_key(void *buf, uint32 offset) {
         check_is_DataBlock(buf);
         return (Key *) Interpreter::move_ptr(buf, offset);
     }
 
     template <typename Key, typename Value>
-    Value* DataBlock_Impl<Key, Value>::get_value(void* buf, uint32 offset) {
+    Value* DataBlock_Impl<Key, Value>::get_value(void *buf, uint32 offset) {
         check_is_DataBlock(buf);
         offset += KeySize;
         return (Value *) Interpreter::move_ptr(buf, offset);
     }
 
     template <typename Key, typename Value>
-    const Key* DataBlock_Impl<Key, Value>::get_key(const void* buf, uint32 offset) {
+    const Key* DataBlock_Impl<Key, Value>::get_key(const void *buf, uint32 offset) {
         check_is_DataBlock(buf);
         return (const Key *) Interpreter::move_ptr(buf, offset);
     }
 
     template <typename Key, typename Value>
-    const Value* DataBlock_Impl<Key, Value>::get_value(const void* buf, uint32 offset) {
+    const Value* DataBlock_Impl<Key, Value>::get_value(const void *buf, uint32 offset) {
         check_is_DataBlock(buf);
         offset += KeySize;
         return (const Value *) Interpreter::move_ptr(buf, offset);
     }
 
     template <typename Key, typename Value>
-    uint32 DataBlock_Impl<Key, Value>::get_offset(const void* buf, uint32 from, int n) {
+    uint32 DataBlock_Impl<Key, Value>::get_offset(const void *buf, uint32 from, int n) {
         if constexpr (ValueChecker::is_fixed) {
             constexpr uint32 size = KeySize + size_helper<Value>::size;
             return from + size * n;
@@ -461,7 +461,7 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::erase_block(Impl_Scheduler &impl, uint32 index) {
+    void DataBlock_Impl<Key, Value>::erase_block(Impl_Scheduler& impl, uint32 index) {
         DataBlock_Impl data(impl, index);
         uint32 prev_index = *data._helper.prev_index(), next_index = *data._helper.next_index();
         if (prev_index != 0) {
@@ -477,8 +477,8 @@ namespace Base {
     }
 
     template <typename Key, typename Value>
-    void DataBlock_Impl<Key, Value>::move_other_block_data(DataBlock_Impl &dest, uint32 dest_pos,
-                                                           DataBlock_Impl &src, uint32 src_pos, uint32 size) {
+    void DataBlock_Impl<Key, Value>::move_other_block_data(DataBlock_Impl& dest, uint32 dest_pos,
+                                                           DataBlock_Impl& src, uint32 src_pos, uint32 size) {
         uint32 dest_behind = *dest._helper.get_size() + DataBlockHelper::BeginPos - dest_pos;
         std::memmove(Interpreter::move_ptr(dest._helper.buffer, dest_pos + size),
                      Interpreter::move_ptr(dest._helper.buffer, dest_pos), dest_behind);

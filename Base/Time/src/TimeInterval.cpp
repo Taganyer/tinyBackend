@@ -6,7 +6,7 @@
 
 namespace Base {
 
-    TimeInterval::TimeInterval(const Time &time) :
+    TimeInterval::TimeInterval(const Time& time) :
         nanoseconds(mktime((tm *) &time) * SEC_ + time.tm_us * US_) {}
 
     Time TimeInterval::to_Time(bool UTC) const {
@@ -44,7 +44,7 @@ namespace Base {
         return to_string(Tm, show_us);
     }
 
-    void format(char* dest, TimeInterval time, bool show_us, bool UTC) {
+    void format(char *dest, TimeInterval time, bool show_us, bool UTC) {
         Time Tm = time.to_Time(UTC);
         return format(dest, Tm, show_us);
     }

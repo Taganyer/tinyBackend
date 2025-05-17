@@ -7,7 +7,7 @@
 
 namespace Base {
 
-    TimeStamp::TimeStamp(const Time &time) :
+    TimeStamp::TimeStamp(const Time& time) :
         _us_SE(mktime((tm *) &time) * coefficient + time.tm_us) {}
 
     TimeStamp TimeStamp::now() {
@@ -25,12 +25,12 @@ namespace Base {
         return time;
     }
 
-    std::string to_string(const TimeStamp &time, bool show_us, bool UTC) {
+    std::string to_string(const TimeStamp& time, bool show_us, bool UTC) {
         Time Tm = time.to_Time(UTC);
         return to_string(Tm, show_us);
     }
 
-    void format(char* dest, const TimeStamp &time, bool show_us, bool UTC) {
+    void format(char *dest, const TimeStamp& time, bool show_us, bool UTC) {
         Time Tm = time.to_Time(UTC);
         return format(dest, Tm, show_us);
     }

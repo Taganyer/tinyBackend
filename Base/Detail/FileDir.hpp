@@ -16,9 +16,9 @@ namespace Base {
 
     class DirentArray : NoCopy {
     public:
-        using Filter = int (*)(const dirent*);
+        using Filter = int (*)(const dirent *);
 
-        using Compare = int (*)(const dirent**, const dirent**);
+        using Compare = int (*)(const dirent **, const dirent **);
 
         static constexpr Compare sort_by_alpha = alphasort;
 
@@ -26,19 +26,19 @@ namespace Base {
 
         DirentArray() = default;
 
-        explicit DirentArray(const char* path,
+        explicit DirentArray(const char *path,
                              Filter filter = nullptr,
                              Compare cmp = sort_by_alpha) {
             _size = scandir(path, &_arr, filter, cmp);
         };
 
-        DirentArray(DirentArray &&other) noexcept :
+        DirentArray(DirentArray&& other) noexcept :
             _arr(other._arr), _size(other._size) {
             other._arr = nullptr;
             other._size = -1;
         };
 
-        DirentArray& operator=(DirentArray &&other) noexcept {
+        DirentArray& operator=(DirentArray&& other) noexcept {
             if (this != &other) {
                 _arr = other._arr;
                 _size = other._size;
@@ -69,7 +69,7 @@ namespace Base {
         [[nodiscard]] bool valid() const { return _size >= 0 && _arr; };
 
     private:
-        dirent** _arr = nullptr;
+        dirent **_arr = nullptr;
 
         int _size = -1;
 
@@ -81,16 +81,16 @@ namespace Base {
     public:
         FileDir() = default;
 
-        explicit FileDir(const char* path) { open(path); };
+        explicit FileDir(const char *path) { open(path); };
 
-        FileDir(FileDir &&other) noexcept :
+        FileDir(FileDir&& other) noexcept :
             _dir(other._dir), _dirent(other._dirent), _size(other._size) {
             other._dir = nullptr;
             other._dirent = nullptr;
             other._size = -1;
         };
 
-        FileDir& operator=(FileDir &&other) noexcept {
+        FileDir& operator=(FileDir&& other) noexcept {
             if (this != &other) {
                 _dir = other._dir;
                 _dirent = other._dirent;
@@ -115,7 +115,7 @@ namespace Base {
             return false;
         };
 
-        bool open(const char* path) {
+        bool open(const char *path) {
             close();
             _dir = opendir(path);
             return _dir;
@@ -134,7 +134,7 @@ namespace Base {
             return result;
         };
 
-        DirentArray relative(const char* relative_path,
+        DirentArray relative(const char *relative_path,
                              DirentArray::Filter filter = nullptr,
                              DirentArray::Compare cmp = DirentArray::sort_by_alpha) const {
             DirentArray result;
@@ -162,9 +162,9 @@ namespace Base {
         [[nodiscard]] bool valid() const { return _dir; };
 
     private:
-        DIR* _dir = nullptr;
+        DIR *_dir = nullptr;
 
-        dirent* _dirent = nullptr;
+        dirent *_dirent = nullptr;
 
         int32 _size = -1;
 

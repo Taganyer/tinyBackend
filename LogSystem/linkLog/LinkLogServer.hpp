@@ -8,12 +8,12 @@
 #ifdef LOGSYSTEM_LINKLOGSERVERE_HPP
 
 #include <map>
-#include "Net/Acceptor.hpp"
-#include "Net/InetAddress.hpp"
 #include "LinkLogErrors.hpp"
 #include "LinkLogHandler.hpp"
-#include "Net/TcpMessageAgent.hpp"
 #include "LinkLogInterpreter.hpp"
+#include "tinyBackend/Net/Acceptor.hpp"
+#include "tinyBackend/Net/InetAddress.hpp"
+#include "tinyBackend/Net/TcpMessageAgent.hpp"
 
 
 namespace Net {
@@ -65,7 +65,7 @@ namespace LogSystem {
             Level5 = 6
         };
 
-        LinkLogServer(const Address &listen_address,
+        LinkLogServer(const Address& listen_address,
                       ServerHandlerPtr handler,
                       std::string dictionary_path,
                       PartitionRank partition_rank = Level2);
@@ -94,7 +94,7 @@ namespace LogSystem {
             BufferIter buf_iter;
             Base::TimeInterval init_time;
             std::map<ID, NodeMessage>::iterator parent_iter;
-            bool* logger_timout = nullptr;
+            bool *logger_timout = nullptr;
 
             NodeMessage(Type t, std::map<ID, NodeMessage>::iterator pi)
                 : type(t), parent_iter(pi) {};
@@ -129,12 +129,12 @@ namespace LogSystem {
         struct TimerData {
             Base::TimeInterval expire_time;
             MapIter iter;
-            bool* logger_timout = nullptr;
+            bool *logger_timout = nullptr;
 
             explicit TimerData(Base::TimeInterval expire_time, MapIter iter) :
                 expire_time(expire_time), iter(iter), logger_timout(iter->second.logger_timout) {};
 
-            TimerData(const TimerData &) = default;
+            TimerData(const TimerData&) = default;
 
             [[nodiscard]] bool check_timeout() const {
                 if (!*logger_timout) {
@@ -145,7 +145,7 @@ namespace LogSystem {
                 return false;
             };
 
-            friend bool operator<(const TimerData &lhs, const TimerData &rhs) {
+            friend bool operator<(const TimerData& lhs, const TimerData& rhs) {
                 return lhs.expire_time > rhs.expire_time;
             };
         };
@@ -180,81 +180,81 @@ namespace LogSystem {
 
         bool create_local_link();
 
-        void accept_center_link(Net::Poller &poller);
+        void accept_center_link(Net::Poller& poller);
 
-        void destroy_local_link(Net::Poller &poller);
+        void destroy_local_link(Net::Poller& poller);
 
-        void destroy_center_link(Net::Poller &poller);
+        void destroy_center_link(Net::Poller& poller);
 
 
-        [[nodiscard]] bool safe_notify(const LinkLogMessage &message) const;
+        [[nodiscard]] bool safe_notify(const LinkLogMessage& message) const;
 
-        void safe_write(BufferIter buf_iter, const void* data, uint32 size);
+        void safe_write(BufferIter buf_iter, const void *data, uint32 size);
 
-        void safe_error(BufferIter buf_iter, const ServiceID &service,
-                        const NodeID &node, LinkErrorType error);
+        void safe_error(BufferIter buf_iter, const ServiceID& service,
+                        const NodeID& node, LinkErrorType error);
 
 
         void start_thread();
 
-        void init_thread(Net::Poller &poller, std::vector<BufferIter> &flush_order);
+        void init_thread(Net::Poller& poller, std::vector<BufferIter>& flush_order);
 
-        bool accept_message(Net::Poller &poller, std::vector<Net::Event> &events);
+        bool accept_message(Net::Poller& poller, std::vector<Net::Event>& events);
 
-        bool handle_local_message(WaitQueue &wait_queue);
+        bool handle_local_message(WaitQueue& wait_queue);
 
-        void handle_remote_message(WaitQueue &wait_queue) const;
+        void handle_remote_message(WaitQueue& wait_queue) const;
 
-        void send_center_message(WaitQueue &wait_queue, Net::Poller &poller, bool write_notify);
+        void send_center_message(WaitQueue& wait_queue, Net::Poller& poller, bool write_notify);
 
-        void update_center_state(Net::Poller &poller) const;
+        void update_center_state(Net::Poller& poller) const;
 
-        void save_logs(WaitQueue &wait_queue);
+        void save_logs(WaitQueue& wait_queue);
 
-        void close_thread(WaitQueue &wait_queue, Net::Poller &poller, std::vector<Net::Event> &events);
+        void close_thread(WaitQueue& wait_queue, Net::Poller& poller, std::vector<Net::Event>& events);
 
 
-        LinkErrorType register_logger(MapIter parent_iter, Type type, const NodeID &node_id,
+        LinkErrorType register_logger(MapIter parent_iter, Type type, const NodeID& node_id,
                                       Base::TimeInterval timeout);
 
-        LinkErrorType register_logger(MapIter parent_iter, Type type, const NodeID &node_id,
-                                      Base::TimeInterval timeout, BufferIter &buf_iter,
-                                      Register_Logger &logger);
+        LinkErrorType register_logger(MapIter parent_iter, Type type, const NodeID& node_id,
+                                      Base::TimeInterval timeout, BufferIter& buf_iter,
+                                      Register_Logger& logger);
 
         BufferIter get_buffer_iter();
 
         std::pair<LinkErrorType, MapIter>
-        create_head_logger(const ServiceID &service, const NodeID &node,
+        create_head_logger(const ServiceID& service, const NodeID& node,
                            Base::TimeInterval timeout, bool is_branch);
 
         std::pair<LinkErrorType, MapIter>
-        create_head_logger(const ServiceID &service, const NodeID &node,
+        create_head_logger(const ServiceID& service, const NodeID& node,
                            Base::TimeInterval timeout, bool is_branch,
-                           BufferIter &buf_iter, Create_Logger &logger);
+                           BufferIter& buf_iter, Create_Logger& logger);
 
         std::pair<LinkErrorType, MapIter>
-        create_logger(const ServiceID &service, const NodeID &node, Base::TimeInterval timeout);
+        create_logger(const ServiceID& service, const NodeID& node, Base::TimeInterval timeout);
 
         std::pair<LinkErrorType, MapIter>
-        create_logger(const ServiceID &service, const NodeID &node, Base::TimeInterval timeout,
-                      BufferIter &buf_iter, Create_Logger &logger);
+        create_logger(const ServiceID& service, const NodeID& node, Base::TimeInterval timeout,
+                      BufferIter& buf_iter, Create_Logger& logger);
 
         void destroy_logger(MapIter iter);
 
-        void destroy_logger(MapIter iter, BufferIter &buf_iter, End_Logger &logger);
+        void destroy_logger(MapIter iter, BufferIter& buf_iter, End_Logger& logger);
 
-        void submit_buffer(Buffer &buf, Base::Lock<Base::Mutex> &lock);
+        void submit_buffer(Buffer& buf, Base::Lock<Base::Mutex>& lock);
 
 
-        bool clear_buffer(LinkLogMessage &message, bool can_send);
+        bool clear_buffer(LinkLogMessage& message, bool can_send);
 
-        bool logger_timeout(const LinkLogMessage &message) const;
+        bool logger_timeout(const LinkLogMessage& message) const;
 
-        bool node_offline(LinkLogMessage &message, Net::Poller &poller);
+        bool node_offline(LinkLogMessage& message, Net::Poller& poller);
 
-        void force_flush(std::vector<BufferIter> &flush_order, WaitQueue &wait_queue);
+        void force_flush(std::vector<BufferIter>& flush_order, WaitQueue& wait_queue);
 
-        void check_timeout(WaitQueue &wait_queue);
+        void check_timeout(WaitQueue& wait_queue);
 
     };
 

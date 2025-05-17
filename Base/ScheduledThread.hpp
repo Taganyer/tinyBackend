@@ -9,10 +9,10 @@
 
 #include <atomic>
 #include <memory>
-#include "Base/Thread.hpp"
-#include "Base/Condition.hpp"
-#include "Base/Container/List.hpp"
-#include "Base/Time/TimeInterval.hpp"
+#include "tinyBackend/Base/Thread.hpp"
+#include "tinyBackend/Base/Condition.hpp"
+#include "tinyBackend/Base/Container/List.hpp"
+#include "tinyBackend/Base/Time/TimeInterval.hpp"
 
 namespace Base {
 
@@ -26,7 +26,7 @@ namespace Base {
 
         virtual ~Scheduler() = default;
 
-        virtual void invoke(void* arg) = 0;
+        virtual void invoke(void *arg) = 0;
 
         virtual void force_invoke() = 0;
 
@@ -51,13 +51,13 @@ namespace Base {
 
         using ObjectPtr = Scheduler::SchedulerPtr;
 
-        void add_scheduler(const ObjectPtr &ptr);
+        void add_scheduler(const ObjectPtr& ptr);
 
-        void remove_scheduler(const ObjectPtr &ptr);
+        void remove_scheduler(const ObjectPtr& ptr);
 
-        void remove_scheduler_and_invoke(const ObjectPtr &ptr, void* arg);
+        void remove_scheduler_and_invoke(const ObjectPtr& ptr, void *arg);
 
-        void submit_task(Scheduler &scheduler, void *arg);
+        void submit_task(Scheduler& scheduler, void *arg);
 
         void shutdown_thread();
 
@@ -97,11 +97,11 @@ namespace Base {
 
         bool waiting(TimeInterval endTime);
 
-        void get_need_flush(std::vector<QueueIter> &need_flush);
+        void get_need_flush(std::vector<QueueIter>& need_flush);
 
-        void flush_need(std::vector<QueueIter> &need_flush);
+        void flush_need(std::vector<QueueIter>& need_flush);
 
-        void set_need_flush(std::vector<QueueIter> &need_flush);
+        void set_need_flush(std::vector<QueueIter>& need_flush);
 
         void invoke();
 

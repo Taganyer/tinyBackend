@@ -3,10 +3,10 @@
 //
 
 #include "../LinkLogServer.hpp"
-#include "Base/SystemLog.hpp"
-#include "Net/monitors/Poller.hpp"
-#include "Net/functions/Interface.hpp"
-#include "LogSystem/linkLog/LinkLogMessage.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Net/monitors/Poller.hpp"
+#include "tinyBackend/Net/functions/Interface.hpp"
+#include "tinyBackend/LogSystem/linkLog/LinkLogMessage.hpp"
 
 using namespace LogSystem;
 
@@ -22,7 +22,7 @@ using namespace Net;
             << " in " << __FUNCTION__;
 
 
-LinkLogServer::LinkLogServer(const Address &listen_address,
+LinkLogServer::LinkLogServer(const Address& listen_address,
                              ServerHandlerPtr handler,
                              std::string dictionary_path,
                              PartitionRank partition_rank) :
@@ -65,7 +65,7 @@ bool LinkLogServer::create_local_link() {
     return true;
 }
 
-void LinkLogServer::accept_center_link(Poller &poller) {
+void LinkLogServer::accept_center_link(Poller& poller) {
     auto [socket, address] = _acceptor.accept_connection();
     CHECK(socket, return)
     CHECK(socket.setNonBlock(true), return)
@@ -79,7 +79,7 @@ void LinkLogServer::accept_center_link(Poller &poller) {
     G_INFO << "Accepting center link: " << address.toIpPort();
 }
 
-void LinkLogServer::destroy_local_link(Poller &poller) {
+void LinkLogServer::destroy_local_link(Poller& poller) {
     assert(_receiver.agent_valid());
     assert(_receiver.input().readable_len() == 0);
     poller.remove_fd(_receiver.fd(), false);
@@ -89,7 +89,7 @@ void LinkLogServer::destroy_local_link(Poller &poller) {
     _acceptor.close();
 }
 
-void LinkLogServer::destroy_center_link(Poller &poller) {
+void LinkLogServer::destroy_center_link(Poller& poller) {
     _center.input().clear_input();
     _center.output().clear_output();
     poller.remove_fd(_center.fd(), false);
@@ -99,11 +99,11 @@ void LinkLogServer::destroy_center_link(Poller &poller) {
         poller.add_fd(Event { _acceptor.socket().fd(), Event::Read });
 }
 
-bool LinkLogServer::safe_notify(const LinkLogMessage &message) const {
+bool LinkLogServer::safe_notify(const LinkLogMessage& message) const {
     return ops::write(_notifier.fd(), &message, sizeof(message)) == sizeof(message);
 }
 
-void LinkLogServer::safe_write(BufferIter buf_iter, const void* data, uint32 size) {
+void LinkLogServer::safe_write(BufferIter buf_iter, const void *data, uint32 size) {
     Lock l(buf_iter->mutex);
     auto rest = buf_iter->buf.size() - buf_iter->index;
     if (rest < size)
@@ -112,8 +112,8 @@ void LinkLogServer::safe_write(BufferIter buf_iter, const void* data, uint32 siz
     buf_iter->index += size;
 }
 
-void LinkLogServer::safe_error(BufferIter buf_iter, const ServiceID &service,
-                               const NodeID &node, LinkErrorType error) {
+void LinkLogServer::safe_error(BufferIter buf_iter, const ServiceID& service,
+                               const NodeID& node, LinkErrorType error) {
     Lock l(buf_iter->mutex);
     auto now = Unix_to_now();
     Error_Logger logger(service, node, now, error);
@@ -149,7 +149,7 @@ void LinkLogServer::start_thread() {
     _thread.start();
 }
 
-void LinkLogServer::init_thread(Poller &poller, std::vector<BufferIter> &flush_order) {
+void LinkLogServer::init_thread(Poller& poller, std::vector<BufferIter>& flush_order) {
     Event event { _receiver.fd() };
     event.set_read();
     event.set_HangUp();
@@ -164,7 +164,7 @@ void LinkLogServer::init_thread(Poller &poller, std::vector<BufferIter> &flush_o
         flush_order.push_back(it);
 }
 
-bool LinkLogServer::accept_message(Poller &poller, std::vector<Event> &events) {
+bool LinkLogServer::accept_message(Poller& poller, std::vector<Event>& events) {
     int get = poller.get_aliveEvent(GET_ACTIVE_TIMEOUT_MS, events);
     CHECK(get >= 0, return false);
     bool center_can_send = false;
@@ -210,38 +210,38 @@ bool LinkLogServer::accept_message(Poller &poller, std::vector<Event> &events) {
     return center_can_send;
 }
 
-bool LinkLogServer::handle_local_message(WaitQueue &wait_queue) {
+bool LinkLogServer::handle_local_message(WaitQueue& wait_queue) {
     LinkLogMessage message;
     assert(_receiver.agent_valid());
     while (_receiver.input().fix_read(&message, sizeof(message))) {
         switch (message.type) {
-        case LinkLogMessage::ClearBuffer:
-            if (!clear_buffer(message, wait_queue.empty()))
-                wait_queue.push(message);
-            break;
-        case LinkLogMessage::ShutDownServer:
-            return true;
-        default:
-            ASSERT_WRONG_TYPE(message.type)
+            case LinkLogMessage::ClearBuffer:
+                if (!clear_buffer(message, wait_queue.empty()))
+                    wait_queue.push(message);
+                break;
+            case LinkLogMessage::ShutDownServer:
+                return true;
+            default:
+                ASSERT_WRONG_TYPE(message.type)
         }
     }
     return false;
 }
 
-void LinkLogServer::handle_remote_message(WaitQueue &wait_queue) const {
+void LinkLogServer::handle_remote_message(WaitQueue& wait_queue) const {
     LinkLogMessage message;
     while (_center.input().fix_read(&message, sizeof(message))) {
         switch (message.type) {
-        case LinkLogMessage::CentralOffline:
-            wait_queue.emplace(LinkLogMessage::NodeOffline);
-            return;
-        default:
-            ASSERT_WRONG_TYPE(message.type)
+            case LinkLogMessage::CentralOffline:
+                wait_queue.emplace(LinkLogMessage::NodeOffline);
+                return;
+            default:
+                ASSERT_WRONG_TYPE(message.type)
         }
     }
 }
 
-void LinkLogServer::send_center_message(WaitQueue &wait_queue, Poller &poller, bool write_notify) {
+void LinkLogServer::send_center_message(WaitQueue& wait_queue, Poller& poller, bool write_notify) {
     if (_center.agent_valid() && _center.can_send() && write_notify) {
         CHECK(_center.send_message() > 0,
               _handler->center_error(error_mark { error_types::Write, errno });
@@ -249,27 +249,27 @@ void LinkLogServer::send_center_message(WaitQueue &wait_queue, Poller &poller, b
     };
 
     while (!wait_queue.empty()) {
-        auto &message = wait_queue.front();
+        auto& message = wait_queue.front();
         bool pop = true;
         switch (message.type) {
-        case LinkLogMessage::ClearBuffer:
-            pop = clear_buffer(message, true);
-            break;
-        case LinkLogMessage::TimeOut:
-            pop = logger_timeout(message);
-            break;
-        case LinkLogMessage::NodeOffline:
-            pop = node_offline(message, poller);
-            break;
-        default:
-            ASSERT_WRONG_TYPE(message.type)
+            case LinkLogMessage::ClearBuffer:
+                pop = clear_buffer(message, true);
+                break;
+            case LinkLogMessage::TimeOut:
+                pop = logger_timeout(message);
+                break;
+            case LinkLogMessage::NodeOffline:
+                pop = node_offline(message, poller);
+                break;
+            default:
+                ASSERT_WRONG_TYPE(message.type)
         }
         if (pop) wait_queue.pop();
         else break;
     }
 }
 
-void LinkLogServer::update_center_state(Poller &poller) const {
+void LinkLogServer::update_center_state(Poller& poller) const {
     if (_center.agent_valid()) {
         Event event { _center.fd() };
         event.set_read();
@@ -282,8 +282,8 @@ void LinkLogServer::update_center_state(Poller &poller) const {
     }
 }
 
-void LinkLogServer::save_logs(WaitQueue &wait_queue) {
-    for (auto &[mutex, index, ref_count, buf, last_flush_time] : _buffers) {
+void LinkLogServer::save_logs(WaitQueue& wait_queue) {
+    for (auto& [mutex, index, ref_count, buf, last_flush_time] : _buffers) {
         Lock l(mutex);
         if (!buf.data() || index == 0) continue;
         auto written = _encoder.write_to_file(buf.data(), index);
@@ -297,7 +297,7 @@ void LinkLogServer::save_logs(WaitQueue &wait_queue) {
     }
 }
 
-void LinkLogServer::close_thread(WaitQueue &wait_queue, Poller &poller, std::vector<Event> &events) {
+void LinkLogServer::close_thread(WaitQueue& wait_queue, Poller& poller, std::vector<Event>& events) {
     Lock l(_mutex);
     destroy_local_link(poller);
     save_logs(wait_queue);
@@ -314,7 +314,7 @@ void LinkLogServer::close_thread(WaitQueue &wait_queue, Poller &poller, std::vec
 }
 
 LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
-                                             const NodeID &node_id, TimeInterval timeout) {
+                                             const NodeID& node_id, TimeInterval timeout) {
     BufferIter buf_iter;
     Register_Logger logger;
     auto state = register_logger(parent_iter, type, node_id, timeout, buf_iter, logger);
@@ -330,8 +330,8 @@ LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
 }
 
 LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
-                                             const NodeID &node_id, TimeInterval timeout,
-                                             BufferIter &buf_iter, Register_Logger &logger) {
+                                             const NodeID& node_id, TimeInterval timeout,
+                                             BufferIter& buf_iter, Register_Logger& logger) {
     Lock l(_mutex);
     buf_iter = parent_iter->second.buf_iter;
     if (parent_iter->second.subtype == Follow)
@@ -341,7 +341,7 @@ LinkErrorType LinkLogServer::register_logger(MapIter parent_iter, Type type,
     if (parent_iter->second.subtype != type)
         return WrongType;
     if (parent_iter->second.subtype == Decision
-        && parent_iter->second.sub_decision_created)
+    && parent_iter->second.sub_decision_created)
         return ExtraDecision;
 
     TimeInterval now = Unix_to_now();
@@ -377,7 +377,7 @@ LinkLogServer::BufferIter LinkLogServer::get_buffer_iter() {
 }
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
-LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
+LinkLogServer::create_head_logger(const ServiceID& service, const NodeID& node,
                                   TimeInterval timeout, bool is_branch) {
     BufferIter buf_iter;
     Create_Logger logger;
@@ -393,9 +393,9 @@ LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
 }
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
-LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
+LinkLogServer::create_head_logger(const ServiceID& service, const NodeID& node,
                                   TimeInterval timeout, bool is_branch,
-                                  BufferIter &buf_iter, Create_Logger &logger) {
+                                  BufferIter& buf_iter, Create_Logger& logger) {
     Lock l(_mutex);
     Type type = is_branch ? BranchHead : Head;
     auto [new_iter, success] = _nodes.try_emplace(
@@ -420,7 +420,7 @@ LinkLogServer::create_head_logger(const ServiceID &service, const NodeID &node,
 }
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
-LinkLogServer::create_logger(const ServiceID &service, const NodeID &node,
+LinkLogServer::create_logger(const ServiceID& service, const NodeID& node,
                              TimeInterval timeout) {
     BufferIter buf_iter;
     Create_Logger logger;
@@ -440,9 +440,9 @@ LinkLogServer::create_logger(const ServiceID &service, const NodeID &node,
 }
 
 std::pair<LinkErrorType, LinkLogServer::MapIter>
-LinkLogServer::create_logger(const ServiceID &service, const NodeID &node,
+LinkLogServer::create_logger(const ServiceID& service, const NodeID& node,
                              TimeInterval timeout,
-                             BufferIter &buf_iter, Create_Logger &logger) {
+                             BufferIter& buf_iter, Create_Logger& logger) {
     Lock l(_mutex);
     auto iter = _nodes.find(ID(service, node));
     if (iter == _nodes.end()) {
@@ -479,7 +479,7 @@ void LinkLogServer::destroy_logger(MapIter iter) {
     _handler->logger_end(logger.service(), logger.node(), logger.end_time());
 }
 
-void LinkLogServer::destroy_logger(MapIter iter, BufferIter &buf_iter, End_Logger &logger) {
+void LinkLogServer::destroy_logger(MapIter iter, BufferIter& buf_iter, End_Logger& logger) {
     Lock l(_mutex);
     assert(iter == _nodes.find(iter->first));
 
@@ -494,7 +494,7 @@ void LinkLogServer::destroy_logger(MapIter iter, BufferIter &buf_iter, End_Logge
     _nodes.erase(iter);
 }
 
-void LinkLogServer::submit_buffer(Buffer &buf, Lock<Mutex> &lock) {
+void LinkLogServer::submit_buffer(Buffer& buf, Lock<Mutex>& lock) {
     if (buf.buf && buf.index != 0) {
         auto new_buf = new BufferPool::Buffer(_pool.get(BLOCK_SIZE));
         LinkLogMessage message(LinkLogMessage::ClearBuffer);
@@ -531,8 +531,8 @@ void LinkLogServer::submit_buffer(Buffer &buf, Lock<Mutex> &lock) {
     }
 }
 
-bool LinkLogServer::clear_buffer(LinkLogMessage &message, bool can_send) {
-    auto &[size, flushed, begin, buf_ptr] = message.get<LinkLogMessage::ClearBuffer_>();
+bool LinkLogServer::clear_buffer(LinkLogMessage& message, bool can_send) {
+    auto& [size, flushed, begin, buf_ptr] = message.get<LinkLogMessage::ClearBuffer_>();
     auto buf = (BufferPool::Buffer *) buf_ptr;
     if (!flushed) {
         _encoder.write_to_file(buf->data(), size);
@@ -551,13 +551,13 @@ bool LinkLogServer::clear_buffer(LinkLogMessage &message, bool can_send) {
     return true;
 }
 
-bool LinkLogServer::logger_timeout(const LinkLogMessage &message) const {
+bool LinkLogServer::logger_timeout(const LinkLogMessage& message) const {
     if (!_center.agent_valid()) return true;
     auto written = _center.output().fix_write(message.arr, sizeof(Error_Logger));
     return written == sizeof(Error_Logger);
 }
 
-bool LinkLogServer::node_offline(LinkLogMessage &message, Poller &poller) {
+bool LinkLogServer::node_offline(LinkLogMessage& message, Poller& poller) {
     if (!_center.agent_valid()) return true;
 
     if (message.get<LinkLogMessage::NodeOffline_>().sent) {
@@ -574,7 +574,7 @@ bool LinkLogServer::node_offline(LinkLogMessage &message, Poller &poller) {
     return false;
 }
 
-void LinkLogServer::force_flush(std::vector<BufferIter> &flush_order, WaitQueue &wait_queue) {
+void LinkLogServer::force_flush(std::vector<BufferIter>& flush_order, WaitQueue& wait_queue) {
     std::sort(flush_order.begin(), flush_order.end(),
               [] (BufferIter a, BufferIter b) {
                   return a->last_flush_time < b->last_flush_time;
@@ -602,17 +602,17 @@ void LinkLogServer::force_flush(std::vector<BufferIter> &flush_order, WaitQueue 
     _encoder.flush();
 }
 
-void LinkLogServer::check_timeout(WaitQueue &wait_queue) {
+void LinkLogServer::check_timeout(WaitQueue& wait_queue) {
     Lock l(_mutex);
     auto now = Unix_to_now();
     while (!_timers.empty() && _timers.top().expire_time <= now) {
-        auto &timer = _timers.top();
+        auto& timer = _timers.top();
         if (timer.check_timeout()) {
             auto iter = timer.iter;
             if (iter->second.created) {
                 if (_center.agent_valid()) {
                     LinkLogMessage msg(LinkLogMessage::TimeOut);
-                    auto &time_out = msg.get<LinkLogMessage::TimeOut_>().time_out;
+                    auto& time_out = msg.get<LinkLogMessage::TimeOut_>().time_out;
                     time_out.ot = ErrorLogger;
                     time_out.service() = iter->first.serviceID();
                     time_out.node() = iter->first.nodeID();
@@ -626,7 +626,7 @@ void LinkLogServer::check_timeout(WaitQueue &wait_queue) {
                 if (iter->second.type != Decision) {
                     if (_center.agent_valid()) {
                         LinkLogMessage msg(LinkLogMessage::TimeOut);
-                        auto &time_out = msg.get<LinkLogMessage::TimeOut_>().time_out;
+                        auto& time_out = msg.get<LinkLogMessage::TimeOut_>().time_out;
                         time_out.ot = ErrorLogger;
                         time_out.service() = iter->first.serviceID();
                         time_out.node() = iter->first.nodeID();

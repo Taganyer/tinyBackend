@@ -21,24 +21,24 @@ namespace Base {
     public:
         iFile() = default;
 
-        explicit iFile(const char* path, bool binary = false);
+        explicit iFile(const char *path, bool binary = false);
 
-        iFile(iFile &&other) noexcept;
+        iFile(iFile&& other) noexcept;
 
-        iFile& operator=(iFile &&other) noexcept;
+        iFile& operator=(iFile&& other) noexcept;
 
         ~iFile();
 
-        bool open(const char* path, bool binary = false);
+        bool open(const char *path, bool binary = false);
 
         bool close();
 
         [[nodiscard]] string read(uint64 size) const;
 
-        uint64 read(uint64 size, void* dest) const;
+        uint64 read(uint64 size, void *dest) const;
 
-        template<std::size_t size>
-        int64 read(const BufferArray<size> &array) const;
+        template <std::size_t size>
+        int64 read(const BufferArray<size>& array) const;
 
         [[nodiscard]] int getChar() const;
 
@@ -54,11 +54,11 @@ namespace Base {
 
         [[nodiscard]] string getline() const;
 
-        int64 getline(char* dest, size_t size) const;
+        int64 getline(char *dest, size_t size) const;
 
         [[nodiscard]] string get_until(int target) const;
 
-        int64 get_until(char target, char* dest, size_t size = 256) const;
+        int64 get_until(char target, char *dest, size_t size = 256) const;
 
         [[nodiscard]] string getAll() const;
 
@@ -91,12 +91,12 @@ namespace Base {
 
         [[nodiscard]] FILE* get_fp() const { return _file; };
 
-        [[nodiscard]] bool get_stat(struct stat* ptr) const;
+        [[nodiscard]] bool get_stat(struct stat *ptr) const;
 
         [[nodiscard]] uint64 size() const;
 
     protected:
-        FILE* _file = nullptr;
+        FILE *_file = nullptr;
 
         std::string _path;
 
@@ -105,16 +105,16 @@ namespace Base {
 }
 
 namespace Base {
-    inline iFile::iFile(const char* path, bool binary) {
+    inline iFile::iFile(const char *path, bool binary) {
         open(path, binary);
     }
 
-    inline iFile::iFile(iFile &&other) noexcept: _file(other._file),
+    inline iFile::iFile(iFile&& other) noexcept: _file(other._file),
         _path(std::move(other._path)) {
         other._file = nullptr;
     }
 
-    inline iFile& iFile::operator=(iFile &&other) noexcept {
+    inline iFile& iFile::operator=(iFile&& other) noexcept {
         close();
         _file = other._file;
         other._file = nullptr;
@@ -126,7 +126,7 @@ namespace Base {
         close();
     }
 
-    inline bool iFile::open(const char* path, bool binary) {
+    inline bool iFile::open(const char *path, bool binary) {
         close();
         _file = fopen(path, binary ? "rb" : "r");
         if (_file)
@@ -151,7 +151,7 @@ namespace Base {
         return ans;
     }
 
-    inline uint64 iFile::read(uint64 size, void* dest) const {
+    inline uint64 iFile::read(uint64 size, void *dest) const {
         return fread(dest, 1, size, _file);
     }
 
@@ -198,12 +198,12 @@ namespace Base {
         return get_until('\n');
     }
 
-    inline int64 iFile::getline(char* dest, size_t size) const {
+    inline int64 iFile::getline(char *dest, size_t size) const {
         return getdelim(&dest, &size, '\n', _file);
     }
 
     inline string iFile::get_until(int target) const {
-        char* ptr = nullptr;
+        char *ptr = nullptr;
         size_t t = getdelim(&ptr, &t, target, _file);
         if (t && ptr[t - 1] == target) --t;
         if (t == -1) t = 0;
@@ -212,7 +212,7 @@ namespace Base {
         return ans;
     }
 
-    inline int64 iFile::get_until(char target, char* dest, size_t size) const {
+    inline int64 iFile::get_until(char target, char *dest, size_t size) const {
         return getdelim(&dest, &size, target, _file);
     }
 
@@ -249,7 +249,7 @@ namespace Base {
         return success;
     }
 
-    inline bool iFile::get_stat(struct stat* ptr) const {
+    inline bool iFile::get_stat(struct stat *ptr) const {
         return is_open() && fstat(get_fd(), ptr) == 0;
     }
 

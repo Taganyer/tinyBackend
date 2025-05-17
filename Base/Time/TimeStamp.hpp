@@ -5,7 +5,7 @@
 #ifndef BASE_TIMESTAMP_HPP
 #define BASE_TIMESTAMP_HPP
 
-#include "Base/Time/Time.hpp"
+#include "tinyBackend/Base/Time/Time.hpp"
 
 namespace Base {
 
@@ -25,9 +25,9 @@ namespace Base {
 
         explicit constexpr TimeStamp(int64 us_SE) : _us_SE(us_SE) {};
 
-        explicit TimeStamp(const timeval &tv) : _us_SE(expand_tv(tv)) {};
+        explicit TimeStamp(const timeval& tv) : _us_SE(expand_tv(tv)) {};
 
-        explicit TimeStamp(const Time &time);
+        explicit TimeStamp(const Time& time);
 
         [[nodiscard]] constexpr int64 us_since_epoch() const { return _us_SE; };
 
@@ -44,7 +44,7 @@ namespace Base {
     private:
         int64 _us_SE = 0;
 
-        static int64 expand_tv(const timeval &tv) {
+        static int64 expand_tv(const timeval& tv) {
             return tv.tv_sec * coefficient + tv.tv_usec;
         }
 
@@ -72,23 +72,23 @@ namespace Base {
 
 #undef TS_operator
 
-    inline double operator-(const TimeStamp &left, const TimeStamp &right) {
+    inline double operator-(const TimeStamp& left, const TimeStamp& right) {
         return (double) (left.us_since_epoch() - right.us_since_epoch()) / TimeStamp::coefficient;
     }
 
-    inline TimeStamp operator+(const TimeStamp &time, double seconds) {
+    inline TimeStamp operator+(const TimeStamp& time, double seconds) {
         auto us = (int64) (seconds * TimeStamp::coefficient);
         return TimeStamp(time.us_since_epoch() + us);
     }
 
-    inline TimeStamp operator-(const TimeStamp &time, double seconds) {
+    inline TimeStamp operator-(const TimeStamp& time, double seconds) {
         auto us = (int64) (seconds * TimeStamp::coefficient);
         return TimeStamp(time.us_since_epoch() - us);
     }
 
-    std::string to_string(const TimeStamp &time, bool show_us = true, bool UTC = false);
+    std::string to_string(const TimeStamp& time, bool show_us = true, bool UTC = false);
 
-    void format(char* dest, const TimeStamp &time, bool show_us = true, bool UTC = false);
+    void format(char *dest, const TimeStamp& time, bool show_us = true, bool UTC = false);
 
 }
 

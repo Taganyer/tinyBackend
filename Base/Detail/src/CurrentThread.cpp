@@ -8,7 +8,7 @@
 #include <execinfo.h>
 #include <sys/syscall.h>
 #include "../CurrentThread.hpp"
-#include "Base/Exception.hpp"
+#include "tinyBackend/Base/Exception.hpp"
 
 using namespace Base;
 
@@ -16,7 +16,7 @@ CurrentThread::TerminalFun CurrentThread::global_terminal_function;
 
 thread_local CurrentThread::TerminalFun CurrentThread::local_terminal_function;
 
-FILE* CurrentThread::error_message_file = stderr;
+FILE *CurrentThread::error_message_file = stderr;
 
 const pthread_t CurrentThread::main_thread_id = [] {
     std::set_terminate(terminal);
@@ -37,7 +37,7 @@ thread_local string CurrentThread::this_thread_name = [] {
     }
 }();
 
-thread_local void* CurrentThread::this_thread_mark_ptr = nullptr;
+thread_local void *CurrentThread::this_thread_mark_ptr = nullptr;
 
 void CurrentThread::yield_this_thread() {
     sched_yield();
@@ -46,13 +46,13 @@ void CurrentThread::yield_this_thread() {
 string CurrentThread::stackTrace(bool demangle) {
     string stack;
     constexpr int max_frames = 200;
-    void* frame[max_frames];
+    void *frame[max_frames];
     int nptrs = ::backtrace(frame, max_frames);
-    if (char** strings = ::backtrace_symbols(frame, nptrs)) {
+    if (char **strings = ::backtrace_symbols(frame, nptrs)) {
         for (int i = 1; i < nptrs; ++i) {
             if (demangle) {
-                char* left_par = nullptr,* plus = nullptr;
-                for (char* p = strings[i]; *p; ++p) {
+                char *left_par = nullptr, *plus = nullptr;
+                for (char *p = strings[i]; *p; ++p) {
                     if (*p == '(') left_par = p;
                     else if (*p == '+') plus = p;
                 }
@@ -60,7 +60,7 @@ string CurrentThread::stackTrace(bool demangle) {
                 if (left_par && plus && left_par < plus) {
                     *plus = '\0';
                     int status = 0;
-                    char* ret = abi::__cxa_demangle(left_par + 1, nullptr, nullptr, &status);
+                    char *ret = abi::__cxa_demangle(left_par + 1, nullptr, nullptr, &status);
                     *plus = '+';
                     if (status == 0) {
                         stack.append(strings[i], left_par + 1);
@@ -86,7 +86,7 @@ bool CurrentThread::set_exit_function(ExitFun fun) {
     return std::atexit(fun) == 0;
 }
 
-void CurrentThread::emergency_exit(const string &message) {
+void CurrentThread::emergency_exit(const string& message) {
     fprintf(error_message_file, "emergency exit in Thread %s:\n", thread_name().c_str());
     fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
     fprintf(error_message_file, "message: %s\n", message.c_str());
@@ -102,7 +102,7 @@ void CurrentThread::exit(const string& message) {
     terminal();
 }
 
-void CurrentThread::print_error_message(const string &message) {
+void CurrentThread::print_error_message(const string& message) {
     fprintf(error_message_file, "error message: %s\n", message.c_str());
     fflush(error_message_file);
 }
@@ -115,7 +115,7 @@ void CurrentThread::set_local_terminal_function(TerminalFun fun) {
     local_terminal_function = std::move(fun);
 }
 
-void CurrentThread::set_error_message_file(FILE* file) {
+void CurrentThread::set_error_message_file(FILE *file) {
     error_message_file = file;
     setvbuf(file, nullptr, _IONBF, 0);
 }
@@ -125,13 +125,13 @@ void CurrentThread::terminal() {
     if (eptr && error_message_file) {
         try {
             std::rethrow_exception(eptr);
-        } catch (const Exception &ex) {
+        } catch (const Exception& ex) {
             fprintf(error_message_file, "Base::Exception in Thread %s:\n", thread_name().c_str());
             fprintf(error_message_file, "Reason: %s:\n", ex.what());
             fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));
             fprintf(error_message_file, "StackTrace: %s:\n", ex.stackTrace());
             fflush(error_message_file);
-        } catch (const std::exception &ex) {
+        } catch (const std::exception& ex) {
             fprintf(error_message_file, "std::exception in Thread %s:\n", thread_name().c_str());
             fprintf(error_message_file, "Reason: %s:\n", ex.what());
             fprintf(error_message_file, "errno: %d %s\n", errno, strerror(errno));

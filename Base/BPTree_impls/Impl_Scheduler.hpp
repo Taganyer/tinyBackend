@@ -9,10 +9,10 @@
 
 #include "Interpreter.hpp"
 #include "BPTreeErrors.hpp"
-#include "Base/LRUCache.hpp"
-#include "Base/ScheduledThread.hpp"
-#include "Base/Detail/BlockFile.hpp"
-#include "Base/Buffer/BufferPool.hpp"
+#include "tinyBackend/Base/LRUCache.hpp"
+#include "tinyBackend/Base/ScheduledThread.hpp"
+#include "tinyBackend/Base/Detail/BlockFile.hpp"
+#include "tinyBackend/Base/Buffer/BufferPool.hpp"
 
 
 namespace Base {

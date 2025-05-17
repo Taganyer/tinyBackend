@@ -20,24 +20,24 @@ namespace Base {
     public:
         oFile() = default;
 
-        explicit oFile(const char* path, bool append = false, bool binary = false);
+        explicit oFile(const char *path, bool append = false, bool binary = false);
 
-        oFile(oFile &&other) noexcept;
+        oFile(oFile&& other) noexcept;
 
-        oFile& operator=(oFile &&other) noexcept;
+        oFile& operator=(oFile&& other) noexcept;
 
         ~oFile();
 
-        bool open(const char* path, bool append = false, bool binary = false);
+        bool open(const char *path, bool append = false, bool binary = false);
 
         bool close();
 
-        uint64 write(const void* str, size_t len = -1) const;
+        uint64 write(const void *str, size_t len = -1) const;
 
         template <std::size_t size>
-        int64 write(const BufferArray<size> &array) const;
+        int64 write(const BufferArray<size>& array) const;
 
-        uint64 put_line(const char* str, size_t len = -1) const;
+        uint64 put_line(const char *str, size_t len = -1) const;
 
         [[nodiscard]] int putChar(int ch) const;
 
@@ -59,8 +59,8 @@ namespace Base {
 
         bool delete_file();
 
-        template <typename...Args>
-        int formatPut(const char* f, Args...args) {
+        template <typename... Args>
+        int formatPut(const char *f, Args... args) {
             return fprintf(_file, f, args...);
         };
 
@@ -77,10 +77,10 @@ namespace Base {
 
         [[nodiscard]] FILE* get_fp() const { return _file; };
 
-        [[nodiscard]] bool get_stat(struct stat* ptr) const;
+        [[nodiscard]] bool get_stat(struct stat *ptr) const;
 
     protected:
-        FILE* _file = nullptr;
+        FILE *_file = nullptr;
 
         std::string _path;
 
@@ -91,15 +91,15 @@ namespace Base {
 
 namespace Base {
 
-    inline oFile::oFile(const char* path, bool append, bool binary) {
+    inline oFile::oFile(const char *path, bool append, bool binary) {
         open(path, append, binary);
     }
 
-    inline oFile::oFile(oFile &&other) noexcept: _file(other._file) {
+    inline oFile::oFile(oFile&& other) noexcept: _file(other._file) {
         other._file = nullptr;
     }
 
-    inline oFile& oFile::operator=(oFile &&other) noexcept {
+    inline oFile& oFile::operator=(oFile&& other) noexcept {
         close();
         _file = other._file;
         other._file = nullptr;
@@ -111,7 +111,7 @@ namespace Base {
         close();
     }
 
-    inline bool oFile::open(const char* path, bool append, bool binary) {
+    inline bool oFile::open(const char *path, bool append, bool binary) {
         close();
         char mod[3] { 'w', 'b', '\0' };
         if (append) mod[0] = 'a';
@@ -132,17 +132,17 @@ namespace Base {
         return false;
     }
 
-    inline uint64 oFile::write(const void* str, size_t len) const {
+    inline uint64 oFile::write(const void *str, size_t len) const {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
 
     template <std::size_t N>
-    int64 oFile::write(const BufferArray<N> &array) const {
+    int64 oFile::write(const BufferArray<N>& array) const {
         return ::writev(get_fd(), array.data(), N);
     }
 
-    inline uint64 oFile::put_line(const char* str, size_t len) const {
+    inline uint64 oFile::put_line(const char *str, size_t len) const {
         size_t flag = write(str, len);
         if (fputc('\n', _file) != EOF) ++flag;
         return flag;
@@ -193,7 +193,7 @@ namespace Base {
         return success;
     }
 
-    inline bool oFile::get_stat(struct stat* ptr) const {
+    inline bool oFile::get_stat(struct stat *ptr) const {
         return is_open() && fstat(get_fd(), ptr) == 0;
     }
 

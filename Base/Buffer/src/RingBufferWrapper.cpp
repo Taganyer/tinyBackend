@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cassert>
 
-uint32 Base::RingBufferWrapper::read(void* dest, uint32 size) const {
+uint32 Base::RingBufferWrapper::read(void *dest, uint32 size) const {
     if (size > readable_len()) size = readable_len();
     if (auto len = end() - _read; len >= size) {
         std::memcpy(dest, _read, size);
@@ -18,7 +18,7 @@ uint32 Base::RingBufferWrapper::read(void* dest, uint32 size) const {
     return size;
 }
 
-uint32 Base::RingBufferWrapper::read(uint32 N, const iovec* array) const {
+uint32 Base::RingBufferWrapper::read(uint32 N, const iovec *array) const {
     uint32 read_len = 0;
     for (; N > 0; --N, ++array) {
         if (array->iov_len == 0) continue;
@@ -28,7 +28,7 @@ uint32 Base::RingBufferWrapper::read(uint32 N, const iovec* array) const {
     return read_len;
 }
 
-uint32 Base::RingBufferWrapper::read(const OutputBuffer &buffer, uint32 size) const {
+uint32 Base::RingBufferWrapper::read(const OutputBuffer& buffer, uint32 size) const {
     if (this == &buffer) return 0;
     if (size > readable_len()) size = readable_len();
     size = buffer.write(read_array(size));
@@ -36,11 +36,11 @@ uint32 Base::RingBufferWrapper::read(const OutputBuffer &buffer, uint32 size) co
     return size;
 }
 
-uint32 Base::RingBufferWrapper::try_read(void* dest, uint32 size, uint32 offset) const {
+uint32 Base::RingBufferWrapper::try_read(void *dest, uint32 size, uint32 offset) const {
     if (offset >= readable_len()) return 0;
     if (offset + size > readable_len())
         size = readable_len() - offset;
-    const char* read_record = _read + offset;
+    const char *read_record = _read + offset;
     if (read_record >= end()) read_record -= _size;
 
     if (auto len = end() - read_record; len >= size) {
@@ -53,7 +53,7 @@ uint32 Base::RingBufferWrapper::try_read(void* dest, uint32 size, uint32 offset)
     return size;
 }
 
-uint32 Base::RingBufferWrapper::try_read(uint32 N, const iovec* array, uint32 offset) const {
+uint32 Base::RingBufferWrapper::try_read(uint32 N, const iovec *array, uint32 offset) const {
     uint32 read_size = 0;
     for (; N > 0; --N, ++array) {
         if (array->iov_len == 0) continue;
@@ -63,7 +63,7 @@ uint32 Base::RingBufferWrapper::try_read(uint32 N, const iovec* array, uint32 of
     return read_size;
 }
 
-uint32 Base::RingBufferWrapper::write(const void* target, uint32 size) const {
+uint32 Base::RingBufferWrapper::write(const void *target, uint32 size) const {
     uint32 writable = writable_len();
     if (size > writable) size = writable;
     if (_write + size <= end()) {
@@ -78,7 +78,7 @@ uint32 Base::RingBufferWrapper::write(const void* target, uint32 size) const {
     return size;
 }
 
-uint32 Base::RingBufferWrapper::write(uint32 N, const iovec* array) const {
+uint32 Base::RingBufferWrapper::write(uint32 N, const iovec *array) const {
     uint32 written = 0;
     for (; N > 0; --N, ++array) {
         if (array->iov_len == 0) continue;
@@ -88,7 +88,7 @@ uint32 Base::RingBufferWrapper::write(uint32 N, const iovec* array) const {
     return written;
 }
 
-uint32 Base::RingBufferWrapper::write(const InputBuffer &buffer, uint32 size) const {
+uint32 Base::RingBufferWrapper::write(const InputBuffer& buffer, uint32 size) const {
     if (this == &buffer) return 0;
     if (size > writable_len()) size = writable_len();
     size = buffer.read(write_array(size));
@@ -96,7 +96,7 @@ uint32 Base::RingBufferWrapper::write(const InputBuffer &buffer, uint32 size) co
     return size;
 }
 
-uint32 Base::RingBufferWrapper::try_write(const void* target, uint32 size, uint32 offset) const {
+uint32 Base::RingBufferWrapper::try_write(const void *target, uint32 size, uint32 offset) const {
     if (offset >= writable_len()) return 0;
     if (offset + size > writable_len()) size = writable_len() - offset;
     if (offset >= continuously_writable()) {
@@ -111,7 +111,7 @@ uint32 Base::RingBufferWrapper::try_write(const void* target, uint32 size, uint3
     return size;
 }
 
-uint32 Base::RingBufferWrapper::try_write(uint32 N, const iovec* array, uint32 offset) const {
+uint32 Base::RingBufferWrapper::try_write(uint32 N, const iovec *array, uint32 offset) const {
     uint32 written = 0;
     for (; N > 0; --N, ++array) {
         if (array->iov_len == 0) continue;
@@ -121,11 +121,11 @@ uint32 Base::RingBufferWrapper::try_write(uint32 N, const iovec* array, uint32 o
     return written;
 }
 
-uint32 Base::RingBufferWrapper::change_written(uint32 offset, const void* data, uint32 size) const {
+uint32 Base::RingBufferWrapper::change_written(uint32 offset, const void *data, uint32 size) const {
     if (offset > readable_len()) return 0;
     if (offset + size > readable_len())
         size = readable_len() - offset;
-    char* read_record = _read + offset;
+    char *read_record = _read + offset;
     if (read_record >= end()) read_record -= _size;
     if (auto len = end() - read_record; len >= size) {
         std::memcpy(read_record, data, size);
@@ -137,7 +137,7 @@ uint32 Base::RingBufferWrapper::change_written(uint32 offset, const void* data, 
     return size;
 }
 
-uint32 Base::RingBufferWrapper::change_written(uint32 offset, uint32 N, const iovec* array) const {
+uint32 Base::RingBufferWrapper::change_written(uint32 offset, uint32 N, const iovec *array) const {
     uint32 written = 0;
     for (; N > 0; --N, ++array) {
         if (array->iov_len == 0) continue;
@@ -232,13 +232,13 @@ void Base::RingBufferWrapper::reposition() const {
     } else {
         auto len = end() - _read, another = _readable - len;
         if (len < another) {
-            auto* t = new char[len];
+            auto *t = new char[len];
             std::memcpy(t, _read, len);
             std::memcpy(_buffer + len, _buffer, another);
             std::memcpy(_buffer, t, len);
             delete[] t;
         } else {
-            auto* t = new char[another];
+            auto *t = new char[another];
             std::memcpy(t, _buffer, another);
             std::memcpy(_buffer, _read, len);
             std::memcpy(_buffer + len, t, another);
@@ -249,9 +249,9 @@ void Base::RingBufferWrapper::reposition() const {
     _write = _read + _readable;
 }
 
-char* Base::RingBufferWrapper::resize(char* buf, uint32 size) {
+char* Base::RingBufferWrapper::resize(char *buf, uint32 size) {
     assert(readable_len() <= size);
-    char* old = _buffer;
+    char *old = _buffer;
     uint32 old_readable = readable_len();
     if (buf <= old && buf + size > old || buf > old && old + _size > buf) {
         reposition();

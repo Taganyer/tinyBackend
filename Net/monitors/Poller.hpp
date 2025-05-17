@@ -19,7 +19,7 @@ namespace Net {
 
         ~Poller() override;
 
-        int get_aliveEvent(int timeoutMS, EventList &list) override;
+        int get_aliveEvent(int timeoutMS, EventList& list) override;
 
         bool add_fd(Event event) override;
 
@@ -40,7 +40,7 @@ namespace Net {
 
         std::map<int, int> _mapping;
 
-        void get_events(EventList &list, int size);
+        void get_events(EventList& list, int size);
 
     };
 

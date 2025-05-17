@@ -9,10 +9,10 @@
 
 #include <atomic>
 #include <unordered_map>
-#include "Base/Mutex.hpp"
-#include "Base/Thread.hpp"
+#include "tinyBackend/Base/Mutex.hpp"
+#include "tinyBackend/Base/Thread.hpp"
 #include "RaftTransmitter.hpp"
-#include "Base/Time/TimeInterval.hpp"
+#include "tinyBackend/Base/Time/TimeInterval.hpp"
 
 namespace Dist {
 
@@ -39,13 +39,13 @@ namespace Dist {
         };
 
         /// addr 将会用作 UDP 通信
-        RaftInstance(const Net::InetAddress &addr, RaftStateMachine* state_machine,
+        RaftInstance(const Net::InetAddress& addr, RaftStateMachine *state_machine,
                      std::string name = std::string());
 
         ~RaftInstance() { stop(); };
 
         /// 禁止加入 RaftInstance 自身的地址
-        void add_peer(const Net::InetAddress &peer);
+        void add_peer(const Net::InetAddress& peer);
 
         void start();
 

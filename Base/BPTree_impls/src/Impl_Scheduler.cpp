@@ -6,15 +6,15 @@
 
 using namespace Base;
 
-Impl_Scheduler::Impl_Scheduler(ScheduledThread &scheduled_thread,
-                               const char* filename, uint64 memory_size) :
+Impl_Scheduler::Impl_Scheduler(ScheduledThread& scheduled_thread,
+                               const char *filename, uint64 memory_size) :
     _thread(&scheduled_thread), _cache(filename, memory_size) {}
 
-Impl_Scheduler::Impl_Scheduler(ScheduledThread &scheduled_thread,
-                               BlockFile &&file, uint64 memory_size) :
+Impl_Scheduler::Impl_Scheduler(ScheduledThread& scheduled_thread,
+                               BlockFile&& file, uint64 memory_size) :
     _thread(&scheduled_thread), _cache(std::move(file), memory_size) {}
 
-void Impl_Scheduler::invoke(void* arg) {
+void Impl_Scheduler::invoke(void *arg) {
     Lock l(_mutex);
     _cache.update_all_with_order(std::less<>());
     _cache._helper._file.flush_to_disk();
@@ -27,7 +27,7 @@ void Impl_Scheduler::force_invoke() {
 std::pair<uint32, void *> Impl_Scheduler::get_block() {
     Lock l(_mutex);
     _cache._helper.need_read_from_file = false;
-    Buffer* ptr = _cache.get(_cache._helper._total_blocks);
+    Buffer *ptr = _cache.get(_cache._helper._total_blocks);
     return { _cache._helper._total_blocks++, ptr->data() };
 }
 
@@ -35,7 +35,7 @@ void* Impl_Scheduler::get_block(uint32 index, bool read_data) {
     assert(index < _cache._helper._total_blocks);
     Lock l(_mutex);
     _cache._helper.need_read_from_file = read_data;
-    Buffer* ptr = _cache.get(index);
+    Buffer *ptr = _cache.get(index);
     return ptr->data();
 }
 
@@ -45,14 +45,14 @@ void Impl_Scheduler::put_block(uint32 index, bool need_update) {
     _cache.put(index, need_update);
 }
 
-Impl_Scheduler::LRU_Helper::LRU_Helper(const char* filename, uint64 memory_size) :
+Impl_Scheduler::LRU_Helper::LRU_Helper(const char *filename, uint64 memory_size) :
     _memory_pool(memory_size), _file(filename, true, true, Interpreter::BLOCK_SIZE) {
     if (!_file.is_open())
         throw BPTreeFileError("Failed to open file " + std::string(filename));
     _total_blocks = _file.total_blocks();
 }
 
-Impl_Scheduler::LRU_Helper::LRU_Helper(BlockFile &&file, uint64 memory_size) :
+Impl_Scheduler::LRU_Helper::LRU_Helper(BlockFile&& file, uint64 memory_size) :
     _memory_pool(memory_size), _file(std::move(file)) {
     if (!_file.is_open())
         throw BPTreeFileError("Failed to open file: " + _file.get_path());
@@ -78,7 +78,7 @@ Impl_Scheduler::LRU_Helper::create(Key index) {
     return buffer;
 }
 
-void Impl_Scheduler::LRU_Helper::update(Key index, Value &buffer) {
+void Impl_Scheduler::LRU_Helper::update(Key index, Value& buffer) {
     if (index >= _file.total_blocks()) {
         bool resize_success = _file.resize_file_total_blocks(_total_blocks);
         if (unlikely(!resize_success)) {

@@ -20,7 +20,7 @@ namespace Base {
 namespace std {
 
     template <std::size_t N>
-    Base::BufferArray<N> operator+(const Base::BufferArray<N> &arr, uint64 step) {
+    Base::BufferArray<N> operator+(const Base::BufferArray<N>& arr, uint64 step) {
         Base::BufferArray<N> result(arr);
         for (int i = 0; i < N && step; ++i) {
             if (result[i].iov_len < step) {
@@ -37,7 +37,7 @@ namespace std {
     }
 
     template <std::size_t N>
-    Base::BufferArray<N>& operator+=(Base::BufferArray<N> &arr, uint64 step) {
+    Base::BufferArray<N>& operator+=(Base::BufferArray<N>& arr, uint64 step) {
         for (int i = 0; i < N && step; ++i) {
             if (arr[i].iov_len < step) {
                 step -= arr[i].iov_len;
@@ -53,9 +53,9 @@ namespace std {
     }
 
     template <std::size_t N>
-    uint64 size_of(const Base::BufferArray<N> &arr) {
+    uint64 size_of(const Base::BufferArray<N>& arr) {
         uint64 size = 0;
-        for (const auto &i : arr) {
+        for (const auto& i : arr) {
             size += i.iov_len;
         }
         return size;

@@ -5,7 +5,7 @@
 #ifndef NET_INTERFACE_HPP
 #define NET_INTERFACE_HPP
 
-#include "Base/Detail/config.hpp"
+#include "tinyBackend/Base/Detail/config.hpp"
 #include <sys/uio.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -21,27 +21,27 @@ namespace Net {
 
     namespace ops {
 
-        inline const sockaddr *sockaddr_cast(const sockaddr_in6 *addr) {
+        inline const sockaddr* sockaddr_cast(const sockaddr_in6 *addr) {
             return static_cast<const sockaddr *>((const void *) addr);
         }
 
-        inline sockaddr *sockaddr_cast(sockaddr_in6 *addr) {
+        inline sockaddr* sockaddr_cast(sockaddr_in6 *addr) {
             return static_cast<sockaddr *>((void *) (addr));
         }
 
-        inline const sockaddr *sockaddr_cast(const sockaddr_in *addr) {
+        inline const sockaddr* sockaddr_cast(const sockaddr_in *addr) {
             return static_cast<const sockaddr *>((const void *) (addr));
         }
 
-        inline sockaddr *sockaddr_cast(sockaddr_in *addr) {
+        inline sockaddr* sockaddr_cast(sockaddr_in *addr) {
             return static_cast<sockaddr *>((void *) (addr));
         }
 
-        inline const sockaddr_in *sockaddr_in_cast(const sockaddr *addr) {
+        inline const sockaddr_in* sockaddr_in_cast(const sockaddr *addr) {
             return static_cast<const sockaddr_in *>((const void *) (addr));
         }
 
-        inline const sockaddr_in6 *sockaddr_in6_cast(const sockaddr *addr) {
+        inline const sockaddr_in6* sockaddr_in6_cast(const sockaddr *addr) {
             return static_cast<const sockaddr_in6 *>((const void *) (addr));
         }
 

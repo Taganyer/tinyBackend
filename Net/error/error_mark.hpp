@@ -32,7 +32,7 @@ namespace Net {
     };
 
     inline const char* get_error_type_name(error_types type) {
-        constexpr const char* name[] = {
+        constexpr const char *name[] = {
             "Null",
             "Socket",
             "Close",

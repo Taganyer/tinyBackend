@@ -3,9 +3,9 @@
 //
 
 #include "../RaftInstance.hpp"
-#include "Base/SystemLog.hpp"
-#include "Distributed/raft/RaftAgent.hpp"
-#include "Distributed/raft/RaftMessage.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Distributed/raft/RaftAgent.hpp"
+#include "tinyBackend/Distributed/raft/RaftMessage.hpp"
 
 
 using namespace Dist;
@@ -24,12 +24,12 @@ TimeInterval RaftInstance::ONLINE_WAIT_TIMEOUT = 2_s;
 
 TimeInterval RaftInstance::OFFLINE_WAIT_TIMEOUT = 2_s;
 
-RaftInstance::RaftInstance(const InetAddress &addr,
-                           RaftStateMachine* state_machine, std::string name) :
+RaftInstance::RaftInstance(const InetAddress& addr,
+                           RaftStateMachine *state_machine, std::string name) :
     _last_flush_time(Unix_to_now()),
     _transmitter(addr, state_machine, name.empty() ? addr.toIpPort() : std::move(name)) {}
 
-void RaftInstance::add_peer(const InetAddress &peer) {
+void RaftInstance::add_peer(const InetAddress& peer) {
     assert(!running());
     if (unlikely(!_peers.emplace(peer, Unix_to_now()).second)) {
         G_ERROR << "RaftInstance add peer " << peer.toIpPort() << " failed";
@@ -43,17 +43,17 @@ void RaftInstance::start() {
         _state = Follower;
         while (running()) {
             switch (_state) {
-            case Leader:
-                leader_thread_loop();
-                break;
-            case Candidate:
-                candidate_thread_loop();
-                break;
-            case Follower:
-                follower_thread_loop();
-                break;
-            default:
-                break;
+                case Leader:
+                    leader_thread_loop();
+                    break;
+                case Candidate:
+                    candidate_thread_loop();
+                    break;
+                case Follower:
+                    follower_thread_loop();
+                    break;
+                default:
+                    break;
             }
         }
         G_INFO << name_state() << " thread stopped";
@@ -71,11 +71,11 @@ bool RaftInstance::join_to_cluster() {
     int confirm_size = 0;
 
     for (int i = 0; i < 3 && confirm_size < _peers.size(); ++i) {
-        for (auto &[addr, time] : _peers)
+        for (auto& [addr, time] : _peers)
             if (time != 0) _transmitter.this_one_online(addr);
         _last_flush_time = Unix_to_now();
         while (_last_flush_time + ONLINE_WAIT_TIMEOUT > Unix_to_now()
-            && confirm_size < _peers.size()) {
+        && confirm_size < _peers.size()) {
             RaftMessage message;
             Address address = _transmitter.receive(&message,
                                                    _last_flush_time + ONLINE_WAIT_TIMEOUT);
@@ -95,11 +95,11 @@ bool RaftInstance::exit_cluster() {
     int confirm_size = 0;
 
     for (int i = 0; i < 3 && confirm_size < _peers.size(); ++i) {
-        for (auto &[addr, time] : _peers)
+        for (auto& [addr, time] : _peers)
             if (time != 0) _transmitter.this_one_offline(addr);
         _last_flush_time = Unix_to_now();
         while (_last_flush_time + OFFLINE_WAIT_TIMEOUT > Unix_to_now()
-            && confirm_size < _peers.size()) {
+        && confirm_size < _peers.size()) {
             RaftMessage message;
             Address address = _transmitter.receive(&message,
                                                    _last_flush_time + OFFLINE_WAIT_TIMEOUT);
@@ -119,7 +119,7 @@ void RaftInstance::synchronize_logs_to_followers() {
     Lock l(_mutex);
     if (_state == Leader) {
         _transmitter.machine->update_log();
-        for (const auto &[address, _] : _peers)
+        for (const auto& [address, _] : _peers)
             _transmitter.notify_follower(address,
                                          _transmitter.machine->leader_notify_message(address));
         _last_flush_time = Unix_to_now();
@@ -179,7 +179,7 @@ void RaftInstance::follower_thread_loop() {
 }
 
 const char* RaftInstance::get_StateName(State state) {
-    constexpr const char* state_names[] = {
+    constexpr const char *state_names[] = {
         "(Leader)",
         "(Candidate)",
         "(Follower)"

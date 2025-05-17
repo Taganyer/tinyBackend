@@ -7,6 +7,7 @@
 
 #ifdef NET_ACCEPTOR_HPP
 
+#include <utility>
 #include "Socket.hpp"
 
 namespace Net {
@@ -19,13 +20,13 @@ namespace Net {
 
         using Message = std::pair<Socket, InetAddress>;
 
-        explicit Acceptor(bool Ipv4, unsigned short target_port, const char* target_ip = nullptr);
+        explicit Acceptor(bool Ipv4, unsigned short target_port, const char *target_ip = nullptr);
 
-        explicit Acceptor(const InetAddress &target);
+        explicit Acceptor(const InetAddress& target);
 
-        explicit Acceptor(Socket &&socket);
+        explicit Acceptor(Socket&& socket);
 
-        Acceptor(Acceptor &&other) noexcept : _socket(std::move(other._socket)) {};
+        Acceptor(Acceptor&& other) noexcept : _socket(std::move(other._socket)) {};
 
         ~Acceptor();
 

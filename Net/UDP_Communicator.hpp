@@ -21,19 +21,19 @@ namespace Net {
     public:
         using Message = std::pair<long, InetAddress>;
 
-        explicit UDP_Communicator(const InetAddress &localAddress);
+        explicit UDP_Communicator(const InetAddress& localAddress);
 
-        UDP_Communicator(UDP_Communicator &&other) = default;
+        UDP_Communicator(UDP_Communicator&& other) = default;
 
-        [[nodiscard]] bool connect(const InetAddress &address) const;
+        [[nodiscard]] bool connect(const InetAddress& address) const;
 
         [[nodiscard]] bool set_timeout(Base::TimeInterval timeout) const;
 
-        Message receive(void* buf, unsigned size, int flag = 0) const;
+        Message receive(void *buf, unsigned size, int flag = 0) const;
 
-        long send(const void* buf, unsigned size, int flag = 0) const;
+        long send(const void *buf, unsigned size, int flag = 0) const;
 
-        long sendto(const InetAddress &address, const void* buf, unsigned size, int flag = 0) const;
+        long sendto(const InetAddress& address, const void *buf, unsigned size, int flag = 0) const;
 
         Socket& get_socket() { return _socket; };
 

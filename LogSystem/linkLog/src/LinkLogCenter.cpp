@@ -3,10 +3,10 @@
 //
 
 #include "../LinkLogCenter.hpp"
-#include "Net/InetAddress.hpp"
-#include "Base/SystemLog.hpp"
-#include "Net/TcpMessageAgent.hpp"
-#include "Net/error/error_mark.hpp"
+#include "tinyBackend/Net/InetAddress.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Net/TcpMessageAgent.hpp"
+#include "tinyBackend/Net/error/error_mark.hpp"
 
 using namespace Base;
 
@@ -23,7 +23,7 @@ using namespace LogSystem;
 
 
 LinkLogCenter::LinkLogCenter(LogHandlerPtr handler, std::string dictionary_path,
-                             ScheduledThread &thread) :
+                             ScheduledThread& thread) :
     _handler(std::move(handler)), _storage(std::move(dictionary_path), thread),
     _reactor(SERVER_TIMEOUT) {
     assert(_handler);
@@ -31,7 +31,7 @@ LinkLogCenter::LinkLogCenter(LogHandlerPtr handler, std::string dictionary_path,
                    [this] { check_timeout(); });
 }
 
-bool LinkLogCenter::add_server(const Address &server_address) {
+bool LinkLogCenter::add_server(const Address& server_address) {
     Socket socket(server_address.is_IPv4() ? AF_INET : AF_INET6, SOCK_STREAM);
     CHECK(socket.connect(server_address), return false)
     CHECK(socket.setNonBlock(true), return false)
@@ -41,17 +41,17 @@ bool LinkLogCenter::add_server(const Address &server_address) {
                                                        REMOTE_SOCKET_INPUT_BUFFER_SIZE, 0);
     Channel channel;
     channel.set_readCallback(
-        [this] (MessageAgent &agent) {
+        [this] (MessageAgent& agent) {
             handle_read(agent);
         });
 
     channel.set_errorCallback(
-        [this] (MessageAgent &agent) {
+        [this] (MessageAgent& agent) {
             return handle_error(agent);
         });
 
     channel.set_closeCallback(
-        [this] (MessageAgent &agent) {
+        [this] (MessageAgent& agent) {
             handle_close(agent);
         });
 
@@ -66,11 +66,11 @@ bool LinkLogCenter::add_server(const Address &server_address) {
     return true;
 }
 
-void LinkLogCenter::remove_server(const Address &server_address) {
+void LinkLogCenter::remove_server(const Address& server_address) {
     auto iter = _nodes.find(server_address);
     if (iter == _nodes.end()) return;
     _reactor.weak_up_channel(iter->second,
-                             [] (MessageAgent &agent, Channel &) {
+                             [] (MessageAgent& agent, Channel&) {
                                  LinkLogMessage message(LinkLogMessage::CentralOffline);
                                  uint32 written = agent.output().fix_write(&message, sizeof(LinkLogMessage));
                                  CHECK(written == sizeof(LinkLogMessage),);
@@ -79,17 +79,17 @@ void LinkLogCenter::remove_server(const Address &server_address) {
                              });
 }
 
-void LinkLogCenter::search_link(const ServiceID &service, LinkLogSearchHandler &handler,
+void LinkLogCenter::search_link(const ServiceID& service, LinkLogSearchHandler& handler,
                                 uint32 buffer_size) {
     assert(buffer_size >= (1 << 16));
 
     auto point = _storage.get_query_set(
         service,
-        [&handler] (const Index_Key &key, const Index_Value &val) {
+        [&handler] (const Index_Key& key, const Index_Value& val) {
             return handler.node_filter(key, val);
         });
-    char* buffer = new char[buffer_size];
-    char* now = buffer;
+    char *buffer = new char[buffer_size];
+    char *now = buffer;
     assert(buffer != nullptr);
 
     uint32 rest = 0;
@@ -124,7 +124,7 @@ void LinkLogCenter::delete_oldest_files(uint32 size) {
     _storage.delete_oldest_files(size);
 }
 
-uint64 LinkLogCenter::replay_history(LinkLogReplayHandler &handler, const char* file_path) {
+uint64 LinkLogCenter::replay_history(LinkLogReplayHandler& handler, const char *file_path) {
     iFile file(file_path, true);
     CHECK(file, return 0;)
     RingBuffer buffer(1 << 16);
@@ -138,28 +138,28 @@ uint64 LinkLogCenter::replay_history(LinkLogReplayHandler &handler, const char* 
             OperationType ot;
             buffer.try_read(&ot, sizeof(OperationType), 0);
             switch (ot) {
-            case RegisterLogger:
-                read = replay_register_logger(handler, buffer);
-                break;
-            case CreateLogger:
-                read = replay_create_logger(handler, buffer);
-                break;
-            case EndLogger:
-                read = replay_end_logger(handler, buffer);
-                break;
-            case LinkLog:
-                read = replay_log(handler, buffer);
-                break;
-            case ErrorLogger:
-                read = replay_error_logger(handler, buffer);
-                break;
-            case NodeOffline:
-                read = replay_remove_server(buffer);
-                break;
-            default:
-                ASSERT_WRONG_TYPE(ot)
-                Global_Logger.flush();
-                CurrentThread::emergency_exit(__PRETTY_FUNCTION__);
+                case RegisterLogger:
+                    read = replay_register_logger(handler, buffer);
+                    break;
+                case CreateLogger:
+                    read = replay_create_logger(handler, buffer);
+                    break;
+                case EndLogger:
+                    read = replay_end_logger(handler, buffer);
+                    break;
+                case LinkLog:
+                    read = replay_log(handler, buffer);
+                    break;
+                case ErrorLogger:
+                    read = replay_error_logger(handler, buffer);
+                    break;
+                case NodeOffline:
+                    read = replay_remove_server(buffer);
+                    break;
+                default:
+                    ASSERT_WRONG_TYPE(ot)
+                    Global_Logger.flush();
+                    CurrentThread::emergency_exit(__PRETTY_FUNCTION__);
             }
             total_read += read;
         }
@@ -167,38 +167,38 @@ uint64 LinkLogCenter::replay_history(LinkLogReplayHandler &handler, const char* 
     return total_read;
 }
 
-void LinkLogCenter::handle_read(MessageAgent &agent) {
+void LinkLogCenter::handle_read(MessageAgent& agent) {
     auto iter = agent.socket_event.get_extra_data<NodeMapIter>();
-    auto &buffer = static_cast<const RingBuffer&>(agent.input());
+    auto& buffer = static_cast<const RingBuffer&>(agent.input());
 
     uint32 read = 1, total_read = 0;
     while (read != 0 && buffer.readable_len() > sizeof(OperationType)) {
         OperationType ot;
         buffer.try_read(&ot, sizeof(OperationType), 0);
         switch (ot) {
-        case RegisterLogger:
-            read = handle_register_logger(iter, buffer);
-            break;
-        case CreateLogger:
-            read = handle_create_logger(iter, buffer);
-            break;
-        case EndLogger:
-            read = handle_end_logger(iter, buffer);
-            break;
-        case LinkLog:
-            read = handle_log(iter, buffer);
-            break;
-        case ErrorLogger:
-            read = handle_error_logger(iter, buffer);
-            break;
-        case NodeOffline:
-            read = handle_remove_server(iter, agent);
-            assert(buffer.readable_len() == 0 || read == 0);
-            break;
-        default:
-            ASSERT_WRONG_TYPE(ot)
-            Global_Logger.flush();
-            CurrentThread::emergency_exit(__PRETTY_FUNCTION__);
+            case RegisterLogger:
+                read = handle_register_logger(iter, buffer);
+                break;
+            case CreateLogger:
+                read = handle_create_logger(iter, buffer);
+                break;
+            case EndLogger:
+                read = handle_end_logger(iter, buffer);
+                break;
+            case LinkLog:
+                read = handle_log(iter, buffer);
+                break;
+            case ErrorLogger:
+                read = handle_error_logger(iter, buffer);
+                break;
+            case NodeOffline:
+                read = handle_remove_server(iter, agent);
+                assert(buffer.readable_len() == 0 || read == 0);
+                break;
+            default:
+                ASSERT_WRONG_TYPE(ot)
+                Global_Logger.flush();
+                CurrentThread::emergency_exit(__PRETTY_FUNCTION__);
         }
         total_read += read;
     }
@@ -206,21 +206,21 @@ void LinkLogCenter::handle_read(MessageAgent &agent) {
     _storage.write_to_file(buffer, total_read);
 }
 
-bool LinkLogCenter::handle_error(MessageAgent &agent) const {
+bool LinkLogCenter::handle_error(MessageAgent& agent) const {
     auto iter = agent.socket_event.get_extra_data<NodeMapIter>();
     switch (agent.error.types) {
-    case error_types::TimeoutEvent:
-        G_WARN << "LinkLogCenter: service node timeout.";
-        return _handler->node_timeout(iter->first);
-    default:
-        G_ERROR << "LinkLogCenter: " << get_error_type_name(agent.error.types)
+        case error_types::TimeoutEvent:
+            G_WARN << "LinkLogCenter: service node timeout.";
+            return _handler->node_timeout(iter->first);
+        default:
+            G_ERROR << "LinkLogCenter: " << get_error_type_name(agent.error.types)
                 << " " << strerror(agent.error.codes);
-        _handler->node_error(iter->first, agent.error);
-        return true;
+            _handler->node_error(iter->first, agent.error);
+            return true;
     }
 }
 
-void LinkLogCenter::handle_close(MessageAgent &agent) {
+void LinkLogCenter::handle_close(MessageAgent& agent) {
     auto iter = agent.socket_event.get_extra_data<NodeMapIter>();
     _nodes.erase(iter);
     agent.socket_event.get_extra_data<NodeMapIter>() = _nodes.end();
@@ -230,7 +230,7 @@ void LinkLogCenter::check_timeout() {
     auto now = Unix_to_now();
     while (!_timers.empty() && _timers.top().expire_time <= now) {
         if (_timers.top().check_timeout()) {
-            auto &[expire_time, iter, ptr, address] = _timers.top();
+            auto& [expire_time, iter, ptr, address] = _timers.top();
             if (iter->second.type != RpcDecision) {
                 _handler->handling_error(address, iter->first.serviceID(),
                                          iter->first.nodeID(), expire_time,
@@ -243,7 +243,7 @@ void LinkLogCenter::check_timeout() {
     }
 }
 
-uint32 LinkLogCenter::handle_register_logger(NodeMapIter iter, const RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_register_logger(NodeMapIter iter, const RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Register_Logger))
         return 0;
     Register_Logger logger;
@@ -267,7 +267,7 @@ uint32 LinkLogCenter::handle_register_logger(NodeMapIter iter, const RingBuffer 
     return sizeof(Register_Logger);
 }
 
-uint32 LinkLogCenter::handle_create_logger(NodeMapIter iter, const RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_create_logger(NodeMapIter iter, const RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Create_Logger))
         return 0;
     Create_Logger logger;
@@ -304,7 +304,7 @@ uint32 LinkLogCenter::handle_create_logger(NodeMapIter iter, const RingBuffer &b
     return sizeof(Create_Logger);
 }
 
-uint32 LinkLogCenter::handle_end_logger(NodeMapIter iter, const RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_end_logger(NodeMapIter iter, const RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(End_Logger))
         return 0;
     End_Logger logger;
@@ -315,7 +315,7 @@ uint32 LinkLogCenter::handle_end_logger(NodeMapIter iter, const RingBuffer &buff
     return sizeof(End_Logger);
 }
 
-uint32 LinkLogCenter::handle_log(NodeMapIter iter, const RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_log(NodeMapIter iter, const RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Link_Log_Header))
         return 0;
     Link_Log_Header header;
@@ -333,7 +333,7 @@ uint32 LinkLogCenter::handle_log(NodeMapIter iter, const RingBuffer &buffer) {
     return sizeof(Link_Log_Header) + header.log_size();
 }
 
-uint32 LinkLogCenter::handle_error_logger(NodeMapIter iter, const RingBuffer &buffer) {
+uint32 LinkLogCenter::handle_error_logger(NodeMapIter iter, const RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Error_Logger))
         return 0;
     Error_Logger logger;
@@ -344,8 +344,8 @@ uint32 LinkLogCenter::handle_error_logger(NodeMapIter iter, const RingBuffer &bu
     return sizeof(Error_Logger);
 }
 
-uint32 LinkLogCenter::handle_remove_server(NodeMapIter iter, MessageAgent &agent) {
-    auto &buffer = agent.input();
+uint32 LinkLogCenter::handle_remove_server(NodeMapIter iter, MessageAgent& agent) {
+    auto& buffer = agent.input();
     if (buffer.readable_len() < sizeof(Node_Offline))
         return 0;
     Node_Offline offline;
@@ -356,8 +356,8 @@ uint32 LinkLogCenter::handle_remove_server(NodeMapIter iter, MessageAgent &agent
     return sizeof(Node_Offline);
 }
 
-uint32 LinkLogCenter::replay_register_logger(LinkLogReplayHandler &handler,
-                                             RingBuffer &buffer) {
+uint32 LinkLogCenter::replay_register_logger(LinkLogReplayHandler& handler,
+                                             RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Register_Logger))
         return 0;
     Register_Logger logger;
@@ -367,7 +367,7 @@ uint32 LinkLogCenter::replay_register_logger(LinkLogReplayHandler &handler,
     return sizeof(Register_Logger);
 }
 
-uint32 LinkLogCenter::replay_create_logger(LinkLogReplayHandler &handler, RingBuffer &buffer) {
+uint32 LinkLogCenter::replay_create_logger(LinkLogReplayHandler& handler, RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Create_Logger))
         return 0;
     Create_Logger logger;
@@ -380,7 +380,7 @@ uint32 LinkLogCenter::replay_create_logger(LinkLogReplayHandler &handler, RingBu
     return sizeof(Create_Logger);
 }
 
-uint32 LinkLogCenter::replay_end_logger(LinkLogReplayHandler &handler, RingBuffer &buffer) {
+uint32 LinkLogCenter::replay_end_logger(LinkLogReplayHandler& handler, RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(End_Logger))
         return 0;
     End_Logger logger;
@@ -389,7 +389,7 @@ uint32 LinkLogCenter::replay_end_logger(LinkLogReplayHandler &handler, RingBuffe
     return sizeof(End_Logger);
 }
 
-uint32 LinkLogCenter::replay_log(LinkLogReplayHandler &handler, RingBuffer &buffer) {
+uint32 LinkLogCenter::replay_log(LinkLogReplayHandler& handler, RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Link_Log_Header))
         return 0;
     Link_Log_Header header;
@@ -405,7 +405,7 @@ uint32 LinkLogCenter::replay_log(LinkLogReplayHandler &handler, RingBuffer &buff
     return sizeof(Link_Log_Header) + header.log_size();
 }
 
-uint32 LinkLogCenter::replay_error_logger(LinkLogReplayHandler &handler, RingBuffer &buffer) {
+uint32 LinkLogCenter::replay_error_logger(LinkLogReplayHandler& handler, RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Error_Logger))
         return 0;
     Error_Logger logger;
@@ -415,7 +415,7 @@ uint32 LinkLogCenter::replay_error_logger(LinkLogReplayHandler &handler, RingBuf
     return sizeof(Error_Logger);
 }
 
-uint32 LinkLogCenter::replay_remove_server(RingBuffer &buffer) {
+uint32 LinkLogCenter::replay_remove_server(RingBuffer& buffer) {
     if (buffer.readable_len() < sizeof(Node_Offline))
         return 0;
     Node_Offline offline;

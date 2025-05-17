@@ -33,17 +33,17 @@ namespace Base {
     public:
         BlockIter() = default;
 
-        BlockIter(const BlockIter &) = default;
+        BlockIter(const BlockIter&) = default;
 
-        BlockIter(bool is_self_valid, bool is_data, uint32 index_or_offset, void* buffer) :
+        BlockIter(bool is_self_valid, bool is_data, uint32 index_or_offset, void *buffer) :
             _self_valid(is_self_valid), _belong_data_block(is_data),
             _index_or_offset(index_or_offset), _block_ptr(buffer) {};
 
-        DataBlock data_block(Impl &impl) {
+        DataBlock data_block(Impl& impl) {
             return DataBlock(*impl._scheduler, index());
         };
 
-        IndexBlock index_block(Impl &impl) {
+        IndexBlock index_block(Impl& impl) {
             return IndexBlock(*impl._scheduler, index());
         };
 
@@ -88,19 +88,19 @@ namespace Base {
             return *this;
         };
 
-        BlockIter& operator=(const BlockIter &other) = default;
+        BlockIter& operator=(const BlockIter& other) = default;
 
-        friend bool operator==(const BlockIter &left, const BlockIter &right) {
+        friend bool operator==(const BlockIter& left, const BlockIter& right) {
             return left._belong_data_block == right._belong_data_block
                 && left._index_or_offset == right._index_or_offset
                 && left._block_ptr == right._block_ptr;
         };
 
-        friend bool operator!=(const BlockIter &left, const BlockIter &right) {
+        friend bool operator!=(const BlockIter& left, const BlockIter& right) {
             return !operator==(left, right);
         };
 
-        friend BlockIter operator+(const BlockIter &iter, int n) {
+        friend BlockIter operator+(const BlockIter& iter, int n) {
             iter.check_not_self_valid();
             int new_offset = iter._belong_data_block ?
                                  DataBlock::get_offset(iter._block_ptr, iter._index_or_offset, n) :
@@ -108,7 +108,7 @@ namespace Base {
             return BlockIter { false, iter._belong_data_block, new_offset, iter._block_ptr };
         };
 
-        friend BlockIter operator-(const BlockIter &iter, int n) {
+        friend BlockIter operator-(const BlockIter& iter, int n) {
             iter.check_not_self_valid();
             int new_offset = iter._belong_data_block ?
                                  DataBlock::get_offset(iter._block_ptr, iter._index_or_offset, -n) :
@@ -116,10 +116,10 @@ namespace Base {
             return BlockIter { false, iter._belong_data_block, new_offset, iter._block_ptr };
         };
 
-        [[nodiscard]] bool is_data_block(Impl &impl) {
+        [[nodiscard]] bool is_data_block(Impl& impl) {
             if (_self_valid) return _belong_data_block;
             uint32 i = index();
-            void* buf = impl._scheduler->get_block(i, true);
+            void *buf = impl._scheduler->get_block(i, true);
             bool is_data_block = Interpreter::is_data_block(buf);
             impl._scheduler->put_block(i, false);
             return is_data_block;
@@ -132,7 +132,7 @@ namespace Base {
 
         uint32 _index_or_offset = 0;
 
-        void* _block_ptr = nullptr;
+        void *_block_ptr = nullptr;
 
         void check_not_self_valid() const {
             if (unlikely(_self_valid))

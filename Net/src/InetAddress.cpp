@@ -3,12 +3,12 @@
 //
 
 #include "../InetAddress.hpp"
-#include "Net/functions/Interface.hpp"
+#include "tinyBackend/Net/functions/Interface.hpp"
 
 using namespace Net;
 
 
-InetAddress::InetAddress(bool IPv4, const char* IP, unsigned short port,
+InetAddress::InetAddress(bool IPv4, const char *IP, unsigned short port,
                          unsigned short family) {
     if (IPv4) {
         _addr.sin_port = htons(port);
@@ -35,9 +35,9 @@ std::string InetAddress::toIpPort() const {
 }
 
 InetAddress InetAddress::get_InetAddress(int fd) {
-    InetAddress addr{};
+    InetAddress addr {};
     socklen_t addr_size = sizeof(addr);
-    if (getsockname(fd, (sockaddr*)&addr, &addr_size))
+    if (getsockname(fd, (sockaddr *) &addr, &addr_size))
         return {};
     return addr;
 }

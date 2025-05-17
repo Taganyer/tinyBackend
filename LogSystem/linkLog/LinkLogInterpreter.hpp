@@ -7,14 +7,15 @@
 
 #ifdef LOGSYSTEM_LINKLOGINTERPRETER_HPP
 
-#include <queue>
 #include <functional>
+#include <queue>
+
 #include "LinkLogOperation.hpp"
-#include "Base/Detail/iFile.hpp"
-#include "Base/Detail/oFile.hpp"
-#include "Base/Buffer/RingBuffer.hpp"
-#include "Base/BPTree_impls/BPTree.hpp"
-#include "Base/BPTree_impls/BPTree_impl.hpp"
+#include "tinyBackend/Base/BPTree_impls/BPTree.hpp"
+#include "tinyBackend/Base/BPTree_impls/BPTree_impl.hpp"
+#include "tinyBackend/Base/Buffer/RingBuffer.hpp"
+#include "tinyBackend/Base/Detail/iFile.hpp"
+#include "tinyBackend/Base/Detail/oFile.hpp"
 
 namespace LogSystem {
 
@@ -29,39 +30,39 @@ namespace LogSystem {
         explicit LinkLogEncoder(std::string dictionary_path);
 
         static uint32 register_logger(LinkNodeType type_,
-                                      const LinkServiceID &service_,
-                                      const LinkNodeID &node_,
-                                      const LinkNodeID &parent_node_,
+                                      const LinkServiceID& service_,
+                                      const LinkNodeID& node_,
+                                      const LinkNodeID& parent_node_,
                                       Base::TimeInterval time_,
                                       Base::TimeInterval parent_init_time_,
                                       Base::TimeInterval expire_time_,
-                                      void* dest, uint32 limit);
+                                      void *dest, uint32 limit);
 
         static uint32 create_logger(LinkNodeType type_,
-                                    const LinkServiceID &service_,
-                                    const LinkNodeID &node_,
-                                    const LinkNodeID &parent_node_,
+                                    const LinkServiceID& service_,
+                                    const LinkNodeID& node_,
+                                    const LinkNodeID& parent_node_,
                                     Base::TimeInterval init_time_,
                                     Base::TimeInterval parent_init_time_,
-                                    void* dest, uint32 limit);
+                                    void *dest, uint32 limit);
 
-        static uint32 end_logger(const LinkServiceID &service_,
-                                 const LinkNodeID &node_,
+        static uint32 end_logger(const LinkServiceID& service_,
+                                 const LinkNodeID& node_,
                                  Base::TimeInterval init_time_,
                                  Base::TimeInterval end_time_,
-                                 void* dest, uint32 limit);
+                                 void *dest, uint32 limit);
 
         static bool can_write_log(uint16 size, uint32 limit);
 
-        static uint16 write_log(const LinkServiceID &service_,
+        static uint16 write_log(const LinkServiceID& service_,
                                 Base::TimeInterval node_init_time_,
-                                const LinkNodeID &node_,
+                                const LinkNodeID& node_,
                                 Base::TimeInterval time_,
                                 LogRank rank_,
-                                const void* data, uint16 size,
-                                void* dest);
+                                const void *data, uint16 size,
+                                void *dest);
 
-        uint32 write_to_file(const void* data, uint32 size);
+        uint32 write_to_file(const void *data, uint32 size);
 
         void flush() const;
 
@@ -101,35 +102,35 @@ namespace LogSystem {
 
         static constexpr uint32 LOG_FILE_LIMIT_SIZE = 1 << 28;
 
-        explicit LinkLogStorage(std::string dictionary_path, Base::ScheduledThread &scheduled_thread);
+        explicit LinkLogStorage(std::string dictionary_path, Base::ScheduledThread& scheduled_thread);
 
-        bool create_logger(const LinkServiceID &service,
-                           const LinkNodeID &node,
+        bool create_logger(const LinkServiceID& service,
+                           const LinkNodeID& node,
                            Base::TimeInterval node_init_time);
 
-        void update_logger(const LinkServiceID &service,
-                           const LinkNodeID &node,
+        void update_logger(const LinkServiceID& service,
+                           const LinkNodeID& node,
                            Base::TimeInterval parent_init_time,
-                           const LinkNodeID &parent,
+                           const LinkNodeID& parent,
                            LinkNodeType type,
                            Base::TimeInterval node_init_time);
 
-        bool create_logger(const LinkServiceID &service,
-                           const LinkNodeID &node,
+        bool create_logger(const LinkServiceID& service,
+                           const LinkNodeID& node,
                            Base::TimeInterval parent_init_time,
-                           const LinkNodeID &parent,
+                           const LinkNodeID& parent,
                            LinkNodeType type,
                            Base::TimeInterval node_init_time);
 
-        void end_logger(const LinkServiceID &service,
-                        const LinkNodeID &node,
+        void end_logger(const LinkServiceID& service,
+                        const LinkNodeID& node,
                         Base::TimeInterval node_init_time);
 
         void add_record(uint32 size);
 
-        void handle_a_log(Link_Log_Header &header, const Base::RingBuffer &buf);
+        void handle_a_log(Link_Log_Header& header, const Base::RingBuffer& buf);
 
-        uint32 write_to_file(const Base::RingBuffer &buf, uint32 size);
+        uint32 write_to_file(const Base::RingBuffer& buf, uint32 size);
 
         void delete_oldest_files(uint32 size);
 
@@ -148,16 +149,16 @@ namespace LogSystem {
 
         };
 
-        using NodeFilter = std::function<bool(const Index_Key &, const Index_Value &)>;
+        using NodeFilter = std::function<bool(const Index_Key&, const Index_Value&)>;
 
-        QuerySet* get_query_set(const LinkServiceID &id,
-                                const NodeFilter &filter = NodeFilter());
+        QuerySet* get_query_set(const LinkServiceID& id,
+                                const NodeFilter& filter = NodeFilter());
 
-        static void destroy_query_set(void* set);
+        static void destroy_query_set(void *set);
 
-        std::pair<uint32, QuerySet *> query(void* dest, uint32 limit, QuerySet* point);
+        std::pair<uint32, QuerySet *> query(void *dest, uint32 limit, QuerySet *point);
 
-        std::pair<uint32, QuerySet *> query(Base::RingBuffer &buf, QuerySet* point);
+        std::pair<uint32, QuerySet *> query(Base::RingBuffer& buf, QuerySet *point);
 
         void flush_log_file();
 
@@ -175,19 +176,19 @@ namespace LogSystem {
 
             static constexpr uint32 CACHE_LIMIT_SIZE = 3000;
 
-            explicit CacheHelper(LinkLogStorage &interpreter) :
+            explicit CacheHelper(LinkLogStorage& interpreter) :
                 _interpreter(interpreter) {};
 
-            [[nodiscard]] bool can_create(const Key &key) const;
+            [[nodiscard]] bool can_create(const Key& key) const;
 
-            [[nodiscard]] Value create(const Key &key) const;
+            [[nodiscard]] Value create(const Key& key) const;
 
-            void update(const Key &key, Value &value) const;
+            void update(const Key& key, Value& value) const;
 
-            void erase(const Key &key) const;
+            void erase(const Key& key) const;
 
         private:
-            LinkLogStorage &_interpreter;
+            LinkLogStorage& _interpreter;
 
         };
 
@@ -224,13 +225,13 @@ namespace LogSystem {
 
         [[nodiscard]] std::string get_log_name(Base::TimeInterval file_init_time) const;
 
-        void open_new_log_file(const Record &record, Base::TimeInterval end_time);
+        void open_new_log_file(const Record& record, Base::TimeInterval end_time);
 
-        bool prepare_read_a_log(QuerySet* point, char* msg) const;
+        bool prepare_read_a_log(QuerySet *point, char *msg) const;
 
-        int querying_a_log(QuerySet* point, char* ptr, uint32 limit, uint32 &written) const;
+        int querying_a_log(QuerySet *point, char *ptr, uint32 limit, uint32& written) const;
 
-        int querying_a_log(QuerySet* point, Base::RingBuffer &buf, uint32 &written) const;
+        int querying_a_log(QuerySet *point, Base::RingBuffer& buf, uint32& written) const;
 
     };
 

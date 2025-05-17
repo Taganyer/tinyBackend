@@ -7,7 +7,7 @@
 
 #include <cassert>
 #include <utility>
-#include "Base/Detail/config.hpp"
+#include "tinyBackend/Base/Detail/config.hpp"
 
 #ifdef BASE_BPTREE_HPP
 
@@ -90,26 +90,26 @@ namespace Base {
             Fail
         };
 
-        template <typename...Args>
-        explicit BPTree(Args &&...args) : _impl(std::forward<Args>(args)...) {};
+        template <typename... Args>
+        explicit BPTree(Args&&... args) : _impl(std::forward<Args>(args)...) {};
 
         /// 查找对应值。
-        Result find(const Key &key);
+        Result find(const Key& key);
 
         /// 查找 [begin, end) 范围的值，limit 为限制大小。
-        ResultSet find(const Key &begin, const Key &end, uint64 limit = MAX_ULLONG);
+        ResultSet find(const Key& begin, const Key& end, uint64 limit = MAX_ULLONG);
 
         /// 查找第一个大于等于 key 的值。
-        Result lower_bound(const Key &key);
+        Result lower_bound(const Key& key);
 
         /// 查找第一个大于 key 的值。
-        Result upper_bound(const Key &key);
+        Result upper_bound(const Key& key);
 
         /// 查找所有大于等于 key 的值，limit 为限制大小。
-        ResultSet above_or_equal(const Key &key, uint64 limit = MAX_ULLONG);
+        ResultSet above_or_equal(const Key& key, uint64 limit = MAX_ULLONG);
 
         /// 从头部查找所有小于 key 的值，limit 为限制大小。
-        ResultSet below(const Key &key, uint64 limit = MAX_ULLONG);
+        ResultSet below(const Key& key, uint64 limit = MAX_ULLONG);
 
         /// 从头部开始查找，limit 为限制大小
         ResultSet search_from_begin(uint64 limit = MAX_ULLONG);
@@ -118,20 +118,20 @@ namespace Base {
         ResultSet search_from_end(uint64 limit = MAX_ULLONG);
 
         /// 更新对应键的值，键不存在或值长度过大会导致更新失败。
-        bool update(const Key &key, const Value &value);
+        bool update(const Key& key, const Value& value);
 
         /// 更新对应键的值，键不存在或值长度过大会导致更新失败，fun 将会传入旧的 value 并生成新的 value。
         template <typename Fun>
-        bool find_for_update(const Key &key, const Fun &fun);
+        bool find_for_update(const Key& key, const Fun& fun);
 
         /// 插入对应键值，键已存在或 value 长度过大会导致插入失败。
-        bool insert(const Key &key, const Value &value);
+        bool insert(const Key& key, const Value& value);
 
         /// 删除对应键值，键不存在删除失败。
-        bool erase(const Key &key);
+        bool erase(const Key& key);
 
         /// 删除 [begin, end) 范围内的键值，范围内不存在元素会导致删除失败。
-        bool erase(const Key &begin, const Key &end);
+        bool erase(const Key& begin, const Key& end);
 
         Impl& impl() { return _impl; };
 
@@ -146,36 +146,36 @@ namespace Base {
 
         using IterKey = typename Impl::IterKey;
 
-        Iter find_data(const Key &key);
+        Iter find_data(const Key& key);
 
-        IterKey insert_impl(const Key &key, const Value &value,
-                            Iter block_iter, State &state);
+        IterKey insert_impl(const Key& key, const Value& value,
+                            Iter block_iter, State& state);
 
-        IterKey index_block_insert(const Key &key, const Value &value,
-                                   Iter block_iter, State &state);
+        IterKey index_block_insert(const Key& key, const Value& value,
+                                   Iter block_iter, State& state);
 
-        IterKey data_block_insert(const Key &key, const Value &value,
-                                  Iter block_iter, State &state);
+        IterKey data_block_insert(const Key& key, const Value& value,
+                                  Iter block_iter, State& state);
 
-        IterKey erase_impl(const Key &key, Iter iter_before,
-                           Iter iter, State &state);
+        IterKey erase_impl(const Key& key, Iter iter_before,
+                           Iter iter, State& state);
 
-        IterKey index_block_erase(const Key &key, Iter iter_before,
-                                  Iter iter, State &state);
+        IterKey index_block_erase(const Key& key, Iter iter_before,
+                                  Iter iter, State& state);
 
-        IterKey data_block_erase(const Key &key, Iter iter_before,
-                                 Iter iter, State &state);
+        IterKey data_block_erase(const Key& key, Iter iter_before,
+                                 Iter iter, State& state);
 
         using Pair = std::pair<IterKey, IterKey>;
 
-        Pair erase_impl(const Key &begin, const Key &end,
-                        Iter left, Iter right, State &state);
+        Pair erase_impl(const Key& begin, const Key& end,
+                        Iter left, Iter right, State& state);
 
-        Pair index_block_erase(const Key &begin, const Key &end,
-                               Iter left, Iter right, State &state);
+        Pair index_block_erase(const Key& begin, const Key& end,
+                               Iter left, Iter right, State& state);
 
-        Pair data_block_erase(const Key &begin, const Key &end,
-                              Iter left, Iter right, State &state);
+        Pair data_block_erase(const Key& begin, const Key& end,
+                              Iter left, Iter right, State& state);
 
         void erase_all_block(Iter begin, Iter end);
 
@@ -190,7 +190,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::Result
-    BPTree<Impl>::find(const Key &key) {
+    BPTree<Impl>::find(const Key& key) {
         Iter iter = find_data(key);
         if (!iter.valid())
             return Result {};
@@ -203,7 +203,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::ResultSet
-    BPTree<Impl>::find(const Key &begin, const Key &end, uint64 limit) {
+    BPTree<Impl>::find(const Key& begin, const Key& end, uint64 limit) {
         ResultSet results;
         if (begin > end || begin == end) return results;
         Iter iter = find_data(begin);
@@ -227,7 +227,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::Result
-    BPTree<Impl>::lower_bound(const Key &key) {
+    BPTree<Impl>::lower_bound(const Key& key) {
         Iter iter = find_data(key);
         if (!iter.valid()) return Result {};
         DataBlock data_block = iter.data_block(_impl);
@@ -242,7 +242,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::Result
-    BPTree<Impl>::upper_bound(const Key &key) {
+    BPTree<Impl>::upper_bound(const Key& key) {
         Iter iter = find_data(key);
         if (!iter.valid()) return Result {};
         DataBlock data_block = iter.data_block(_impl);
@@ -261,7 +261,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::ResultSet
-    BPTree<Impl>::above_or_equal(const Key &key, uint64 limit) {
+    BPTree<Impl>::above_or_equal(const Key& key, uint64 limit) {
         ResultSet results;
         Iter iter = find_data(key);
         if (!iter.valid()) return results;
@@ -283,7 +283,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::ResultSet
-    BPTree<Impl>::below(const Key &key, uint64 limit) {
+    BPTree<Impl>::below(const Key& key, uint64 limit) {
         ResultSet results;
         Iter iter = _impl.begin_block();
         if (!iter.valid()) return results;
@@ -394,7 +394,7 @@ namespace Base {
     }
 
     template <typename Impl>
-    bool BPTree<Impl>::update(const Key &key, const Value &value) {
+    bool BPTree<Impl>::update(const Key& key, const Value& value) {
         if (!DataBlock::data_size_check(value))
             return false;
         Iter iter = find_data(key);
@@ -407,7 +407,7 @@ namespace Base {
 
     template <typename Impl>
     template <typename Fun>
-    bool BPTree<Impl>::find_for_update(const Key &key, const Fun &fun) {
+    bool BPTree<Impl>::find_for_update(const Key& key, const Fun& fun) {
         Iter iter = find_data(key);
         if (!iter.valid()) return false;
         DataBlock data_block = iter.data_block(_impl);
@@ -421,7 +421,7 @@ namespace Base {
     }
 
     template <typename Impl>
-    bool BPTree<Impl>::insert(const Key &key, const Value &value) {
+    bool BPTree<Impl>::insert(const Key& key, const Value& value) {
         if (!DataBlock::data_size_check(value))
             return false;
         Iter iter = _impl.begin_block();
@@ -453,7 +453,7 @@ namespace Base {
     }
 
     template <typename Impl>
-    bool BPTree<Impl>::erase(const Key &key) {
+    bool BPTree<Impl>::erase(const Key& key) {
         Iter iter = _impl.begin_block();
         if (!iter.valid()) return false;
         State state = { Fail };
@@ -473,7 +473,7 @@ namespace Base {
     }
 
     template <typename Impl>
-    bool BPTree<Impl>::erase(const Key &begin, const Key &end) {
+    bool BPTree<Impl>::erase(const Key& begin, const Key& end) {
         Iter iter = _impl.begin_block();
         if (!iter.valid()) return false;
         State state = { Fail };
@@ -486,7 +486,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::Iter
-    BPTree<Impl>::find_data(const Key &key) {
+    BPTree<Impl>::find_data(const Key& key) {
         Iter iter = _impl.begin_block();
         if (!iter.valid()) return {};
         if (iter.is_data_block(_impl)) return iter;
@@ -494,13 +494,13 @@ namespace Base {
         while (true) {
             iter = index_block.lower_bound(key);
             if (iter == index_block.end() ||
-                (iter != index_block.begin() && iter.key() > key))
+            (iter != index_block.begin() && iter.key() > key))
                 --iter;
             if (iter.is_data_block(_impl)) break;
             index_block = iter.index_block(_impl);
         }
         if (iter == index_block.end() ||
-            (iter != index_block.begin() && iter.key() > key))
+        (iter != index_block.begin() && iter.key() > key))
             --iter;
         DataBlock data_block = iter.data_block(_impl);
         return data_block.self_iter();
@@ -508,8 +508,8 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::IterKey
-    BPTree<Impl>::insert_impl(const Key &key, const Value &value,
-                              Iter block_iter, State &state) {
+    BPTree<Impl>::insert_impl(const Key& key, const Value& value,
+                              Iter block_iter, State& state) {
         if (block_iter.is_data_block(_impl)) {
             return data_block_insert(key, value, block_iter, state);
         } else {
@@ -519,8 +519,8 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::IterKey
-    BPTree<Impl>::index_block_insert(const Key &key, const Value &value,
-                                     Iter block_iter, State &state) {
+    BPTree<Impl>::index_block_insert(const Key& key, const Value& value,
+                                     Iter block_iter, State& state) {
         IndexBlock index_block = block_iter.index_block(_impl);
         bool need_update = key < index_block.begin().key();
         auto iter = index_block.lower_bound(key);
@@ -546,8 +546,8 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::IterKey
-    BPTree<Impl>::data_block_insert(const Key &key, const Value &value,
-                                    Iter block_iter, State &state) {
+    BPTree<Impl>::data_block_insert(const Key& key, const Value& value,
+                                    Iter block_iter, State& state) {
         DataBlock data_block = block_iter.data_block(_impl);
         auto iter = data_block.lower_bound(key);
         if (iter != data_block.end() && iter.key() == key) {
@@ -568,7 +568,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::IterKey
-    BPTree<Impl>::erase_impl(const Key &key, Iter iter_before, Iter iter, State &state) {
+    BPTree<Impl>::erase_impl(const Key& key, Iter iter_before, Iter iter, State& state) {
         if (iter.is_data_block(_impl)) {
             return data_block_erase(key, iter_before, iter, state);
         } else {
@@ -578,7 +578,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::IterKey
-    BPTree<Impl>::index_block_erase(const Key &key, Iter iter_before, Iter iter, State &state) {
+    BPTree<Impl>::index_block_erase(const Key& key, Iter iter_before, Iter iter, State& state) {
         IndexBlock index_block = iter.index_block(_impl);
         auto iter_val = index_block.lower_bound(key);
         if (iter_val == index_block.begin() && iter_val.key() > key)
@@ -622,7 +622,7 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::IterKey
-    BPTree<Impl>::data_block_erase(const Key &key, Iter iter_before, Iter iter, State &state) {
+    BPTree<Impl>::data_block_erase(const Key& key, Iter iter_before, Iter iter, State& state) {
         DataBlock data_block = iter.data_block(_impl);
         Iter iter_val = data_block.lower_bound(key);
         if (iter_val == data_block.end() || iter_val.key() != key)
@@ -651,8 +651,8 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::Pair
-    BPTree<Impl>::erase_impl(const Key &begin, const Key &end,
-                             Iter left, Iter right, State &state) {
+    BPTree<Impl>::erase_impl(const Key& begin, const Key& end,
+                             Iter left, Iter right, State& state) {
         if (left.is_data_block(_impl)) {
             return data_block_erase(begin, end, left, right, state);
         } else {
@@ -662,8 +662,8 @@ namespace Base {
 
     template <typename Impl>
     typename BPTree<Impl>::Pair
-    BPTree<Impl>::index_block_erase(const Key &begin, const Key &end,
-                                    Iter left, Iter right, State &state) {
+    BPTree<Impl>::index_block_erase(const Key& begin, const Key& end,
+                                    Iter left, Iter right, State& state) {
         if (left == right) {
             IndexBlock index_block = left.index_block(_impl);
             Iter li = index_block.lower_bound(begin),
@@ -712,7 +712,7 @@ namespace Base {
                 return Pair { IterKey {}, IterKey {} };
             }
             return Pair { IterKey { index_block.self_iter(), index_block.begin().key() },
-                IterKey { index_block.self_iter(), index_block.begin().key() } };
+                          IterKey { index_block.self_iter(), index_block.begin().key() } };
         } else {
             IndexBlock lb = left.index_block(_impl), rb = right.index_block(_impl);
             Iter li = lb.lower_bound(begin),
@@ -749,7 +749,7 @@ namespace Base {
                     lb.merge(rb);
                     _impl.erase_block(rb.self_iter());
                     return Pair { IterKey { lb.self_iter(), lb.begin().key() },
-                        IterKey {} };
+                                  IterKey {} };
                 }
                 _impl.erase_block(lb.self_iter());
                 if (rb.begin() == rb.end()) {
@@ -757,19 +757,19 @@ namespace Base {
                     return Pair { IterKey {}, IterKey {} };
                 }
                 return Pair { IterKey {},
-                    IterKey { rb.self_iter(), rb.begin().key() } };
+                              IterKey { rb.self_iter(), rb.begin().key() } };
             }
             if (choose < 0)
                 lb.average(rb);
             return Pair { IterKey { lb.self_iter(), lb.begin().key() },
-                IterKey { rb.self_iter(), rb.begin().key() } };
+                          IterKey { rb.self_iter(), rb.begin().key() } };
         }
     }
 
     template <typename Impl>
     typename BPTree<Impl>::Pair
-    BPTree<Impl>::data_block_erase(const Key &begin, const Key &end,
-                                   Iter left, Iter right, State &state) {
+    BPTree<Impl>::data_block_erase(const Key& begin, const Key& end,
+                                   Iter left, Iter right, State& state) {
         state = State::Success;
         if (left == right) {
             DataBlock data_block = left.data_block(_impl);
@@ -782,7 +782,7 @@ namespace Base {
                 return Pair { IterKey {}, IterKey {} };
             }
             return Pair { IterKey { data_block.self_iter(), data_block.begin().key() },
-                IterKey { data_block.self_iter(), data_block.begin().key() } };
+                          IterKey { data_block.self_iter(), data_block.begin().key() } };
         } else {
             DataBlock lb = left.data_block(_impl), rb = right.data_block(_impl);
             lb.erase(lb.lower_bound(begin), lb.end());
@@ -794,7 +794,7 @@ namespace Base {
                     lb.merge(rb);
                     _impl.erase_block(rb.self_iter());
                     return Pair { IterKey { lb.self_iter(), lb.begin().key() },
-                        IterKey {} };
+                                  IterKey {} };
                 }
 
                 _impl.erase_block(lb.self_iter());
@@ -803,12 +803,12 @@ namespace Base {
                     return Pair { IterKey {}, IterKey {} };
                 }
                 return Pair { IterKey {},
-                    IterKey { rb.self_iter(), rb.begin().key() } };
+                              IterKey { rb.self_iter(), rb.begin().key() } };
             }
             if (choose < 0)
                 lb.average(rb);
             return Pair { IterKey { lb.self_iter(), lb.begin().key() },
-                IterKey { rb.self_iter(), rb.begin().key() } };
+                          IterKey { rb.self_iter(), rb.begin().key() } };
         }
     }
 

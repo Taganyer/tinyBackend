@@ -27,10 +27,10 @@ struct UnconnectedData {
 };
 
 struct TCP_Multiplexer::ChannelData : MessageAgent {
-    explicit ChannelData(FD fd, Channel &&ch, Event event) :
+    explicit ChannelData(FD fd, Channel&& ch, Event event) :
         self(fd), channel(std::move(ch)), monitor_event(event) {};
 
-    explicit ChannelData(FD fd, FD other, uint32 window, Channel &&ch,
+    explicit ChannelData(FD fd, FD other, uint32 window, Channel&& ch,
                          uint32 input_size, uint32 output_size) :
         self(fd), other(other), other_window(window), channel(std::move(ch)),
         input_buffer(input_size), output_buffer(output_size) {};
@@ -52,7 +52,7 @@ struct TCP_Multiplexer::ChannelData : MessageAgent {
     };
 
     /// 这里的 fd 无法注册到 Reactor 中。
-    [[nodiscard]] int fd() const override { return static_cast<int>((uint32) (self.id << 16) + self.index); };
+    [[nodiscard]] int fd() const override { return static_cast<int>((uint32)(self.id << 16) + self.index); };
 
     [[nodiscard]] bool agent_valid() const override { return other != FD(); };
 
@@ -83,11 +83,11 @@ int64 TCP_Multiplexer::ChannelData::receive_message() {
 
 int64 TCP_Multiplexer::ChannelData::send_message() {
     assert_thread_safe();
-    TCP_Multiplexer* ptr = get_multiplexer();
+    TCP_Multiplexer *ptr = get_multiplexer();
     uint32 writable = ptr->_output.writable_len();
     uint32 size = std::min(other_window, output_buffer.readable_len());
     if (writable < sizeof(Header) + size / 2) return 0;
-    size = std::min(size, (uint32) (writable - sizeof(Header)));
+    size = std::min(size, (uint32)(writable - sizeof(Header)));
     Header header { Sent, size, 0, other };
     uint32 written = ptr->_output.write(&header, sizeof(header));
     assert(written == sizeof(header));
@@ -101,7 +101,7 @@ int64 TCP_Multiplexer::ChannelData::send_message() {
 void TCP_Multiplexer::ChannelData::close() {
     assert_thread_safe();
     if (other == FD()) return;
-    TCP_Multiplexer* ptr = get_multiplexer();
+    TCP_Multiplexer *ptr = get_multiplexer();
     input_buffer.read_advance(input_buffer.readable_len());
     input_buffer.resize(0);
     uint32 need_sent_size = 0;
@@ -116,7 +116,7 @@ void TCP_Multiplexer::ChannelData::close() {
     other = FD();
 }
 
-TCP_Multiplexer::TCP_Multiplexer(Socket &&socket, AcceptCallback accept_callback,
+TCP_Multiplexer::TCP_Multiplexer(Socket&& socket, AcceptCallback accept_callback,
                                  uint32 input_size, uint32 output_size, uint16 max_channels_size) :
     TcpMessageAgent(std::move(socket), input_size, output_size),
     _channels(max_channels_size, nullptr), _increase_id(max_channels_size, 1 << 15),
@@ -152,14 +152,14 @@ int64 TCP_Multiplexer::send_message() {
     Lock l(_mutex);
     set_running_thread();
     while (!_send_queue.empty() && _output.writable_len() >= sizeof(Header)) {
-        auto &header = _send_queue.front();
+        auto& header = _send_queue.front();
         if (header.op == Null) {
-            auto &buffer = _channels[header.fd.index]->output_buffer;
+            auto& buffer = _channels[header.fd.index]->output_buffer;
             uint32 written = _output.write(buffer.read_array(header.extra_size));
             buffer.read_advance(written);
             header.extra_size -= written;
         } else if (header.op == Connect) {
-            auto &channel_data = *_channels[header.fd.index];
+            auto& channel_data = *_channels[header.fd.index];
             auto ptr = channel_data.get_unconnected_data();
             if (_output.writable_len() < sizeof(header) + ptr->verify_message.size())
                 break;
@@ -192,29 +192,29 @@ int64 TCP_Multiplexer::receive_message() {
             assert(read == sizeof(Header));
         }
         switch (_current_header.op) {
-        case Sent:
-            handle_Sent();
-            break;
-        case Received:
-            handle_Received();
-            break;
-        case Connect:
-            handle_Connect();
-            break;
-        case Accept:
-            handle_Accept();
-            break;
-        case Reject:
-            handle_Reject();
-            break;
-        case Close:
-            handle_Close();
-            break;
-        case Shutdown:
-            handle_Shutdown();
-            break;
-        default:
-            assert(false);
+            case Sent:
+                handle_Sent();
+                break;
+            case Received:
+                handle_Received();
+                break;
+            case Connect:
+                handle_Connect();
+                break;
+            case Accept:
+                handle_Accept();
+                break;
+            case Reject:
+                handle_Reject();
+                break;
+            case Close:
+                handle_Close();
+                break;
+            case Shutdown:
+                handle_Shutdown();
+                break;
+            default:
+                assert(false);
         }
         if (_current_header.extra_size == 0) _current_header = Header();
     }
@@ -249,17 +249,17 @@ void TCP_Multiplexer::update_channel(Event event) {
     set_running_thread();
     int index = event.fd & 0xffff;
     if (!_channels[index]) return;
-    auto &channel_data = *_channels[index];
+    auto& channel_data = *_channels[index];
     if (channel_data.active_closer || channel_data.passive_closer) return;
     channel_data.monitor_event.event = event.event;
 }
 
-void TCP_Multiplexer::weak_up_channel(int fd, const WeakUpFun &fun) {
+void TCP_Multiplexer::weak_up_channel(int fd, const WeakUpFun& fun) {
     Lock l(_mutex);
     set_running_thread();
     int index = fd & 0xffff;
     if (!_channels[index]) return;
-    auto &channel_data = *_channels[index];
+    auto& channel_data = *_channels[index];
     if (channel_data.active_closer || channel_data.passive_closer) return;
     fun(channel_data, channel_data.channel);
 }
@@ -277,7 +277,7 @@ void TCP_Multiplexer::invoke_event() {
 }
 
 void TCP_Multiplexer::handle_Sent() {
-    ChannelData &channel_data = *_channels[_current_header.fd.index];
+    ChannelData& channel_data = *_channels[_current_header.fd.index];
     assert(channel_data.self == _current_header.fd);
     if (channel_data.input_buffer.buffer_size() != 0) {
         uint32 read = _input.read(channel_data.input_buffer.write_array(_current_header.extra_size));
@@ -304,7 +304,7 @@ void TCP_Multiplexer::handle_Sent() {
 }
 
 void TCP_Multiplexer::handle_Received() const {
-    ChannelData &channel_data = *_channels[_current_header.fd.index];
+    ChannelData& channel_data = *_channels[_current_header.fd.index];
     assert(channel_data.self == _current_header.fd);
     channel_data.other_window += _current_header.windows_size;
 }
@@ -339,7 +339,7 @@ void TCP_Multiplexer::handle_Connect() {
 }
 
 void TCP_Multiplexer::handle_Accept() {
-    ChannelData &channel_data = *_channels[_current_header.fd.index];
+    ChannelData& channel_data = *_channels[_current_header.fd.index];
     assert(channel_data.self == _current_header.fd);
     auto data = channel_data.get_unconnected_data();
     channel_data.other_window = _current_header.windows_size;
@@ -351,7 +351,7 @@ void TCP_Multiplexer::handle_Accept() {
 }
 
 void TCP_Multiplexer::handle_Reject() {
-    ChannelData &channel_data = *_channels[_current_header.fd.index];
+    ChannelData& channel_data = *_channels[_current_header.fd.index];
     assert(channel_data.self == _current_header.fd);
     auto data = channel_data.get_unconnected_data();
     data->reject_callback(std::move(data->verify_message), channel_data.channel);
@@ -360,7 +360,7 @@ void TCP_Multiplexer::handle_Reject() {
 }
 
 void TCP_Multiplexer::handle_Close() {
-    ChannelData &channel_data = *_channels[_current_header.fd.index];
+    ChannelData& channel_data = *_channels[_current_header.fd.index];
     assert(channel_data.self == _current_header.fd);
     channel_data.passive_closer = true;
     if (_current_header.extra_size != 0) {
@@ -384,7 +384,7 @@ void TCP_Multiplexer::handle_Close() {
 void TCP_Multiplexer::handle_Shutdown() {
     for (auto ptr : _channels) {
         if (!ptr) continue;
-        ChannelData &channel_data = *ptr;
+        ChannelData& channel_data = *ptr;
         if (channel_data.active_closer || channel_data.passive_closer) {
             remove(channel_data.self);
             continue;
@@ -404,7 +404,7 @@ void TCP_Multiplexer::handle_Shutdown() {
 }
 
 void TCP_Multiplexer::remove(FD fd) {
-    ChannelData &channel_data = *_channels[fd.index];
+    ChannelData& channel_data = *_channels[fd.index];
     assert(channel_data.self == fd);
     delete _channels[fd.index];
     _channels[fd.index] = nullptr;

@@ -8,7 +8,7 @@ using namespace Net;
 
 using namespace Base;
 
-TcpMessageAgent::TcpMessageAgent(Socket &&sock, uint32 input_size, uint32 output_size) :
+TcpMessageAgent::TcpMessageAgent(Socket&& sock, uint32 input_size, uint32 output_size) :
     _socket(std::move(sock)), _input(input_size), _output(output_size) {}
 
 int64 TcpMessageAgent::send_message() {
@@ -34,7 +34,7 @@ int64 TcpMessageAgent::receive_message() {
     return read;
 }
 
-void TcpMessageAgent::reset_socket(Socket &&sock) {
+void TcpMessageAgent::reset_socket(Socket&& sock) {
     close();
     _socket = std::move(sock);
 }

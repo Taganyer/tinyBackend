@@ -7,8 +7,8 @@
 
 #ifdef BASE_INPUTBUFFER_HPP
 
-#include "Base/Detail/NoCopy.hpp"
-#include "Base/Detail/BufferArray.hpp"
+#include "tinyBackend/Base/Detail/NoCopy.hpp"
+#include "tinyBackend/Base/Detail/BufferArray.hpp"
 
 namespace Base {
 

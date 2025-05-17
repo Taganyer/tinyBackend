@@ -28,20 +28,20 @@ namespace Base {
         int32 day = e - ((153 * m + 2) / 5) + 1;
         int32 month = m + 3 - 12 * (m / 10);
         int32 year = b * 100 + d - 4800 + (m / 10);
-        return {year, month, day};
+        return { year, month, day };
     }
 
     const int32 Date::JulianDayOf1970_01_01 = get_julianDayNumber(1970, 1, 1);
 
-    Date::Date(const Date_data &data) :
-            _julianDayNumber(get_julianDayNumber(data.year, data.month, data.day)) {}
+    Date::Date(const Date_data& data) :
+        _julianDayNumber(get_julianDayNumber(data.year, data.month, data.day)) {}
 
-    Date::Date(const tm &time) :
-            _julianDayNumber(get_julianDayNumber(
-                    time.tm_year + 1900, time.tm_mon + 1, time.tm_mday)) {}
+    Date::Date(const tm& time) :
+        _julianDayNumber(get_julianDayNumber(
+            time.tm_year + 1900, time.tm_mon + 1, time.tm_mday)) {}
 
     Date::Date(int32 year, int32 month, int32 day) :
-            _julianDayNumber(get_julianDayNumber(year, month, day)) {}
+        _julianDayNumber(get_julianDayNumber(year, month, day)) {}
 
     Date_data Date::get_date() const {
         return get_Date_data(_julianDayNumber);
@@ -55,14 +55,14 @@ namespace Base {
         date_format(dest, get_date());
     }
 
-    std::string date_to_string(const Date_data &data) {
+    std::string date_to_string(const Date_data& data) {
         std::string date(Date::Date_format_len, '\0');
         std::sprintf(date.data(), Date::Date_format,
                      data.year, data.month, data.day);
         return date;
     }
 
-    void date_format(char *dest, const Date_data &data) {
+    void date_format(char *dest, const Date_data& data) {
         std::sprintf(dest, Date::Date_format,
                      data.year, data.month, data.day);
     }

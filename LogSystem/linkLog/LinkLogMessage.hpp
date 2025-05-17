@@ -12,7 +12,7 @@
 
 namespace LogSystem {
 
-    template <typename...Types>
+    template <typename... Types>
     static constexpr auto max_size() {
         return std::max({ sizeof(Types)... });
     };
@@ -29,7 +29,7 @@ namespace LogSystem {
         };
 
         static const char* getTypename(Type type) {
-            constexpr const char* name[] {
+            constexpr const char *name[] {
                 "[Invalid]",
                 "[ClearBuffer]",
                 "[TimeOut]",
@@ -44,7 +44,7 @@ namespace LogSystem {
             uint32 size = 0;
             bool flushed = false;
             uint32 begin = 0;
-            void* buf_ptr = nullptr;
+            void *buf_ptr = nullptr;
         };
 
         struct TimeOut_ {
@@ -66,7 +66,7 @@ namespace LogSystem {
 
         LinkLogMessage() = default;
 
-        LinkLogMessage(const LinkLogMessage &) = default;
+        LinkLogMessage(const LinkLogMessage&) = default;
 
         explicit LinkLogMessage(Type type) : type(type) {};
 

@@ -10,8 +10,8 @@
 
 #include "Socket.hpp"
 #include "MessageAgent.hpp"
-#include "Base/Buffer/RingBuffer.hpp"
-#include "Net/functions/Interface.hpp"
+#include "tinyBackend/Base/Buffer/RingBuffer.hpp"
+#include "tinyBackend/Net/functions/Interface.hpp"
 
 namespace Net {
 
@@ -19,7 +19,7 @@ namespace Net {
     public:
         using Buffer = Base::RingBuffer;
 
-        TcpMessageAgent(Socket &&sock, uint32 input_size, uint32 output_size);
+        TcpMessageAgent(Socket&& sock, uint32 input_size, uint32 output_size);
 
         ~TcpMessageAgent() override = default;
 
@@ -31,7 +31,7 @@ namespace Net {
 
         int64 receive_message() override;
 
-        void reset_socket(Socket &&sock);
+        void reset_socket(Socket&& sock);
 
         void close() override;
 

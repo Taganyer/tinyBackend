@@ -11,7 +11,7 @@
 /// 解除注释开启全局 BufferPool 对象
 #define GLOBAL_BUFFER_POOL
 #ifdef GLOBAL_BUFFER_POOL
-#include "Base/Buffer/BufferPool.hpp"
+#include "tinyBackend/Base/Buffer/BufferPool.hpp"
 
 inline Base::BufferPool Global_BufferPool(1 << 28);
 /// 解除注释开启全局 ScheduledThread 对象
@@ -20,7 +20,7 @@ inline Base::BufferPool Global_BufferPool(1 << 28);
 #endif
 
 #ifdef GLOBAL_SCHEDULED_THREAD
-#include "Base/ScheduledThread.hpp"
+#include "tinyBackend/Base/ScheduledThread.hpp"
 
 constexpr Base::TimeInterval Global_ScheduledThread_FlushTime(Base::operator ""_s(1));
 inline Base::ScheduledThread Global_ScheduledThread(Global_ScheduledThread_FlushTime);

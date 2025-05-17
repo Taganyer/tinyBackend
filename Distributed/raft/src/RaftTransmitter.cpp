@@ -3,8 +3,8 @@
 //
 
 #include "../RaftTransmitter.hpp"
-#include "Base/SystemLog.hpp"
-#include "Distributed/raft/RaftMessage.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Distributed/raft/RaftMessage.hpp"
 
 using namespace Dist;
 
@@ -16,11 +16,11 @@ static constexpr long MESSAGE_SIZE = sizeof(RaftMessage);
 
 #define FILLING_PARAMETER version, serial_number++
 
-RaftTransmitter::RaftTransmitter(const Address &local_address,
-                                 RaftStateMachine* machine, std::string name) :
+RaftTransmitter::RaftTransmitter(const Address& local_address,
+                                 RaftStateMachine *machine, std::string name) :
     _sender(local_address), machine(machine), _name(std::move(name)) {}
 
-void RaftTransmitter::notify_follower(const Address &follower, const std::string &data) {
+void RaftTransmitter::notify_follower(const Address& follower, const std::string& data) {
     RaftMessage message;
     message.leader_check(FILLING_PARAMETER);
     if (!message.add_extra_message(data.data(), data.size())) {
@@ -34,7 +34,7 @@ void RaftTransmitter::notify_follower(const Address &follower, const std::string
     }
 }
 
-void RaftTransmitter::respond_leader(const Address &leader) {
+void RaftTransmitter::respond_leader(const Address& leader) {
     RaftMessage message;
     message.follower_ack(FILLING_PARAMETER);
     if (_sender.sendto(leader, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -43,7 +43,7 @@ void RaftTransmitter::respond_leader(const Address &leader) {
     }
 }
 
-void RaftTransmitter::request_vote(const Address &peer) {
+void RaftTransmitter::request_vote(const Address& peer) {
     RaftMessage message;
     message.ask_for_vote(FILLING_PARAMETER);
     if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -52,7 +52,7 @@ void RaftTransmitter::request_vote(const Address &peer) {
     }
 }
 
-void RaftTransmitter::vote_to(const Address &peer, bool result) {
+void RaftTransmitter::vote_to(const Address& peer, bool result) {
     RaftMessage message;
     message.vote(FILLING_PARAMETER, result);
     if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -61,7 +61,7 @@ void RaftTransmitter::vote_to(const Address &peer, bool result) {
     }
 }
 
-void RaftTransmitter::request_logs(const Address &address, const std::string &data) {
+void RaftTransmitter::request_logs(const Address& address, const std::string& data) {
     RaftMessage message;
     message.request_logs(FILLING_PARAMETER);
     if (!message.add_extra_message(data.data(), data.size())) {
@@ -75,7 +75,7 @@ void RaftTransmitter::request_logs(const Address &address, const std::string &da
     }
 }
 
-void RaftTransmitter::this_one_online(const Address &peer) {
+void RaftTransmitter::this_one_online(const Address& peer) {
     RaftMessage message;
     message.online(FILLING_PARAMETER);
     if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -84,7 +84,7 @@ void RaftTransmitter::this_one_online(const Address &peer) {
     }
 }
 
-void RaftTransmitter::affirm_online(const Address &address) {
+void RaftTransmitter::affirm_online(const Address& address) {
     RaftMessage message;
     message.affirm_online(FILLING_PARAMETER);
     if (_sender.sendto(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -93,7 +93,7 @@ void RaftTransmitter::affirm_online(const Address &address) {
     }
 }
 
-void RaftTransmitter::this_one_offline(const Address &peer) {
+void RaftTransmitter::this_one_offline(const Address& peer) {
     RaftMessage message;
     message.offline(FILLING_PARAMETER);
     if (_sender.sendto(peer, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -102,7 +102,7 @@ void RaftTransmitter::this_one_offline(const Address &peer) {
     }
 }
 
-void RaftTransmitter::affirm_offline(const Address &address) {
+void RaftTransmitter::affirm_offline(const Address& address) {
     RaftMessage message;
     message.affirm_offline(FILLING_PARAMETER);
     if (_sender.sendto(address, &message, MESSAGE_SIZE) != MESSAGE_SIZE) {
@@ -111,7 +111,7 @@ void RaftTransmitter::affirm_offline(const Address &address) {
     }
 }
 
-RaftTransmitter::Address RaftTransmitter::receive(RaftMessage* message,
+RaftTransmitter::Address RaftTransmitter::receive(RaftMessage *message,
                                                   TimeInterval end_time) const {
     auto time = end_time - Unix_to_now();
     int choose = MSG_DONTWAIT;

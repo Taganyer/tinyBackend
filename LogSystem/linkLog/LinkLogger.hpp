@@ -8,7 +8,7 @@
 #ifdef LOGSYSTEM_LINKLOGGER_HPP
 
 #include "LinkLogServer.hpp"
-#include "Base/LogRank.hpp"
+#include "tinyBackend/Base/LogRank.hpp"
 
 
 namespace LogSystem {
@@ -29,41 +29,41 @@ namespace LogSystem {
 
         using NodeID = Server::NodeID;
 
-        LinkLogger(LogRank rank, const ServiceID &service, const NodeID &node,
-                   bool is_branch, Base::TimeInterval end_timeout, LinkLogServer &server);
+        LinkLogger(LogRank rank, const ServiceID& service, const NodeID& node,
+                   bool is_branch, Base::TimeInterval end_timeout, LinkLogServer& server);
 
-        LinkLogger(LogRank rank, const ID &head_id,
-                   bool is_branch, Base::TimeInterval end_timeout, LinkLogServer &server);
+        LinkLogger(LogRank rank, const ID& head_id,
+                   bool is_branch, Base::TimeInterval end_timeout, LinkLogServer& server);
 
-        LinkLogger(LogRank rank, const ServiceID &service, const NodeID &node,
-                   Base::TimeInterval end_timeout, LinkLogServer &server);
+        LinkLogger(LogRank rank, const ServiceID& service, const NodeID& node,
+                   Base::TimeInterval end_timeout, LinkLogServer& server);
 
-        LinkLogger(LogRank rank, const ID &complete_id,
-                   Base::TimeInterval end_timeout, LinkLogServer &server);
+        LinkLogger(LogRank rank, const ID& complete_id,
+                   Base::TimeInterval end_timeout, LinkLogServer& server);
 
-        LinkLogger(LogRank rank, const LinkLogger &parent, const NodeID &node,
+        LinkLogger(LogRank rank, const LinkLogger& parent, const NodeID& node,
                    Base::TimeInterval end_timeout);
 
-        LinkLogger(LinkLogger &&other) noexcept;
+        LinkLogger(LinkLogger&& other) noexcept;
 
         ~LinkLogger();
 
-        void push(LogRank rank, const void* data, uint16 size) const;
+        void push(LogRank rank, const void *data, uint16 size) const;
 
-        void register_child_node(Type type, const NodeID &node_id,
+        void register_child_node(Type type, const NodeID& node_id,
                                  Base::TimeInterval create_timeout) const;
 
-        void fork(const NodeID &child_node, Base::TimeInterval create_timeout) const;
+        void fork(const NodeID& child_node, Base::TimeInterval create_timeout) const;
 
-        void follow(const NodeID &child_node, Base::TimeInterval create_timeout) const;
+        void follow(const NodeID& child_node, Base::TimeInterval create_timeout) const;
 
-        void decision(const NodeID &child_node, Base::TimeInterval create_timeout) const;
+        void decision(const NodeID& child_node, Base::TimeInterval create_timeout) const;
 
-        void rpc_fork(const NodeID &child_node, Base::TimeInterval create_timeout) const;
+        void rpc_fork(const NodeID& child_node, Base::TimeInterval create_timeout) const;
 
-        void rpc_follow(const NodeID &child_node, Base::TimeInterval create_timeout) const;
+        void rpc_follow(const NodeID& child_node, Base::TimeInterval create_timeout) const;
 
-        void rpc_decision(const NodeID &child_node, Base::TimeInterval create_timeout) const;
+        void rpc_decision(const NodeID& child_node, Base::TimeInterval create_timeout) const;
 
         void close();
 
@@ -82,7 +82,7 @@ namespace LogSystem {
 
         Iter _iter;
 
-        LinkLogServer* _server;
+        LinkLogServer *_server;
 
     };
 
@@ -90,13 +90,13 @@ namespace LogSystem {
     public:
         static constexpr uint16 BUFFER_SIZE = 256;
 
-        LinkLogStream(LinkLogger &log, LogRank rank) : _log(&log), _rank(rank) {};
+        LinkLogStream(LinkLogger& log, LogRank rank) : _log(&log), _rank(rank) {};
 
         ~LinkLogStream() {
             _log->push(_rank, _message, _index);
         };
 
-        LinkLogStream& operator<<(const std::string &val) {
+        LinkLogStream& operator<<(const std::string& val) {
             if (_log->get_rank() > _rank) return *this;
             auto len = val.size() > BUFFER_SIZE - _index ? BUFFER_SIZE - _index : val.size();
             memcpy(_message + _index, val.data(), len);
@@ -104,7 +104,7 @@ namespace LogSystem {
             return *this;
         };
 
-        LinkLogStream& operator<<(const std::string_view &val) {
+        LinkLogStream& operator<<(const std::string_view& val) {
             if (_log->get_rank() > _rank) return *this;
             auto len = val.size() > BUFFER_SIZE - _index ? BUFFER_SIZE - _index : val.size();
             memcpy(_message + _index, val.data(), len);
@@ -139,7 +139,7 @@ namespace LogSystem {
 #undef LinkStreamOperator
 
     private:
-        LinkLogger* _log;
+        LinkLogger *_log;
 
         LogRank _rank;
 

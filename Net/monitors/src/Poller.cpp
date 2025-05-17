@@ -3,9 +3,9 @@
 //
 
 #include "../Poller.hpp"
-#include "Net/error/errors.hpp"
-#include "Base/SystemLog.hpp"
-#include "Net/functions/poll_interface.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Net/error/errors.hpp"
+#include "tinyBackend/Net/functions/poll_interface.hpp"
 
 using namespace Net;
 
@@ -17,7 +17,7 @@ Poller::~Poller() {
 }
 
 
-int Poller::get_aliveEvent(int timeoutMS, EventList &list) {
+int Poller::get_aliveEvent(int timeoutMS, EventList& list) {
     int active = ops::poll(_fds.data(), _fds.size(), timeoutMS);
     if (active > 0) {
         get_events(list, active);
@@ -79,7 +79,7 @@ uint64 Poller::fd_size() const {
     return _fds.size();
 }
 
-void Poller::get_events(EventList &list, int size) {
+void Poller::get_events(EventList& list, int size) {
     list.reserve(size + list.size());
     for (int i = 0; i < _fds.size(); ++i) {
         if (_fds[i].revents <= 0)

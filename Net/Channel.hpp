@@ -16,9 +16,9 @@ namespace Net {
     /// 并且不操作 Base::InputBuffer 和 Base::OutputBuffer。
     class Channel {
     public:
-        using ReadCallback = std::function<void(MessageAgent &)>;
+        using ReadCallback = std::function<void(MessageAgent&)>;
 
-        using WriteCallback = std::function<void(MessageAgent &)>;
+        using WriteCallback = std::function<void(MessageAgent&)>;
 
         /*
          * 返回值表示是否调用 CloseCallback
@@ -29,9 +29,9 @@ namespace Net {
          *                error_types::ErrorEvent,
          *                error_types::TimeoutEvent
         */
-        using ErrorCallback = std::function<void(MessageAgent &)>;
+        using ErrorCallback = std::function<void(MessageAgent&)>;
 
-        using CloseCallback = std::function<void(MessageAgent &)>;
+        using CloseCallback = std::function<void(MessageAgent&)>;
 
         void set_readCallback(ReadCallback event) { _readFun = std::move(event); };
 
@@ -41,7 +41,7 @@ namespace Net {
 
         void set_closeCallback(CloseCallback event) { _closeFun = std::move(event); };
 
-        void invoke_event(MessageAgent &agent) const;
+        void invoke_event(MessageAgent& agent) const;
 
     private:
         ReadCallback _readFun;
@@ -52,13 +52,13 @@ namespace Net {
 
         CloseCallback _closeFun;
 
-        void handle_read(MessageAgent &agent) const;
+        void handle_read(MessageAgent& agent) const;
 
-        void handle_write(MessageAgent &agent) const;
+        void handle_write(MessageAgent& agent) const;
 
-        void handle_error(MessageAgent &agent) const;
+        void handle_error(MessageAgent& agent) const;
 
-        void handle_close(MessageAgent &agent) const;
+        void handle_close(MessageAgent& agent) const;
 
     };
 }

@@ -8,8 +8,8 @@
 #ifdef LOGSYSTEM_LINKLOGERROR_HPP
 
 #include <utility>
-#include "Base/Exception.hpp"
-#include "LogSystem/linkLog/Identification.hpp"
+#include "tinyBackend/Base/Exception.hpp"
+#include "tinyBackend/LogSystem/linkLog/Identification.hpp"
 
 namespace LogSystem {
 
@@ -27,7 +27,7 @@ namespace LogSystem {
     };
 
     inline const char* getLinkErrorTypeName(LinkErrorType errorType) {
-        constexpr const char* errorTypeNames[] = {
+        constexpr const char *errorTypeNames[] = {
             "Success",
             "ExtraFollow",
             "WrongType",
@@ -44,7 +44,7 @@ namespace LogSystem {
 
     class LinkLogError : public Base::Exception {
     public:
-        LinkLogError(const LinkServiceID &service, const LinkNodeID &node,
+        LinkLogError(const LinkServiceID& service, const LinkNodeID& node,
                      LinkErrorType errorType_, std::string message) :
             Exception(std::move(message)),
             id(service, node), errorType(errorType_) {};
@@ -56,7 +56,7 @@ namespace LogSystem {
 
     class LinkLogCreateError : public LinkLogError {
     public:
-        LinkLogCreateError(const LinkServiceID &service, const LinkNodeID &node,
+        LinkLogCreateError(const LinkServiceID& service, const LinkNodeID& node,
                            LinkErrorType errorType_) :
             LinkLogError(service, node, errorType_,
                          "LinkLogCreateError: service["
@@ -70,7 +70,7 @@ namespace LogSystem {
 
     class LinkLogRegisterError : public LinkLogError {
     public:
-        LinkLogRegisterError(const LinkServiceID &service, const LinkNodeID &node,
+        LinkLogRegisterError(const LinkServiceID& service, const LinkNodeID& node,
                              LinkErrorType errorType_):
             LinkLogError(service, node, errorType_,
                          "LinkLogRegisterError: service["

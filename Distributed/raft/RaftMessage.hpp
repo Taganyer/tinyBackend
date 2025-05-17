@@ -7,8 +7,8 @@
 
 #ifdef DIST_RAFTMESSAGE_HPP
 
-#include "Base/VersionNumber.hpp"
-#include "Base/Time/TimeInterval.hpp"
+#include "tinyBackend/Base/VersionNumber.hpp"
+#include "tinyBackend/Base/Time/TimeInterval.hpp"
 
 namespace Dist {
 
@@ -28,7 +28,7 @@ namespace Dist {
         };
 
         static const char* get_TypeName(Type type) {
-            constexpr const char* name[] = {
+            constexpr const char *name[] = {
                 "[Invalid]",
                 "[LeaderCheck]",
                 "[FollowerAck]",
@@ -99,10 +99,10 @@ namespace Dist {
 
         void update_time() { time_of_departure = Base::Unix_to_now(); };
 
-        bool add_extra_message(const void* data, uint64 size) {
+        bool add_extra_message(const void *data, uint64 size) {
             if (size > sizeof(extra_data) - extra_data_size)
                 return false;
-            char* dest = extra_data + extra_data_size;
+            char *dest = extra_data + extra_data_size;
             extra_data_size += size;
             for (auto ptr = (const char *) data;
                  size; --size, ++ptr, ++dest)

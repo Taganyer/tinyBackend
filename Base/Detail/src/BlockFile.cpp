@@ -4,12 +4,12 @@
 
 #include <bits/move.h>
 #include "../BlockFile.hpp"
-#include "Base/Exception.hpp"
+#include "tinyBackend/Base/Exception.hpp"
 
 
 using namespace Base;
 
-BlockFile::BlockFile(const char* path, bool append,
+BlockFile::BlockFile(const char *path, bool append,
                      bool binary, uint64 block_size) :
     _file(path, append, binary), _block_size(block_size) {
     if (_file.is_open()) {
@@ -22,7 +22,7 @@ BlockFile::BlockFile(const char* path, bool append,
     }
 }
 
-BlockFile::BlockFile(BlockFile &&other) noexcept :
+BlockFile::BlockFile(BlockFile&& other) noexcept :
     _file(std::move(other._file)), _offset(other._offset),
     _total_blocks(other._total_blocks), _block_size(other._block_size) {
     other._total_blocks = 0;
@@ -31,7 +31,7 @@ BlockFile::BlockFile(BlockFile &&other) noexcept :
     other._block_size = 0;
 }
 
-bool BlockFile::open(const char* path, bool append, bool binary) {
+bool BlockFile::open(const char *path, bool append, bool binary) {
     _offset = 0;
     _total_blocks = 0;
     if (!_file.open(path, append, binary)) return false;
@@ -50,7 +50,7 @@ bool BlockFile::close() {
     return _file.close();
 }
 
-uint64 BlockFile::read(void* dest, uint64 index, uint64 count) {
+uint64 BlockFile::read(void *dest, uint64 index, uint64 count) {
     if (index + count > _total_blocks || !locating(index)) return 0;
     auto _dest = (char *) dest;
     for (uint64 rs = _block_size; count > 0 && rs == _block_size; --count) {
@@ -61,7 +61,7 @@ uint64 BlockFile::read(void* dest, uint64 index, uint64 count) {
     return _dest - (char *) dest;
 }
 
-uint64 BlockFile::write_to_back(const void* data, uint64 size) {
+uint64 BlockFile::write_to_back(const void *data, uint64 size) {
     if (!locating(_total_blocks)) return 0;
     auto _data = (const char *) data;
     for (uint64 s, written; size > 0; size -= s) {
@@ -78,7 +78,7 @@ uint64 BlockFile::write_to_back(const void* data, uint64 size) {
     return _data - (char *) data;
 }
 
-uint64 BlockFile::update(const void* data, uint64 size, uint64 index) {
+uint64 BlockFile::update(const void *data, uint64 size, uint64 index) {
     if (index >= _total_blocks || !locating(index)) return 0;
     if (size > _block_size) size = _block_size;
     return padding_write(data, size);
@@ -113,10 +113,10 @@ bool BlockFile::locating(uint64 index) {
     return false;
 }
 
-uint64 BlockFile::padding_write(const void* data, uint64 size) {
+uint64 BlockFile::padding_write(const void *data, uint64 size) {
     uint64 written = _file.write(data, size);
     if (written == size && size != _block_size) {
-        char* _pad = new char[_block_size];
+        char *_pad = new char[_block_size];
         written += _file.write(_pad, _block_size - size);
         delete [] _pad;
     }

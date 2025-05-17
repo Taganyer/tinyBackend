@@ -6,7 +6,7 @@
 #define BASE_SINGLELIST_HPP
 
 #include <utility>
-#include "../Detail/config.hpp"
+#include "tinyBackend/Base/Detail/config.hpp"
 
 namespace Base {
 
@@ -15,9 +15,9 @@ namespace Base {
     public:
         SingleList() = default;
 
-        SingleList(const SingleList &other);
+        SingleList(const SingleList& other);
 
-        SingleList(SingleList &&other) noexcept;
+        SingleList(SingleList&& other) noexcept;
 
         ~SingleList();
 
@@ -33,10 +33,10 @@ namespace Base {
 
         Iter before_begin() { return { nullptr }; };
 
-        template <typename...Args>
-        Iter insert_after(Iter before_dest, Args &&...args);
+        template <typename... Args>
+        Iter insert_after(Iter before_dest, Args&&... args);
 
-        Iter insert_after(Iter before_dest, Val &&val);
+        Iter insert_after(Iter before_dest, Val&& val);
 
         void next_to_after(Iter before_dest, Iter before_target);
 
@@ -51,8 +51,8 @@ namespace Base {
     private:
         struct Node;
 
-        Node* _head = nullptr;
-        Node* _tail = nullptr;
+        Node *_head = nullptr;
+        Node *_tail = nullptr;
 
         uint64 _size = 0;
 
@@ -62,12 +62,12 @@ namespace Base {
     template <typename Data>
     struct SingleList<Data>::Node {
 
-        template <typename...Args>
-        Node(Args...args) : _data(std::forward<Args>(args)...) {};
+        template <typename... Args>
+        Node(Args... args) : _data(std::forward<Args>(args)...) {};
 
         Data _data;
 
-        Node* _next = nullptr;
+        Node *_next = nullptr;
 
     };
 
@@ -76,7 +76,7 @@ namespace Base {
     public:
         Iter() = default;
 
-        Iter(Node* node) : _ptr(node) {};
+        Iter(Node *node) : _ptr(node) {};
 
         Data& operator*() { return _ptr->_data; };
 
@@ -97,12 +97,12 @@ namespace Base {
             return temp;
         };
 
-        bool operator==(const Iter &other) const { return _ptr == other._ptr; };
+        bool operator==(const Iter& other) const { return _ptr == other._ptr; };
 
-        bool operator!=(const Iter &other) const { return _ptr != other._ptr; };
+        bool operator!=(const Iter& other) const { return _ptr != other._ptr; };
 
     private:
-        SingleList<Data>::Node* _ptr = nullptr;
+        SingleList<Data>::Node *_ptr = nullptr;
 
         friend class SingleList<Data>;
 
@@ -111,13 +111,13 @@ namespace Base {
     template <typename Data>
     class SingleList<Data>::Val {
     public:
-        Val(const Val &) = delete;
+        Val(const Val&) = delete;
 
-        Val(Val &&other) noexcept: _ptr(other._ptr) { other._ptr = nullptr; };
+        Val(Val&& other) noexcept: _ptr(other._ptr) { other._ptr = nullptr; };
 
         ~Val() { delete _ptr; };
 
-        explicit Val(Node* node) : _ptr(node) {};
+        explicit Val(Node *node) : _ptr(node) {};
 
         Data& operator*() { return _ptr->_data; };
 
@@ -128,7 +128,7 @@ namespace Base {
         const Data& operator->() const { return _ptr->_data; };
 
     private:
-        Node* _ptr = nullptr;
+        Node *_ptr = nullptr;
 
         friend class SingleList;
 
@@ -136,9 +136,9 @@ namespace Base {
 
 
     template <typename Data>
-    SingleList<Data>::SingleList(const SingleList &other) : _size(other._size) {
+    SingleList<Data>::SingleList(const SingleList& other) : _size(other._size) {
         Iter iter = other.begin(), end = other.end();
-        Node* temp,* last = nullptr;
+        Node *temp, *last = nullptr;
         while (iter != end) {
             temp = new Node(*iter);
             (!last ? _head : last->_next) = temp;
@@ -149,7 +149,7 @@ namespace Base {
     }
 
     template <typename Data>
-    SingleList<Data>::SingleList(SingleList &&other) noexcept :
+    SingleList<Data>::SingleList(SingleList&& other) noexcept :
         _head(other._head), _tail(other._tail), _size(other._size) {
         other._head = other._tail = nullptr;
         other._size = 0;
@@ -158,16 +158,16 @@ namespace Base {
     template <typename Data>
     SingleList<Data>::~SingleList() {
         while (_head) {
-            Node* temp = _head;
+            Node *temp = _head;
             _head = _head->_next;
             delete temp;
         }
     }
 
     template <typename Data>
-    template <typename...Args>
+    template <typename... Args>
     typename SingleList<Data>::Iter
-    SingleList<Data>::insert_after(Iter before_dest, Args &&...args) {
+    SingleList<Data>::insert_after(Iter before_dest, Args&&... args) {
         auto ptr = new Node(std::forward<Args>(args)...);
         if (before_dest._ptr) {
             if (before_dest._ptr == _tail) _tail = ptr;
@@ -233,7 +233,7 @@ namespace Base {
     template <typename Data>
     void SingleList<Data>::erase_after(Iter before_target) {
         if (before_target._ptr == _tail) return;
-        Node* ptr;
+        Node *ptr;
         if (before_target._ptr) {
             ptr = before_target._ptr->_next;
             if (ptr == _tail) _tail = before_target._ptr;
@@ -251,7 +251,7 @@ namespace Base {
     void SingleList<Data>::erase_after(Iter before_begin, Iter end) {
         if (before_begin._ptr == _tail) return;
         if (!end._ptr) _tail = before_begin._ptr;
-        Node* ptr;
+        Node *ptr;
         if (before_begin._ptr) {
             ptr = before_begin._ptr->_next;
             before_begin._ptr->_next = end._ptr;
@@ -271,7 +271,7 @@ namespace Base {
     typename SingleList<Data>::Val
     SingleList<Data>::release_after(Iter before_target) {
         if (before_target._ptr == _tail) return SingleList::Val(nullptr);
-        Node* ptr;
+        Node *ptr;
         if (before_target._ptr) {
             ptr = before_target._ptr->_next;
             if (ptr == _tail) _tail = before_target._ptr;

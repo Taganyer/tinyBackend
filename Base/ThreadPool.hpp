@@ -19,11 +19,11 @@ namespace Base {
 
         ~ThreadPool();
 
-        template <typename Fun_, typename...Args>
-        void submit(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        void submit(Fun_&& fun, Args&&... args);
 
-        template <typename Fun_, typename...Args>
-        auto submit_with_future(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        auto submit_with_future(Fun_&& fun, Args&&... args);
 
         bool stolen_a_task();
 
@@ -79,7 +79,7 @@ namespace Base {
 
         void create_thread();
 
-        void thread_begin(std::atomic<bool> &create_done);
+        void thread_begin(std::atomic<bool>& create_done);
 
         void thread_end();
 
@@ -89,11 +89,11 @@ namespace Base {
             };
         };
 
-        template <typename Fun_, typename...Args>
-        void create_fun(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        void create_fun(Fun_&& fun, Args&&... args);
 
-        template <typename Fun_, typename...Args>
-        auto create_fun_with_future(Fun_ &&fun, Args &&...args);
+        template <typename Fun_, typename... Args>
+        auto create_fun_with_future(Fun_&& fun, Args&&... args);
 
     };
 
@@ -101,8 +101,8 @@ namespace Base {
 
 namespace Base {
 
-    template <typename Fun_, typename...Args>
-    void ThreadPool::submit(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    void ThreadPool::submit(Fun_&& fun, Args&&... args) {
         Lock l(_lock);
         _submit.wait(l, joinable_fun());
         if (stopping())
@@ -111,8 +111,8 @@ namespace Base {
         create_fun(std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template <typename Fun_, typename...Args>
-    auto ThreadPool::submit_with_future(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    auto ThreadPool::submit_with_future(Fun_&& fun, Args&&... args) {
         Lock l(_lock);
         _submit.wait(l, joinable_fun());
         if (stopping())
@@ -121,8 +121,8 @@ namespace Base {
         return create_fun_with_future(std::forward<Fun_>(fun), std::forward<Args>(args)...);
     }
 
-    template <typename Fun_, typename...Args>
-    void ThreadPool::create_fun(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    void ThreadPool::create_fun(Fun_&& fun, Args&&... args) {
         auto fun_ptr = new Detail::FunPack<Fun_, Args...>(std::forward<Fun_>(fun),
                                                           std::forward<Args>(args)...);
         _list.emplace_back([fun_ptr] (bool kill) {
@@ -132,8 +132,8 @@ namespace Base {
         );
     }
 
-    template <typename Fun_, typename...Args>
-    auto ThreadPool::create_fun_with_future(Fun_ &&fun, Args &&...args) {
+    template <typename Fun_, typename... Args>
+    auto ThreadPool::create_fun_with_future(Fun_&& fun, Args&&... args) {
         using Result_Type = std::result_of_t<Fun_(Args...)>;
         auto fun_ptr = new Detail::AsyncFun<Result_Type, Fun_, Args...>(std::forward<Fun_>(fun),
                                                                         std::forward<Args>(args)...);

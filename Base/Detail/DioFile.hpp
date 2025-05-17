@@ -22,19 +22,19 @@ namespace Base {
     public:
         DioFile() = default;
 
-        explicit DioFile(const char* path);
+        explicit DioFile(const char *path);
 
-        DioFile(DioFile &&other) noexcept;
+        DioFile(DioFile&& other) noexcept;
 
         ~DioFile();
 
-        bool open(const char* path);
+        bool open(const char *path);
 
         bool close();
 
-        uint64 read(uint64 size, void* dest) const;
+        uint64 read(uint64 size, void *dest) const;
 
-        uint64 write(const void* str, size_t len);
+        uint64 write(const void *str, size_t len);
 
         void flush_to_disk();
 
@@ -56,7 +56,7 @@ namespace Base {
 
         [[nodiscard]] const std::string& get_path() const { return _path; };
 
-        [[nodiscard]] bool get_stat(struct stat* ptr) const;
+        [[nodiscard]] bool get_stat(struct stat *ptr) const;
 
         [[nodiscard]] int get_fd() const {
             return _fd;
@@ -69,11 +69,11 @@ namespace Base {
 
     };
 
-    inline DioFile::DioFile(const char* path) {
+    inline DioFile::DioFile(const char *path) {
         open(path);
     }
 
-    inline DioFile::DioFile(DioFile &&other) noexcept : _fd(other._fd), _path(std::move(other._path)) {
+    inline DioFile::DioFile(DioFile&& other) noexcept : _fd(other._fd), _path(std::move(other._path)) {
         other._fd = -1;
         other._path.clear();
     }
@@ -82,7 +82,7 @@ namespace Base {
         close();
     }
 
-    inline bool DioFile::open(const char* path) {
+    inline bool DioFile::open(const char *path) {
         close();
         _fd = ::open(path, O_RDWR | O_CREAT | O_DIRECT, 0644);
         if (_fd < 0) return false;
@@ -100,12 +100,12 @@ namespace Base {
         return false;
     }
 
-    inline uint64 DioFile::read(uint64 size, void* dest) const {
+    inline uint64 DioFile::read(uint64 size, void *dest) const {
         int64 len = ::read(_fd, dest, size);
         return len > 0 ? len : 0;
     }
 
-    inline uint64 DioFile::write(const void* str, size_t len) {
+    inline uint64 DioFile::write(const void *str, size_t len) {
         int64 size = ::write(_fd, str, len);
         return size > 0 ? size : 0;
     }
@@ -126,7 +126,7 @@ namespace Base {
         return success;
     }
 
-    inline bool DioFile::get_stat(struct stat* ptr) const {
+    inline bool DioFile::get_stat(struct stat *ptr) const {
         return is_open() && fstat(_fd, ptr) == 0;
     }
 

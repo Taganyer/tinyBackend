@@ -9,10 +9,10 @@
 
 #include <queue>
 #include <vector>
-#include "Socket.hpp"
 #include "Channel.hpp"
-#include "Base/Mutex.hpp"
+#include "Socket.hpp"
 #include "TcpMessageAgent.hpp"
+#include "tinyBackend/Base/Mutex.hpp"
 
 namespace Net {
 
@@ -23,17 +23,17 @@ namespace Net {
         static constexpr uint64 FAIL = MAX_ULLONG;
 
         using AcceptCallback = std::function<Channel(std::string verify_string,
-                                                     bool has_reject, bool &can_accept,
-                                                     uint32 &input_buffer_size,
-                                                     uint32 &output_buffer_size)>;
+                                                     bool has_reject, bool& can_accept,
+                                                     uint32& input_buffer_size,
+                                                     uint32& output_buffer_size)>;
 
-        using CreateCallback = std::function<void(MessageAgent &, Channel &)>;
+        using CreateCallback = std::function<void(MessageAgent&, Channel&)>;
 
-        using RejectCallback = std::function<void(std::string verify_string, Channel &channel)>;
+        using RejectCallback = std::function<void(std::string verify_string, Channel& channel)>;
 
-        using WeakUpFun = std::function<void(MessageAgent &, Channel &)>;
+        using WeakUpFun = std::function<void(MessageAgent&, Channel&)>;
 
-        TCP_Multiplexer(Socket &&socket, AcceptCallback accept_callback,
+        TCP_Multiplexer(Socket&& socket, AcceptCallback accept_callback,
                         uint32 input_size, uint32 output_size, uint16 max_channels_size);
 
         ~TCP_Multiplexer() override;
@@ -51,7 +51,7 @@ namespace Net {
 
         void update_channel(Event event);
 
-        void weak_up_channel(int fd, const WeakUpFun &fun);
+        void weak_up_channel(int fd, const WeakUpFun& fun);
 
         /// error_event 和 hang_up_event 可能会在 send_message 和 receive_message 调用。
         /// 会轮询整个数组，调用有事件发生的 Channel。
@@ -61,7 +61,7 @@ namespace Net {
         struct FD {
             FD() = default;
 
-            FD(const FD &) = default;
+            FD(const FD&) = default;
 
             FD(uint16 id, uint16 index, uint32 socket_fd) :
                 id(id), index(index), socket_fd(socket_fd) {};

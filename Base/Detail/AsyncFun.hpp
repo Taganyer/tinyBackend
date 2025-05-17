@@ -10,10 +10,10 @@
 
 namespace Base::Detail {
 
-    template <typename Target_fun, typename...Args>
+    template <typename Target_fun, typename... Args>
     class FunPack {
     public:
-        explicit FunPack(Target_fun &&fun, Args &&...args) :
+        explicit FunPack(Target_fun&& fun, Args&&... args) :
             fun(std::forward<Target_fun>(fun)), args(std::tuple<Args...>(std::forward<Args>(args)...)) {};
 
         virtual ~FunPack() = default;
@@ -28,11 +28,12 @@ namespace Base::Detail {
 
     };
 
-    template <typename Result, typename Target_fun, typename...Args>
+    template <typename Result, typename Target_fun, typename... Args>
     class AsyncFun : public FunPack<Target_fun, Args...> {
     public:
         using Parent = FunPack<Target_fun, Args...>;
-        explicit AsyncFun(Target_fun &&fun, Args &&...args) :
+
+        explicit AsyncFun(Target_fun&& fun, Args&&... args) :
             Parent(std::forward<Target_fun>(fun), std::forward<Args>(args)...) {};
 
         ~AsyncFun() override = default;

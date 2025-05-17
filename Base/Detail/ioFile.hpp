@@ -20,27 +20,27 @@ namespace Base {
     public:
         ioFile() = default;
 
-        explicit ioFile(const char* path, bool append, bool binary);
+        explicit ioFile(const char *path, bool append, bool binary);
 
-        ioFile(ioFile &&other) noexcept;
+        ioFile(ioFile&& other) noexcept;
 
-        ioFile& operator=(ioFile &&other) noexcept;
+        ioFile& operator=(ioFile&& other) noexcept;
 
         ~ioFile();
 
-        bool open(const char* path, bool append, bool binary);
+        bool open(const char *path, bool append, bool binary);
 
         bool close();
 
-        uint64 read(uint64 size, void* dest) const;
+        uint64 read(uint64 size, void *dest) const;
 
-        template<std::size_t N>
-        int64 read(const BufferArray<N> &array) const;
+        template <std::size_t N>
+        int64 read(const BufferArray<N>& array) const;
 
-        uint64 write(const void* str, size_t len = -1) const;
+        uint64 write(const void *str, size_t len = -1) const;
 
-        template<std::size_t N>
-        int64 write(const BufferArray<N> &array) const;
+        template <std::size_t N>
+        int64 write(const BufferArray<N>& array) const;
 
         void flush() const;
 
@@ -66,7 +66,7 @@ namespace Base {
 
         [[nodiscard]] const std::string& get_path() const { return _path; };
 
-        [[nodiscard]] bool get_stat(struct stat* ptr) const;
+        [[nodiscard]] bool get_stat(struct stat *ptr) const;
 
         [[nodiscard]] int get_fd() const {
             if (!_file) return -1;
@@ -76,21 +76,21 @@ namespace Base {
         [[nodiscard]] FILE* get_fp() const { return _file; };
 
     protected:
-        FILE* _file = nullptr;
+        FILE *_file = nullptr;
 
         std::string _path;
 
     };
 
-    inline ioFile::ioFile(const char* path, bool append, bool binary) {
+    inline ioFile::ioFile(const char *path, bool append, bool binary) {
         open(path, append, binary);
     }
 
-    inline ioFile::ioFile(ioFile &&other) noexcept : _file(other._file) {
+    inline ioFile::ioFile(ioFile&& other) noexcept : _file(other._file) {
         other._file = nullptr;
     }
 
-    inline ioFile& ioFile::operator=(ioFile &&other) noexcept {
+    inline ioFile& ioFile::operator=(ioFile&& other) noexcept {
         close();
         _file = other._file;
         other._file = nullptr;
@@ -102,7 +102,7 @@ namespace Base {
         close();
     }
 
-    inline bool ioFile::open(const char* path, bool append, bool binary) {
+    inline bool ioFile::open(const char *path, bool append, bool binary) {
         close();
         char mod[4] { 'w', 'b', '+', '\0' };
         if (append) mod[0] = 'r';
@@ -130,7 +130,7 @@ namespace Base {
         return false;
     }
 
-    inline uint64 ioFile::read(uint64 size, void* dest) const {
+    inline uint64 ioFile::read(uint64 size, void *dest) const {
         return fread(dest, 1, size, _file);
     }
 
@@ -139,7 +139,7 @@ namespace Base {
         return ::readv(get_fd(), array.data(), N);
     }
 
-    inline uint64 ioFile::write(const void* str, size_t len) const {
+    inline uint64 ioFile::write(const void *str, size_t len) const {
         if (len == -1) return fputs((const char *) str, _file);
         return fwrite(str, 1, len, _file);
     }
@@ -170,7 +170,7 @@ namespace Base {
         return success;
     }
 
-    inline bool ioFile::get_stat(struct stat* ptr) const {
+    inline bool ioFile::get_stat(struct stat *ptr) const {
         return is_open() && fstat(get_fd(), ptr) == 0;
     }
 

@@ -19,15 +19,15 @@ namespace Base {
     template <typename K, typename V>
     class BPTree_impl {
     public:
-        BPTree_impl(ScheduledThread &scheduled_thread, const char* filename, uint64 memory_size);
+        BPTree_impl(ScheduledThread& scheduled_thread, const char *filename, uint64 memory_size);
 
-        BPTree_impl(ScheduledThread &scheduled_thread, BlockFile &&_file, uint64 memory_size);
+        BPTree_impl(ScheduledThread& scheduled_thread, BlockFile&& _file, uint64 memory_size);
 
         ~BPTree_impl();
 
         void flush() const { _scheduler->force_invoke(); };
 
-        static BlockFile open_file(const char* filename) {
+        static BlockFile open_file(const char *filename) {
             return BlockFile(filename, true, true, Interpreter::BLOCK_SIZE);
         };
 
@@ -42,9 +42,9 @@ namespace Base {
 
             HeaderMessage() = default;
 
-            HeaderMessage(const HeaderMessage &) = default;
+            HeaderMessage(const HeaderMessage&) = default;
 
-            explicit HeaderMessage(BlockFile &file) {
+            explicit HeaderMessage(BlockFile& file) {
                 if (total_blocks_size == 0) return;
                 if (file.block_size() != Interpreter::BLOCK_SIZE)
                     throw BPTreeFileError("Invalid BlockFile because block size isn't same.");
@@ -90,7 +90,7 @@ namespace Base {
 
         Iter begin_block();
 
-        void set_begin_block(const Iter &iter);
+        void set_begin_block(const Iter& iter);
 
         void erase_block(Iter iter);
 
@@ -120,15 +120,15 @@ namespace Base {
     };
 
     template <typename K, typename V>
-    BPTree_impl<K, V>::BPTree_impl(ScheduledThread &scheduled_thread,
-                                   const char* filename, uint64 memory_size) :
+    BPTree_impl<K, V>::BPTree_impl(ScheduledThread& scheduled_thread,
+                                   const char *filename, uint64 memory_size) :
         _scheduler(std::make_shared<Impl_Scheduler>(scheduled_thread, filename, memory_size)) {
         init();
     }
 
     template <typename K, typename V>
-    BPTree_impl<K, V>::BPTree_impl(ScheduledThread &scheduled_thread,
-                                   BlockFile &&_file, uint64 memory_size) :
+    BPTree_impl<K, V>::BPTree_impl(ScheduledThread& scheduled_thread,
+                                   BlockFile&& _file, uint64 memory_size) :
         _scheduler(std::make_shared<Impl_Scheduler>(scheduled_thread, std::move(_file), memory_size)) {
         init();
     }
@@ -146,14 +146,14 @@ namespace Base {
     typename BPTree_impl<K, V>::Iter BPTree_impl<K, V>::begin_block() {
         uint32 index = *_header.begin_block_index();
         if (index == 0) return Iter();
-        void* buf = _scheduler->get_block(index, true);
+        void *buf = _scheduler->get_block(index, true);
         bool is_data_block = Interpreter::is_data_block(buf);
         _scheduler->put_block(index, false);
         return Iter { true, is_data_block, index, nullptr };
     }
 
     template <typename K, typename V>
-    void BPTree_impl<K, V>::set_begin_block(const Iter &iter) {
+    void BPTree_impl<K, V>::set_begin_block(const Iter& iter) {
         _head_need_update = true;
         if (!iter.valid()) *_header.begin_block_index() = 0;
         else *_header.begin_block_index() = iter.index();
@@ -205,7 +205,7 @@ namespace Base {
         if (*_header.deleted_blocks_size() == 0)
             return DataBlock(*_scheduler);
         uint32 index = get_new_block_index();
-        void* buf = _scheduler->get_block(index, false);
+        void *buf = _scheduler->get_block(index, false);
         return DataBlock(*_scheduler, index, buf);
     }
 
@@ -217,7 +217,7 @@ namespace Base {
         if (*_header.deleted_blocks_size() == 0)
             return IndexBlock(*_scheduler);
         uint32 index = get_new_block_index();
-        void* buf = _scheduler->get_block(index, false);
+        void *buf = _scheduler->get_block(index, false);
         return IndexBlock(*_scheduler, index, buf);
     }
 
@@ -276,7 +276,7 @@ namespace Base {
     public:
         IterKey() = default;
 
-        explicit IterKey(const Iter &iter, const Key &key) : _iter(iter), _key(key) {};
+        explicit IterKey(const Iter& iter, const Key& key) : _iter(iter), _key(key) {};
 
         Key& key() { return _key; };
 

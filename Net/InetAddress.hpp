@@ -17,14 +17,14 @@ namespace Net {
     public:
         InetAddress() = default;
 
-        explicit InetAddress(const sockaddr_in &addr) : _addr(addr) {};
+        explicit InetAddress(const sockaddr_in& addr) : _addr(addr) {};
 
-        explicit InetAddress(const sockaddr_in6 &addr6) : _addr6(addr6) {};
+        explicit InetAddress(const sockaddr_in6& addr6) : _addr6(addr6) {};
 
         /// 会调用 htons 函数，传入主机序。
-        InetAddress(bool IPv4, const char* IP, unsigned short port = 0, unsigned short family = -1);
+        InetAddress(bool IPv4, const char *IP, unsigned short port = 0, unsigned short family = -1);
 
-        InetAddress& operator=(const InetAddress &) = default;
+        InetAddress& operator=(const InetAddress&) = default;
 
         void set_port(bool IPv4, short port) {
             if (IPv4) {
@@ -42,7 +42,7 @@ namespace Net {
             }
         };
 
-        bool set_IP(bool Ipv4, const char* IP) {
+        bool set_IP(bool Ipv4, const char *IP) {
             if (Ipv4) {
                 return inet_pton(AF_INET, IP, &_addr.sin_addr) > 0;
             } else {
@@ -90,7 +90,7 @@ namespace Net {
 
         static InetAddress get_InetAddress(int fd);
 
-        friend bool operator==(const InetAddress &left, const InetAddress &right) {
+        friend bool operator==(const InetAddress& left, const InetAddress& right) {
             if (left.family() != right.family() || left.port() != right.port())
                 return false;
             if (left.is_IPv4())
@@ -100,7 +100,7 @@ namespace Net {
             return std::memcmp(&left._addr.sin_addr, &right._addr.sin_addr, 24) == 0;
         };
 
-        friend bool operator!=(const InetAddress &left, const InetAddress &right) {
+        friend bool operator!=(const InetAddress& left, const InetAddress& right) {
             return !(left == right);
         };
 
@@ -121,7 +121,7 @@ namespace std {
 
     template <>
     struct hash<Net::InetAddress> {
-        size_t operator()(const Net::InetAddress &_val) const noexcept {
+        size_t operator()(const Net::InetAddress& _val) const noexcept {
             if (_val.is_IPv4()) {
                 return _Hash_impl::hash(&_val, 8);
             }
@@ -144,7 +144,7 @@ namespace std {
 
     template <>
     struct less<Net::InetAddress> {
-        bool operator()(const Net::InetAddress &lhs, const Net::InetAddress &rhs) const {
+        bool operator()(const Net::InetAddress& lhs, const Net::InetAddress& rhs) const {
             if (lhs.family() != rhs.family())
                 return lhs.family() < rhs.family();
             if (lhs.port() != rhs.port())

@@ -8,11 +8,11 @@
 #ifdef LOGSYSTEM_LINKLOGHANDLER_HPP
 
 #include <string>
-#include "Net/InetAddress.hpp"
 #include "LinkLogMessage.hpp"
-#include "Base/LogRank.hpp"
 #include "LinkLogOperation.hpp"
-#include "Net/error/error_mark.hpp"
+#include "tinyBackend/Base/LogRank.hpp"
+#include "tinyBackend/Net/InetAddress.hpp"
+#include "tinyBackend/Net/error/error_mark.hpp"
 
 
 namespace LogSystem {
@@ -34,7 +34,7 @@ namespace LogSystem {
 
         Link_Log() = default;
 
-        Link_Log(Link_Log_Header &header, std::string text) :
+        Link_Log(Link_Log_Header& header, std::string text) :
             service(header.service()), node_init_time(header.init_time()),
             node(header.node()), rank(header.rank()), time(header.time()),
             text(std::move(text)) {};
@@ -63,7 +63,7 @@ namespace LogSystem {
         virtual void handling_error(LinkServiceID service, LinkNodeID node,
                                     Base::TimeInterval time, LinkErrorType type) = 0;
 
-        virtual void center_online(const Address &center_address) = 0;
+        virtual void center_online(const Address& center_address) = 0;
 
         virtual void center_offline() = 0;
 
@@ -77,31 +77,31 @@ namespace LogSystem {
 
         virtual ~LinkLogCenterHandler() = default;
 
-        virtual void create_head_logger(const Address &address, LinkServiceID service, LinkNodeID node,
+        virtual void create_head_logger(const Address& address, LinkServiceID service, LinkNodeID node,
                                         Base::TimeInterval time) = 0;
 
-        virtual void register_logger(const Address &address, LinkServiceID service, LinkNodeID node,
+        virtual void register_logger(const Address& address, LinkServiceID service, LinkNodeID node,
                                      LinkNodeID parent_node, LinkNodeType type,
                                      Base::TimeInterval time, Base::TimeInterval expire_time) = 0;
 
-        virtual void create_logger(const Address &address, LinkServiceID service, LinkNodeID node,
+        virtual void create_logger(const Address& address, LinkServiceID service, LinkNodeID node,
                                    Base::TimeInterval init_time) = 0;
 
-        virtual void logger_end(const Address &address, LinkServiceID service, LinkNodeID node,
+        virtual void logger_end(const Address& address, LinkServiceID service, LinkNodeID node,
                                 Base::TimeInterval end_time) = 0;
 
-        virtual void receive_log(const Address &address, Link_Log log) = 0;
+        virtual void receive_log(const Address& address, Link_Log log) = 0;
 
-        virtual void handling_error(const Address &address, LinkServiceID service, LinkNodeID node,
+        virtual void handling_error(const Address& address, LinkServiceID service, LinkNodeID node,
                                     Base::TimeInterval time, LinkErrorType type) = 0;
 
-        virtual void node_online(const Address &address, Base::TimeInterval time) = 0;
+        virtual void node_online(const Address& address, Base::TimeInterval time) = 0;
 
-        virtual void node_offline(const Address &address, Base::TimeInterval time) = 0;
+        virtual void node_offline(const Address& address, Base::TimeInterval time) = 0;
 
-        virtual bool node_timeout(const Address &address) = 0;
+        virtual bool node_timeout(const Address& address) = 0;
 
-        virtual void node_error(const Address &address, Net::error_mark mark) = 0;
+        virtual void node_error(const Address& address, Net::error_mark mark) = 0;
 
     };
 

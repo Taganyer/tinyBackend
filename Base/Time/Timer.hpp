@@ -12,12 +12,11 @@ namespace Base {
 
     class Timer {
     public:
-
         using Fun = std::function<void()>;
 
         Timer() = default;
 
-        Timer(const Timer &other) : _time(other._time), _fun(other._fun) {};
+        Timer(const Timer& other) : _time(other._time), _fun(other._fun) {};
 
         Timer(int64 ns) : _time(ns) {}
 
@@ -42,7 +41,6 @@ namespace Base {
         [[nodiscard]] int32 get_fd() const { return fd; };
 
     private:
-
         TimeInterval _time;
 
         Fun _fun;

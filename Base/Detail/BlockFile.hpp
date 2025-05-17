@@ -15,20 +15,20 @@ namespace Base {
     public:
         BlockFile() = default;
 
-        explicit BlockFile(const char* path, bool append,
+        explicit BlockFile(const char *path, bool append,
                            bool binary = true, uint64 block_size = (1 << 12));
 
-        BlockFile(BlockFile &&other) noexcept;
+        BlockFile(BlockFile&& other) noexcept;
 
-        bool open(const char* path, bool append, bool binary);
+        bool open(const char *path, bool append, bool binary);
 
         bool close();
 
-        uint64 read(void* dest, uint64 index, uint64 count = 1);
+        uint64 read(void *dest, uint64 index, uint64 count = 1);
 
-        uint64 write_to_back(const void* data, uint64 size);
+        uint64 write_to_back(const void *data, uint64 size);
 
-        uint64 update(const void* data, uint64 size, uint64 index);
+        uint64 update(const void *data, uint64 size, uint64 index);
 
         bool erase_back_blocks(uint64 count);
 
@@ -51,7 +51,7 @@ namespace Base {
     private:
         bool locating(uint64 index);
 
-        uint64 padding_write(const void* data, uint64 size);
+        uint64 padding_write(const void *data, uint64 size);
 
         bool write_error_handle();
 

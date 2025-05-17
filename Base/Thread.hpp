@@ -20,20 +20,20 @@ namespace Base {
 
         Thread() = default;
 
-        Thread(Thread &&other) noexcept;
+        Thread(Thread&& other) noexcept;
 
-        template <typename Fun, typename...Args>
-        Thread(string name, Fun &&fun, Args &&...args) :
+        template <typename Fun, typename... Args>
+        Thread(string name, Fun&& fun, Args&&... args) :
             _data(new Data(std::move(name),
                            Thread_fun(std::forward<Fun>(fun), std::forward<Args>(args)...))) {};
 
         ~Thread();
 
-        template <typename Fun, typename...Args>
-        explicit Thread(Fun fun, Args &&...args) :
+        template <typename Fun, typename... Args>
+        explicit Thread(Fun fun, Args&&... args) :
             _data(new Data(string(), Thread_fun(std::forward<Fun>(fun), std::forward<Args>(args)...))) {};
 
-        Thread& operator=(Thread &&other) noexcept;
+        Thread& operator=(Thread&& other) noexcept;
 
         void start();
 
@@ -56,17 +56,17 @@ namespace Base {
 
         pthread_t _pthread = -1;
 
-        Data* _data = nullptr;
+        Data *_data = nullptr;
 
-        static void* invoke(void* self);
+        static void* invoke(void *self);
 
     };
 
-    inline bool operator==(const Thread &left, const Thread &right) {
+    inline bool operator==(const Thread& left, const Thread& right) {
         return pthread_equal(left.get_id(), right.get_id());
     }
 
-    inline bool operator!=(const Thread &left, const Thread &right) {
+    inline bool operator!=(const Thread& left, const Thread& right) {
         return !pthread_equal(left.get_id(), right.get_id());
     }
 

@@ -44,7 +44,7 @@ BufferPool::BufferPool(uint64 total_size) :
 BufferPool::~BufferPool() {
     if (max_block() != _size) {
         CurrentThread::emergency_exit("Premature destruction of the BufferPool "
-                     "can result in invalid references.\n");
+            "can result in invalid references.\n");
     }
     delete[] _buffer;
 }
@@ -68,7 +68,7 @@ BufferPool::Buffer BufferPool::get(uint64 size) {
     return { ptr, size, *this };
 }
 
-void BufferPool::put(Buffer &buffer) {
+void BufferPool::put(Buffer& buffer) {
     Lock l(_mutex);
     uint64 i = location(buffer._buf, buffer._size), fs = buffer._size;
 
@@ -97,7 +97,7 @@ std::pair<uint64, char *> BufferPool::positioning(uint64 size) const {
     return { i, _buffer + (i - ((1 << n) - 1)) * size };
 }
 
-uint64 BufferPool::location(const char* target, uint64 size) const {
+uint64 BufferPool::location(const char *target, uint64 size) const {
     uint64 i = 0;
     for (auto s = size; _size > s; s <<= 1) ++i;
     i = (1 << i) - 1;

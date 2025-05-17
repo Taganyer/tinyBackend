@@ -15,7 +15,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Base PUBLIC Net)
 # 设置包含目录
 target_include_directories(${PROJECT_NAME}
         PRIVATE
-        $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}>
+        $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}/..>
         PUBLIC
         $<INSTALL_INTERFACE:${INSTALL_INCLUDE_DIR}>
 )

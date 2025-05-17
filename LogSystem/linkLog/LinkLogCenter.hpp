@@ -9,8 +9,8 @@
 
 #include "LinkLogHandler.hpp"
 #include "LinkLogInterpreter.hpp"
-#include "Net/reactor/Reactor.hpp"
-#include "Net/InetAddress.hpp"
+#include "tinyBackend/Net/reactor/Reactor.hpp"
+#include "tinyBackend/Net/InetAddress.hpp"
 
 namespace Net {
     class MessageAgent;
@@ -39,26 +39,26 @@ namespace LogSystem {
         using LogHandlerPtr = std::shared_ptr<LinkLogCenterHandler>;
 
         explicit LinkLogCenter(LogHandlerPtr handler, std::string dictionary_path,
-                               Base::ScheduledThread &thread);
+                               Base::ScheduledThread& thread);
 
-        bool add_server(const Address &server_address);
+        bool add_server(const Address& server_address);
 
-        void remove_server(const Address &server_address);
+        void remove_server(const Address& server_address);
 
-        void search_link(const ServiceID &service, LinkLogSearchHandler &handler,
+        void search_link(const ServiceID& service, LinkLogSearchHandler& handler,
                          uint32 buffer_size = (1 << 16));
 
         void flush();
 
         void delete_oldest_files(uint32 size);
 
-        static uint64 replay_history(LinkLogReplayHandler &handler, const char* file_path);
+        static uint64 replay_history(LinkLogReplayHandler& handler, const char *file_path);
 
     private:
         struct NodeData {
             Net::Channel channel;
 
-            explicit NodeData(Net::Channel &&ch) :
+            explicit NodeData(Net::Channel&& ch) :
                 channel(std::move(ch)) {};
         };
 
@@ -70,13 +70,13 @@ namespace LogSystem {
             LinkNodeID parent;
             LinkNodeType type;
             Base::TimeInterval init_time, parent_init_time;
-            bool* logger_timout = nullptr;
+            bool *logger_timout = nullptr;
 
-            explicit LoggerCheckData(Register_Logger &logger) :
+            explicit LoggerCheckData(Register_Logger& logger) :
                 parent(logger.parent_node()),
                 type(logger.type()) {};
 
-            explicit LoggerCheckData(Create_Logger &logger) :
+            explicit LoggerCheckData(Create_Logger& logger) :
                 type(logger.type()),
                 init_time(logger.init_time()) {};
 
@@ -96,15 +96,15 @@ namespace LogSystem {
         struct TimerData {
             Base::TimeInterval expire_time;
             CheckMapIter iter;
-            bool* logger_timout = nullptr;
+            bool *logger_timout = nullptr;
             Address address;
 
             explicit TimerData(Base::TimeInterval expire_time, CheckMapIter iter,
-                               const Address &address) :
+                               const Address& address) :
                 expire_time(expire_time), iter(iter), logger_timout(iter->second.logger_timout),
                 address(address) {};
 
-            TimerData(const TimerData &) = default;
+            TimerData(const TimerData&) = default;
 
             [[nodiscard]] bool check_timeout() const {
                 bool timeout = *logger_timout;
@@ -112,7 +112,7 @@ namespace LogSystem {
                 return timeout;
             };
 
-            friend bool operator<(const TimerData &lhs, const TimerData &rhs) {
+            friend bool operator<(const TimerData& lhs, const TimerData& rhs) {
                 return lhs.expire_time > rhs.expire_time;
             };
         };
@@ -131,37 +131,37 @@ namespace LogSystem {
 
         Net::Reactor _reactor;
 
-        void handle_read(Net::MessageAgent &agent);
+        void handle_read(Net::MessageAgent& agent);
 
-        bool handle_error(Net::MessageAgent &agent) const;
+        bool handle_error(Net::MessageAgent& agent) const;
 
-        void handle_close(Net::MessageAgent &agent);
+        void handle_close(Net::MessageAgent& agent);
 
         void check_timeout();
 
-        uint32 handle_register_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
+        uint32 handle_register_logger(NodeMapIter iter, const Base::RingBuffer& buffer);
 
-        uint32 handle_create_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
+        uint32 handle_create_logger(NodeMapIter iter, const Base::RingBuffer& buffer);
 
-        uint32 handle_end_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
+        uint32 handle_end_logger(NodeMapIter iter, const Base::RingBuffer& buffer);
 
-        uint32 handle_log(NodeMapIter iter, const Base::RingBuffer &buffer);
+        uint32 handle_log(NodeMapIter iter, const Base::RingBuffer& buffer);
 
-        uint32 handle_error_logger(NodeMapIter iter, const Base::RingBuffer &buffer);
+        uint32 handle_error_logger(NodeMapIter iter, const Base::RingBuffer& buffer);
 
-        uint32 handle_remove_server(NodeMapIter iter, Net::MessageAgent &agent);
+        uint32 handle_remove_server(NodeMapIter iter, Net::MessageAgent& agent);
 
-        static uint32 replay_register_logger(LinkLogReplayHandler &handler, Base::RingBuffer &buffer);
+        static uint32 replay_register_logger(LinkLogReplayHandler& handler, Base::RingBuffer& buffer);
 
-        static uint32 replay_create_logger(LinkLogReplayHandler &handler, Base::RingBuffer &buffer);
+        static uint32 replay_create_logger(LinkLogReplayHandler& handler, Base::RingBuffer& buffer);
 
-        static uint32 replay_end_logger(LinkLogReplayHandler &handler, Base::RingBuffer &buffer);
+        static uint32 replay_end_logger(LinkLogReplayHandler& handler, Base::RingBuffer& buffer);
 
-        static uint32 replay_log(LinkLogReplayHandler &handler, Base::RingBuffer &buffer);
+        static uint32 replay_log(LinkLogReplayHandler& handler, Base::RingBuffer& buffer);
 
-        static uint32 replay_error_logger(LinkLogReplayHandler &handler, Base::RingBuffer &buffer);
+        static uint32 replay_error_logger(LinkLogReplayHandler& handler, Base::RingBuffer& buffer);
 
-        static uint32 replay_remove_server(Base::RingBuffer &buffer);
+        static uint32 replay_remove_server(Base::RingBuffer& buffer);
 
     };
 

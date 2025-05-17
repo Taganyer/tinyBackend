@@ -3,7 +3,7 @@
 //
 
 #include "../LinkedThreadPool.hpp"
-#include "Base/Thread.hpp"
+#include "tinyBackend/Base/Thread.hpp"
 
 using namespace Base;
 
@@ -39,7 +39,7 @@ void LinkedThreadPool::start() {
 
 void LinkedThreadPool::clear_task() {
     Lock l(_lock);
-    for (const auto &fun : _list)
+    for (const auto& fun : _list)
         fun(true);
     _list.erase_after(_list.before_begin(), _list.end());
 }
@@ -50,7 +50,7 @@ void LinkedThreadPool::shutdown() {
     if (_state.load(std::memory_order_acquire) > STOP) return;
     _state.store(SHUTTING, std::memory_order_release);
 
-    for (const auto &fun : _list)
+    for (const auto& fun : _list)
         fun(true);
     _list.erase_after(_list.before_begin(), _list.end());
 

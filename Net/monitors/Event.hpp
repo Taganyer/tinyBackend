@@ -56,7 +56,7 @@ namespace Net {
         int event = 0;
         void *extra_data = nullptr;
 
-        template<typename Type>
+        template <typename Type>
         constexpr Type& get_extra_data() {
             static_assert(sizeof(Type) <= sizeof(void *));
             static_assert(std::is_trivially_copyable_v<Type>);

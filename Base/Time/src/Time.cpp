@@ -17,7 +17,7 @@ Time Time::now(bool UTC) {
     return time;
 }
 
-std::string Base::to_string(const Time &time, bool show_us) {
+std::string Base::to_string(const Time& time, bool show_us) {
     if (show_us) {
         std::string temp(Time::Time_us_format_len, '\0');
         format(temp.data(), time, show_us);
@@ -29,7 +29,7 @@ std::string Base::to_string(const Time &time, bool show_us) {
     }
 }
 
-void Base::format(char* dest, const Time &time, bool show_us) {
+void Base::format(char *dest, const Time& time, bool show_us) {
     if (show_us) {
         std::sprintf(dest, Time::Time_us_format,
                      time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,

@@ -14,14 +14,13 @@ namespace Net {
 
     class EPoller : public Monitor {
     public:
-
         using ActiveEvents = std::vector<epoll_event>;
 
         EPoller();
 
         ~EPoller() override;
 
-        int get_aliveEvent(int timeoutMS, EventList &list) override;
+        int get_aliveEvent(int timeoutMS, EventList& list) override;
 
         bool add_fd(Event event) override;
 
@@ -37,14 +36,13 @@ namespace Net {
         [[nodiscard]] uint64 fd_size() const override { return _fds.size(); };
 
     private:
-
         ActiveEvents activeEvents;
 
         std::map<int, Event> _fds;
 
         int _epfd = -1;
 
-        void get_events(EventList &list, int size);
+        void get_events(EventList& list, int size);
 
         bool operate(int mod, Event *event);
 

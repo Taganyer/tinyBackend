@@ -3,9 +3,9 @@
 //
 
 #include "../RaftAgent.hpp"
-#include "Base/SystemLog.hpp"
-#include "Distributed/raft/RaftMessage.hpp"
-#include "Distributed/raft/RaftInstance.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Distributed/raft/RaftMessage.hpp"
+#include "tinyBackend/Distributed/raft/RaftInstance.hpp"
 
 
 using namespace Dist;
@@ -16,8 +16,8 @@ using namespace Net;
 
 #define STATE_MECHINE instance._transmitter.machine
 
-void RaftAgent::handle_messages_from_follower(RaftInstance &instance,
-                                              const RaftMessage &message, const Address &address) {
+void RaftAgent::handle_messages_from_follower(RaftInstance& instance,
+                                              const RaftMessage& message, const Address& address) {
     assert(instance._state == RaftInstance::Leader);
     if (instance._peers.find(address) != instance._peers.end()) {
         TimeInterval now = Unix_to_now();
@@ -31,40 +31,40 @@ void RaftAgent::handle_messages_from_follower(RaftInstance &instance,
     }
 
     switch (message.type) {
-    case RaftMessage::FollowerAck:
-        break;
-    case RaftMessage::Request:
-        synchronize_logs(instance, message, address);
-        break;
-    case RaftMessage::AskForVote:
-        vote_to(instance, message, address);
-        break;
-    case RaftMessage::Vote:
-        accept_vote(instance, message, address);
-        break;
-    case RaftMessage::Online:
-        new_one_online(instance, address);
-        break;
-    case RaftMessage::Offline:
-        peer_offline(instance, address);
-        break;
-    case RaftMessage::LeaderCheck:
-        if (message.version < instance._transmitter.version
+        case RaftMessage::FollowerAck:
+            break;
+        case RaftMessage::Request:
+            synchronize_logs(instance, message, address);
+            break;
+        case RaftMessage::AskForVote:
+            vote_to(instance, message, address);
+            break;
+        case RaftMessage::Vote:
+            accept_vote(instance, message, address);
+            break;
+        case RaftMessage::Online:
+            new_one_online(instance, address);
+            break;
+        case RaftMessage::Offline:
+            peer_offline(instance, address);
+            break;
+        case RaftMessage::LeaderCheck:
+            if (message.version < instance._transmitter.version
             && STATE_MECHINE->can_be_leader(address, message)) {
-            instance._transmitter.notify_follower(address,
-                                                  STATE_MECHINE->leader_notify_message(address));
-        } else {
-            change_leader_to(instance, message, address);
-            respond_leader_check(instance, message);
-        }
-        break;
-    default:
-        error_type(__FUNCTION__, instance, message, address);
-        break;
+                instance._transmitter.notify_follower(address,
+                                                      STATE_MECHINE->leader_notify_message(address));
+            } else {
+                change_leader_to(instance, message, address);
+                respond_leader_check(instance, message);
+            }
+            break;
+        default:
+            error_type(__FUNCTION__, instance, message, address);
+            break;
     }
 }
 
-void RaftAgent::handle_messages_from_leader(RaftInstance &instance, const RaftMessage &message) {
+void RaftAgent::handle_messages_from_leader(RaftInstance& instance, const RaftMessage& message) {
     assert(instance._state != RaftInstance::Leader);
     if (check_outdated(instance, message, instance._leader))
         return;
@@ -77,23 +77,23 @@ void RaftAgent::handle_messages_from_leader(RaftInstance &instance, const RaftMe
     instance._last_flush_time = now;
 
     switch (message.type) {
-    case RaftMessage::LeaderCheck:
-        respond_leader_check(instance, message);
-        break;
-    case RaftMessage::AskForVote:
-        vote_to(instance, message, instance._leader);
-        break;
-    case RaftMessage::Offline:
-        peer_offline(instance, instance._leader);
-        break;
-    default:
-        error_type(__FUNCTION__, instance, message, instance._leader);
-        break;
+        case RaftMessage::LeaderCheck:
+            respond_leader_check(instance, message);
+            break;
+        case RaftMessage::AskForVote:
+            vote_to(instance, message, instance._leader);
+            break;
+        case RaftMessage::Offline:
+            peer_offline(instance, instance._leader);
+            break;
+        default:
+            error_type(__FUNCTION__, instance, message, instance._leader);
+            break;
     }
 }
 
-void RaftAgent::handle_messages_from_peer(RaftInstance &instance,
-                                          const RaftMessage &message, const Address &address) {
+void RaftAgent::handle_messages_from_peer(RaftInstance& instance,
+                                          const RaftMessage& message, const Address& address) {
     assert(instance._leader != address);
     if (check_outdated(instance, message, address))
         return;
@@ -109,99 +109,99 @@ void RaftAgent::handle_messages_from_peer(RaftInstance &instance,
     }
 
     switch (message.type) {
-    case RaftMessage::AskForVote:
-        vote_to(instance, message, address);
-        break;
-    case RaftMessage::Vote:
-        accept_vote(instance, message, address);
-        break;
-    case RaftMessage::LeaderCheck:
-        change_leader_to(instance, message, address);
-        respond_leader_check(instance, message);
-        break;
-    case RaftMessage::Online:
-        new_one_online(instance, address);
-        break;
-    case RaftMessage::Offline:
-        peer_offline(instance, address);
-        break;
-    default:
-        error_type(__FUNCTION__, instance, message, address);
-        break;
+        case RaftMessage::AskForVote:
+            vote_to(instance, message, address);
+            break;
+        case RaftMessage::Vote:
+            accept_vote(instance, message, address);
+            break;
+        case RaftMessage::LeaderCheck:
+            change_leader_to(instance, message, address);
+            respond_leader_check(instance, message);
+            break;
+        case RaftMessage::Online:
+            new_one_online(instance, address);
+            break;
+        case RaftMessage::Offline:
+            peer_offline(instance, address);
+            break;
+        default:
+            error_type(__FUNCTION__, instance, message, address);
+            break;
     }
 }
 
-void RaftAgent::handle_leader_timeout(RaftInstance &instance) {
-    for (const auto &[address, _] : instance._peers)
+void RaftAgent::handle_leader_timeout(RaftInstance& instance) {
+    for (const auto& [address, _] : instance._peers)
         instance._transmitter.notify_follower(address,
                                               STATE_MECHINE->leader_notify_message(address));
     instance._last_flush_time = Unix_to_now();
 }
 
-void RaftAgent::handle_candidate_timeout(RaftInstance &instance) {
+void RaftAgent::handle_candidate_timeout(RaftInstance& instance) {
     G_WARN << instance.name_state() << ": Candidate timeout.";
     vote_to_be_leader(instance);
 }
 
-void RaftAgent::handle_follower_timeout(RaftInstance &instance) {
+void RaftAgent::handle_follower_timeout(RaftInstance& instance) {
     G_WARN << instance.name_state() << ": Leader " << instance._leader.toIpPort() << " timeout.";
     vote_to_be_leader(instance);
 }
 
-bool RaftAgent::handle_message_when_online(RaftInstance &instance,
-                                           const RaftMessage &message, const Address &address) {
+bool RaftAgent::handle_message_when_online(RaftInstance& instance,
+                                           const RaftMessage& message, const Address& address) {
     switch (message.type) {
-    case RaftMessage::OnlineAck:
-        return accept_online_ack(instance, address);
-    case RaftMessage::LeaderCheck:
-        change_leader_to(instance, message, address);
-        respond_leader_check(instance, message);
-        break;
-    case RaftMessage::AskForVote:
-        vote_to(instance, message, address);
-        break;
-    case RaftMessage::Online:
-        new_one_online(instance, address);
-        instance._transmitter.this_one_online(address);
-        break;
-    case RaftMessage::Offline:
-        instance._transmitter.this_one_online(address);
-        peer_offline(instance, address);
-        break;
-    default:
-        error_type(__FUNCTION__, instance, message, address);
-        break;
-    }
-    return false;
-}
-
-bool RaftAgent::handle_message_when_offline(RaftInstance &instance,
-                                            const RaftMessage &message, const Address &address) {
-    switch (message.type) {
-    case RaftMessage::OfflineAck:
-        return accept_offline_ack(instance, address);
-    case RaftMessage::Online:
-        instance._transmitter.this_one_offline(address);
-        new_one_online(instance, address);
-        break;
-    case RaftMessage::Offline:
-        peer_offline(instance, address);
-        instance._transmitter.this_one_offline(address);
-        break;
-    case RaftMessage::FollowerAck:
-        if (instance._state == RaftInstance::Leader)
+        case RaftMessage::OnlineAck:
+            return accept_online_ack(instance, address);
+        case RaftMessage::LeaderCheck:
+            change_leader_to(instance, message, address);
+            respond_leader_check(instance, message);
             break;
-    default:
-        error_type(__FUNCTION__, instance, message, address);
-        break;
+        case RaftMessage::AskForVote:
+            vote_to(instance, message, address);
+            break;
+        case RaftMessage::Online:
+            new_one_online(instance, address);
+            instance._transmitter.this_one_online(address);
+            break;
+        case RaftMessage::Offline:
+            instance._transmitter.this_one_online(address);
+            peer_offline(instance, address);
+            break;
+        default:
+            error_type(__FUNCTION__, instance, message, address);
+            break;
     }
     return false;
 }
 
-bool RaftAgent::end_status_check(bool online, RaftInstance &instance) {
+bool RaftAgent::handle_message_when_offline(RaftInstance& instance,
+                                            const RaftMessage& message, const Address& address) {
+    switch (message.type) {
+        case RaftMessage::OfflineAck:
+            return accept_offline_ack(instance, address);
+        case RaftMessage::Online:
+            instance._transmitter.this_one_offline(address);
+            new_one_online(instance, address);
+            break;
+        case RaftMessage::Offline:
+            peer_offline(instance, address);
+            instance._transmitter.this_one_offline(address);
+            break;
+        case RaftMessage::FollowerAck:
+            if (instance._state == RaftInstance::Leader)
+                break;
+        default:
+            error_type(__FUNCTION__, instance, message, address);
+            break;
+    }
+    return false;
+}
+
+bool RaftAgent::end_status_check(bool online, RaftInstance& instance) {
     TimeInterval now = Unix_to_now();
     bool success = true;
-    for (auto &[addr, time] : instance._peers) {
+    for (auto& [addr, time] : instance._peers) {
         if (time != 0) {
             success = false;
             G_FATAL << instance.name_state() << (online ? ": Online" : ": Offline")
@@ -215,7 +215,7 @@ bool RaftAgent::end_status_check(bool online, RaftInstance &instance) {
     return success;
 }
 
-void RaftAgent::respond_leader_check(RaftInstance &instance, const RaftMessage &message) {
+void RaftAgent::respond_leader_check(RaftInstance& instance, const RaftMessage& message) {
     assert(instance._state == RaftInstance::Follower);
     instance._transmitter.version = message.version;
     G_INFO << instance.name_state() << ": Get leader check message.";
@@ -231,17 +231,17 @@ void RaftAgent::respond_leader_check(RaftInstance &instance, const RaftMessage &
     G_INFO << instance.name_state() << ": Want to synchronize leader logs: " << message.version.data();
 }
 
-void RaftAgent::vote_to_be_leader(RaftInstance &instance) {
+void RaftAgent::vote_to_be_leader(RaftInstance& instance) {
     become_candidate(instance);
     G_INFO << instance.name_state() << ": Ask for votes";
-    for (const auto &[address, _] : instance._peers)
+    for (const auto& [address, _] : instance._peers)
         instance._transmitter.request_vote(address);
 }
 
-void RaftAgent::vote_to(RaftInstance &instance, const RaftMessage &message, const Address &address) {
+void RaftAgent::vote_to(RaftInstance& instance, const RaftMessage& message, const Address& address) {
     bool can_be_leader = true;
     if (message.version > instance._transmitter.version
-        && ((can_be_leader = STATE_MECHINE->can_be_leader(address, message)))) {
+    && ((can_be_leader = STATE_MECHINE->can_be_leader(address, message)))) {
         change_leader_to(instance, message, address);
         G_INFO << instance.name_state() << ": Agree to vote for " << address.toIpPort();
         instance._transmitter.vote_to(address, true);
@@ -260,7 +260,7 @@ void RaftAgent::vote_to(RaftInstance &instance, const RaftMessage &message, cons
     }
 }
 
-void RaftAgent::accept_vote(RaftInstance &instance, const RaftMessage &message, const Address &address) {
+void RaftAgent::accept_vote(RaftInstance& instance, const RaftMessage& message, const Address& address) {
     if (instance._state != RaftInstance::Candidate) {
         G_INFO << instance.name_state() << ": Get vote from " << address.toIpPort()
                 << " but Instance has been become a " << RaftInstance::get_StateName(instance._state);
@@ -273,20 +273,20 @@ void RaftAgent::accept_vote(RaftInstance &instance, const RaftMessage &message, 
     G_INFO << instance.name_state() << ": Get vote from " << address.toIpPort();
     if (++instance.votes >= (instance._peers.size() + 1) / 2 + 1) {
         become_leader(instance);
-        for (const auto &[address, _] : instance._peers)
+        for (const auto& [address, _] : instance._peers)
             instance._transmitter.notify_follower(address,
                                                   STATE_MECHINE->leader_notify_message(address));
     }
 }
 
-void RaftAgent::synchronize_logs(RaftInstance &instance,
-                                 const RaftMessage &message, const Address &address) {
+void RaftAgent::synchronize_logs(RaftInstance& instance,
+                                 const RaftMessage& message, const Address& address) {
     STATE_MECHINE->ready_to_send_to(address, message);
     G_INFO << instance.name_state() << ": Leader synchronize "
                 << address.toIpPort() << " logs.";
 }
 
-void RaftAgent::new_one_online(RaftInstance &instance, const Address &address) {
+void RaftAgent::new_one_online(RaftInstance& instance, const Address& address) {
     if (likely(instance._peers.try_emplace(address, Unix_to_now()).second)) {
         G_INFO << instance.name_state() << ": New one online: " << address.toIpPort();
     } else {
@@ -300,7 +300,7 @@ void RaftAgent::new_one_online(RaftInstance &instance, const Address &address) {
     }
 }
 
-bool RaftAgent::accept_online_ack(RaftInstance &instance, const Address &address) {
+bool RaftAgent::accept_online_ack(RaftInstance& instance, const Address& address) {
     auto iter = instance._peers.find(address);
     if (unlikely(iter == instance._peers.end())) {
         G_WARN << instance.name_state()
@@ -314,7 +314,7 @@ bool RaftAgent::accept_online_ack(RaftInstance &instance, const Address &address
     return false;
 }
 
-void RaftAgent::peer_offline(RaftInstance &instance, const Address &address) {
+void RaftAgent::peer_offline(RaftInstance& instance, const Address& address) {
     auto iter = instance._peers.find(address);
     if (iter == instance._peers.end()) {
         G_WARN << instance.name_state() << ": Peer " << address.toIpPort()
@@ -332,7 +332,7 @@ void RaftAgent::peer_offline(RaftInstance &instance, const Address &address) {
     }
 }
 
-bool RaftAgent::accept_offline_ack(RaftInstance &instance, const Address &address) {
+bool RaftAgent::accept_offline_ack(RaftInstance& instance, const Address& address) {
     auto iter = instance._peers.find(address);
     if (iter == instance._peers.end()) {
         G_WARN << instance.name_state()
@@ -348,8 +348,8 @@ bool RaftAgent::accept_offline_ack(RaftInstance &instance, const Address &addres
     return false;
 }
 
-void RaftAgent::error_type(const char* fun, RaftInstance &instance,
-                           const RaftMessage &message, const Address &address) {
+void RaftAgent::error_type(const char *fun, RaftInstance& instance,
+                           const RaftMessage& message, const Address& address) {
     G_ERROR << instance.name_state()
             << ": Wrong message type " << RaftMessage::get_TypeName(message.type)
             << " in " << fun << " from " << address.toIpPort()
@@ -357,8 +357,8 @@ void RaftAgent::error_type(const char* fun, RaftInstance &instance,
             << " message version " << message.version.data();
 }
 
-bool RaftAgent::check_outdated(RaftInstance &instance,
-                               const RaftMessage &message, const Address &address) {
+bool RaftAgent::check_outdated(RaftInstance& instance,
+                               const RaftMessage& message, const Address& address) {
     if (unlikely(message.version < instance._transmitter.version
         && message.type != RaftMessage::Online && message.type != RaftMessage::Offline)) {
         G_WARN << instance.name_state()
@@ -369,8 +369,8 @@ bool RaftAgent::check_outdated(RaftInstance &instance,
     return false;
 }
 
-void RaftAgent::assert_split_brain(RaftInstance &instance,
-                                   const RaftMessage &message, const Address &address) {
+void RaftAgent::assert_split_brain(RaftInstance& instance,
+                                   const RaftMessage& message, const Address& address) {
     if (unlikely(message.version < instance._transmitter.version
         || (message.version == instance._transmitter.version
             && instance._state == RaftInstance::Leader))) {
@@ -381,7 +381,7 @@ void RaftAgent::assert_split_brain(RaftInstance &instance,
     }
 }
 
-void RaftAgent::become_candidate(RaftInstance &instance) {
+void RaftAgent::become_candidate(RaftInstance& instance) {
     G_INFO << instance.name_state() << ": Be a candidate.";
     instance._state = RaftInstance::Candidate;
     instance._leader = {};
@@ -390,7 +390,7 @@ void RaftAgent::become_candidate(RaftInstance &instance) {
     instance.votes = 1;
 }
 
-void RaftAgent::become_leader(RaftInstance &instance) {
+void RaftAgent::become_leader(RaftInstance& instance) {
     G_INFO << instance.name_state() << ": Run for the leadership.";
     instance._state = RaftInstance::Leader;
     instance._leader = {};
@@ -398,8 +398,8 @@ void RaftAgent::become_leader(RaftInstance &instance) {
     instance.votes = 0;
 }
 
-void RaftAgent::change_leader_to(RaftInstance &instance,
-                                 const RaftMessage &message, const Address &address) {
+void RaftAgent::change_leader_to(RaftInstance& instance,
+                                 const RaftMessage& message, const Address& address) {
     assert_split_brain(instance, message, address);
     G_INFO << instance.name_state() << ": Change leader " << instance._leader.toIpPort()
             << " to " << address.toIpPort();

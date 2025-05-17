@@ -19,10 +19,10 @@ namespace Base {
 
         Result_Impl() = default;
 
-        explicit Result_Impl(const BlockIter<Key, Value> &iter) :
+        explicit Result_Impl(const BlockIter<Key, Value>& iter) :
             key(iter.key()), value(iter.value()) {};
 
-        Result_Impl(const Key &key, const Value &value) :
+        Result_Impl(const Key& key, const Value& value) :
             key(key), value(value) {};
 
         Key key;
@@ -41,15 +41,15 @@ namespace Base {
 
         ResultSet_Impl() = default;
 
-        ResultSet_Impl(const ResultSet_Impl &) = default;
+        ResultSet_Impl(const ResultSet_Impl&) = default;
 
-        ResultSet_Impl(ResultSet_Impl &&) = default;
+        ResultSet_Impl(ResultSet_Impl&&) = default;
 
-        void add(const BlockIter<Key, Value> &iter) {
+        void add(const BlockIter<Key, Value>& iter) {
             results.emplace_back(iter);
         };
 
-        void add(const Key &key, const Value &value) {
+        void add(const Key& key, const Value& value) {
             results.emplace(key, value);
         };
 

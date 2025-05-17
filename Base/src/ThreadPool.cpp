@@ -3,7 +3,7 @@
 //
 
 #include "../ThreadPool.hpp"
-#include "Base/Thread.hpp"
+#include "tinyBackend/Base/Thread.hpp"
 
 using namespace Base;
 
@@ -51,7 +51,7 @@ void ThreadPool::start() {
 
 void ThreadPool::clear_task() {
     Lock l(_lock);
-    for (const auto &fun : _list)
+    for (const auto& fun : _list)
         fun(true);
     _list.clear();
 }
@@ -62,7 +62,7 @@ void ThreadPool::shutdown() {
     if (_state.load(std::memory_order_acquire) > STOP) return;
     _state.store(SHUTTING, std::memory_order_release);
 
-    for (const auto &fun : _list)
+    for (const auto& fun : _list)
         fun(true);
     _list.clear();
 
@@ -80,7 +80,7 @@ void ThreadPool::resize_core_threads(uint32 size) {
     _target_thread_size.store(size, std::memory_order_release);
     _consume.notify_all();
     while (_core_threads.load(std::memory_order_consume) <
-        _target_thread_size.load(std::memory_order_consume)) {
+    _target_thread_size.load(std::memory_order_consume)) {
         create_thread();
     }
 }
@@ -120,7 +120,7 @@ void ThreadPool::create_thread() {
                     break;
                 }
                 if (_list.empty()
-                    || _state.load(std::memory_order_acquire) == STOP) {
+                || _state.load(std::memory_order_acquire) == STOP) {
                     continue;
                 }
                 fun = std::move(_list.back());
@@ -138,7 +138,7 @@ void ThreadPool::create_thread() {
     });
 }
 
-void ThreadPool::thread_begin(std::atomic<bool> &create_done) {
+void ThreadPool::thread_begin(std::atomic<bool>& create_done) {
     _core_threads.fetch_add(1, std::memory_order_release);
     create_done.store(true, std::memory_order_release);
     _submit.notify_all();

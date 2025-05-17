@@ -3,9 +3,10 @@
 //
 
 #include "../EPoller.hpp"
-#include "Base/SystemLog.hpp"
-#include "Net/error/errors.hpp"
-#include "Net/functions/poll_interface.hpp"
+
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Net/error/errors.hpp"
+#include "tinyBackend/Net/functions/poll_interface.hpp"
 
 static_assert(EPOLLIN == POLLIN, "epoll uses same flag values as poll");
 static_assert(EPOLLPRI == POLLPRI, "epoll uses same flag values as poll");
@@ -28,7 +29,7 @@ Net::EPoller::~EPoller() {
         G_FATAL << "EPoller " << _epfd << ' ' << ops::get_close_error(errno);
 }
 
-int Net::EPoller::get_aliveEvent(int timeoutMS, EventList &list) {
+int Net::EPoller::get_aliveEvent(int timeoutMS, EventList& list) {
     int active = ops::epoll_wait(_epfd, activeEvents.data(),
                                  (int) activeEvents.capacity(), timeoutMS);
     if (active > 0) {
@@ -103,15 +104,15 @@ bool Net::EPoller::exist_fd(int fd) const {
     return _fds.find(fd) != _fds.end();
 }
 
-void Net::EPoller::get_events(EventList &list, int size) {
+void Net::EPoller::get_events(EventList& list, int size) {
     list.reserve(size + list.size());
     for (int i = 0; i < size; ++i) {
-        auto* event = (Event *) activeEvents[i].data.ptr;
+        auto *event = (Event *) activeEvents[i].data.ptr;
         list.push_back({ event->fd, (int) activeEvents[i].events, event->extra_data });
     }
 }
 
-bool Net::EPoller::operate(int mod, Event* event) {
+bool Net::EPoller::operate(int mod, Event *event) {
     epoll_event _event {};
     _event.events = event->event;
     _event.data.ptr = event;

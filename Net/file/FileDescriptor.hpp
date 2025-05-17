@@ -5,7 +5,7 @@
 #ifndef NET_FILEDESCRIPTOR_HPP
 #define NET_FILEDESCRIPTOR_HPP
 
-#include "Base/Detail/NoCopy.hpp"
+#include "tinyBackend/Base/Detail/NoCopy.hpp"
 
 namespace Net {
 
@@ -13,7 +13,7 @@ namespace Net {
     public:
         explicit FileDescriptor(int fd) : _fd(fd) {};
 
-        FileDescriptor(FileDescriptor &&other) noexcept: _fd(other._fd) {};
+        FileDescriptor(FileDescriptor&& other) noexcept: _fd(other._fd) {};
 
         virtual ~FileDescriptor();
 
