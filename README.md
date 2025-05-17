@@ -39,3 +39,27 @@ C++17 实现，功能丰富的后端组件库。
        系统中心实时搜集服务集群上报信息，并将其汇总为信息流，主动调用注册的处理函数，同时储存信息。
 
        系统提供提供链路级的历史日志查询功能和文件级的历史过程重放功能。
+
+## 安装
+可指定 CMAKE_INSTALL_PREFIX 改变安装路径（默认 /usr/local/）
+
+可定义 -DADD_AOP=OFF -DADD_LOGSYSTEM=OFF -DADD_DISTRIBUTED=OFF 关闭这三个部分的编译（默认编译打开）
+```shell
+cmake .
+# cmake -DCMAKE_INSTALL_PREFIX=/path/to/install ...
+sudo make install
+# sudo make uninstall
+```
+## 使用（以CMake为例）
+````CMake
+find_package(tinyBackend REQUIRED)
+
+# 其他代码...
+
+# 选取需要的
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE tinyBackend::Base
+        PRIVATE tinyBackend::Net
+        PRIVATE tinyBackend::Distributed
+        PRIVATE tinyBackend::LogSystem)
+````
