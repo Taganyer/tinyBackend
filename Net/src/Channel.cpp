@@ -4,7 +4,7 @@
 
 #include "../Channel.hpp"
 #include "Net/error/errors.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 
 using namespace Base;
 

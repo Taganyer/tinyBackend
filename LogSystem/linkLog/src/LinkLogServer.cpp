@@ -3,7 +3,7 @@
 //
 
 #include "../LinkLogServer.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/monitors/Poller.hpp"
 #include "Net/functions/Interface.hpp"
 #include "LogSystem/linkLog/LinkLogMessage.hpp"

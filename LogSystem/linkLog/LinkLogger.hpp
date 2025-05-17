@@ -8,7 +8,7 @@
 #ifdef LOGSYSTEM_LINKLOGGER_HPP
 
 #include "LinkLogServer.hpp"
-#include "LogSystem/LogRank.hpp"
+#include "Base/LogRank.hpp"
 
 
 namespace LogSystem {

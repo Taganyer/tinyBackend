@@ -50,16 +50,17 @@ if(NOT TARGET uninstall)
             COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
 
-set(ADD_TESTING OFF CACHE BOOL "Enable testing components" FORCE)
+
 set(ADD_AOP ON CACHE BOOL "Enable AOP components" FORCE)
+set(ADD_LOGSYSTEM ON CACHE BOOL "Enable LogSystem components" FORCE)
 set(ADD_DISTRIBUTED ON CACHE BOOL "Enable distributed components" FORCE)
 
 if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.12)
     cmake_parse_arguments(
-            ARG "" "" "ADD_TESTING;ADD_AOP;ADD_DISTRIBUTED" ${CMAKE_ARGV}
+            ARG "" "" "ADD_LOGSYSTEM;ADD_AOP;ADD_DISTRIBUTED" ${CMAKE_ARGV}
     )
-    if (ARG_ADD_TESTING)
-        set(ADD_TESTING ${ARG_ADD_TESTING} FORCE)
+    if (ARG_ADD_LOGSYSTEM)
+        set(ADD_LOGSYSTEM ${ARG_ADD_LOGSYSTEM} FORCE)
     endif ()
     if (ARG_ADD_AOP)
         set(ADD_AOP ${ARG_ADD_AOP} FORCE)
@@ -79,23 +80,21 @@ set(Net_VERSION 1.0 CACHE STRING "Net Version")
 add_subdirectory(Net)
 list(APPEND LIBRARY_LIST Net)
 
-set(LogSystem_VERSION 1.0 CACHE STRING "LogSystem Version")
-add_subdirectory(LogSystem)
-list(APPEND LIBRARY_LIST LogSystem)
-
 if (ADD_AOP)
     set(AOP_VERSION 1.0 CACHE STRING "AOP Version")
     add_subdirectory(AOP)
+endif ()
+
+if (ADD_LOGSYSTEM)
+    set(LogSystem_VERSION 1.0 CACHE STRING "LogSystem Version")
+    add_subdirectory(LogSystem)
+    list(APPEND LIBRARY_LIST LogSystem)
 endif ()
 
 if (ADD_DISTRIBUTED)
     set(Distributed_VERSION 1.0 CACHE STRING "Distributed Version")
     add_subdirectory(Distributed)
     list(APPEND LIBRARY_LIST Distributed)
-endif ()
-
-if (ADD_TESTING)
-    add_subdirectory(testing)
 endif ()
 
 # 导出CMake配置，设置NAMESPACE

@@ -4,7 +4,7 @@
 
 #include "../UDP_Communicator.hpp"
 #include "Net/error/errors.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
 
 using namespace Base;

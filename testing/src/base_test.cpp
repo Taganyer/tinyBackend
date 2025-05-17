@@ -3,24 +3,22 @@
 //
 
 #include "../base_test.hpp"
-#include "Base/LinkedThreadPool.hpp"
-#include "LogSystem/SystemLog.hpp"
-#include "Base/Time/Timer.hpp"
-#include "Base/File.hpp"
-#include "Base/Thread.hpp"
-
-#include <vector>
-#include <iostream>
+#include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <random>
-#include <set>
+#include <vector>
 
-#include "Base/ThreadPool.hpp"
-#include "Base/Buffer/BufferPool.hpp"
-#include "Base/BPTree_impls/BPTree.hpp"
-#include "Base/BPTree_impls/BPTree_impl.hpp"
-
+#include "tinyBackend/Base/File.hpp"
+#include "tinyBackend/Base/LinkedThreadPool.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/Thread.hpp"
+#include "tinyBackend/Base/ThreadPool.hpp"
+#include "tinyBackend/Base/BPTree_impls/BPTree.hpp"
+#include "tinyBackend/Base/BPTree_impls/BPTree_impl.hpp"
+#include "tinyBackend/Base/Buffer/BufferPool.hpp"
+#include "tinyBackend/Base/Time/Timer.hpp"
 using namespace std;
 using namespace Base;
 
@@ -73,14 +71,14 @@ namespace Test {
                 for (int i = 0; i < 100000; ++i) {
                     try {
                         arr.push_back(pool.submit_with_future(fun));
-                    } catch (Exception &) {
+                    } catch (Exception&) {
                         reject.fetch_add(1);
                     }
                     if (i == 600) pool.stop();
                     if (i == 800) pool.start();
                 }
                 cout << "submit end" << endl;
-                for (auto &t : arr) {
+                for (auto& t : arr) {
                     t.get();
                 }
                 cout << "thread end" << endl;
@@ -97,11 +95,11 @@ namespace Test {
 
         thread.start();
 
-        for (auto &t : at) {
+        for (auto& t : at) {
             t.start();
         }
 
-        for (auto &t : at) {
+        for (auto& t : at) {
             t.join();
         }
 
@@ -128,14 +126,14 @@ namespace Test {
                 for (int i = 0; i < 100000; ++i) {
                     try {
                         arr.push_back(pool.submit_to_back_with_future(fun));
-                    } catch (Exception &) {
+                    } catch (Exception&) {
                         reject.fetch_add(1);
                     }
                     if (i == 600) pool.stop();
                     if (i == 800) pool.start();
                 }
                 cout << "submit end" << endl;
-                for (auto &t : arr) {
+                for (auto& t : arr) {
                     t.get();
                 }
                 cout << "thread end" << endl;
@@ -152,11 +150,11 @@ namespace Test {
 
         thread.start();
 
-        for (auto &t : at) {
+        for (auto& t : at) {
             t.start();
         }
 
-        for (auto &t : at) {
+        for (auto& t : at) {
             t.join();
         }
 
@@ -257,7 +255,7 @@ namespace Test {
 
     constexpr uint64 total_size = 1 << 20;
 
-    static void BPTree_insert_test(BPTree<BPTree_impl<int, int>> &tree) {
+    static void BPTree_insert_test(BPTree<BPTree_impl<int, int>>& tree) {
         std::vector<int> arr(total_size);
         for (int i = 0; i < arr.size(); ++i)
             arr[i] = i;
@@ -294,7 +292,7 @@ namespace Test {
             TimeInterval search1_end = Unix_to_now();
             cout << "search from begin: " << (search1_end - search1_begin).to_ms() << " ms" << endl;
             bool _is_sorted = std::is_sorted(results.begin(), results.end(),
-                                             [] (const Result_Impl<int, int> &l, const Result_Impl<int, int> &r) {
+                                             [] (const Result_Impl<int, int>& l, const Result_Impl<int, int>& r) {
                                                  return l.key < r.key;
                                              });
             assert(_is_sorted);
@@ -310,7 +308,7 @@ namespace Test {
             TimeInterval search1_end = Unix_to_now();
             cout << "search from end: " << (search1_end - search1_begin).to_ms() << " ms" << endl;
             bool _is_sorted = std::is_sorted(results.begin(), results.end(),
-                                             [] (const Result_Impl<int, int> &l, const Result_Impl<int, int> &r) {
+                                             [] (const Result_Impl<int, int>& l, const Result_Impl<int, int>& r) {
                                                  return l.key > r.key;
                                              });
             assert(_is_sorted);
@@ -321,7 +319,7 @@ namespace Test {
         }
     }
 
-    static void BPTree_erase_test(BPTree<BPTree_impl<int, int>> &tree) {
+    static void BPTree_erase_test(BPTree<BPTree_impl<int, int>>& tree) {
         std::vector<int> arr(total_size);
         for (int i = 0; i < arr.size(); ++i)
             arr[i] = arr.size() - 1 - i;
@@ -356,7 +354,7 @@ namespace Test {
             TimeInterval search1_end = Unix_to_now();
             cout << "search from end: " << (search1_end - search1_begin).to_ms() << " ms" << endl;
             bool _is_sorted = std::is_sorted(results.begin(), results.end(),
-                                             [] (const Result_Impl<int, int> &l, const Result_Impl<int, int> &r) {
+                                             [] (const Result_Impl<int, int>& l, const Result_Impl<int, int>& r) {
                                                  return l.key > r.key;
                                              });
             assert(_is_sorted);

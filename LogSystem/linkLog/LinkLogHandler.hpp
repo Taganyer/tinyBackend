@@ -10,7 +10,7 @@
 #include <string>
 #include "Net/InetAddress.hpp"
 #include "LinkLogMessage.hpp"
-#include "LogSystem/LogRank.hpp"
+#include "Base/LogRank.hpp"
 #include "LinkLogOperation.hpp"
 #include "Net/error/error_mark.hpp"
 

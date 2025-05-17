@@ -2,17 +2,24 @@
 // Created by taganyer on 24-7-23.
 //
 
-#include <vector>
-#include <iostream>
 #include "../logSystem_test.hpp"
-#include "CMake_config.h"
-#include "Base/Thread.hpp"
-#include "LogSystem/SystemLog.hpp"
-#include "LogSystem/linkLog/LinkLogger.hpp"
-#include "LogSystem/linkLog/LinkLogServer.hpp"
-#include "LogSystem/linkLog/LinkLogHandler.hpp"
-#include "LogSystem/linkLog/LinkLogCenter.hpp"
-#include "LogSystem/linkLog/LinkLogOperation.hpp"
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <tinyBackend/CMake_config.h>
+#include <tinyBackend/Base/File.hpp>
+#include <tinyBackend/Base/SystemLog.hpp>
+#include <tinyBackend/Base/Thread.hpp>
+#include <tinyBackend/Base/Time/Time.hpp>
+#include <tinyBackend/Base/Time/TimeInterval.hpp>
+#include <tinyBackend/LogSystem/linkLog/Identification.hpp>
+#include <tinyBackend/LogSystem/linkLog/LinkLogCenter.hpp>
+#include <tinyBackend/LogSystem/linkLog/LinkLogger.hpp>
+#include <tinyBackend/LogSystem/linkLog/LinkLogHandler.hpp>
+#include <tinyBackend/LogSystem/linkLog/LinkLogOperation.hpp>
+#include <tinyBackend/LogSystem/linkLog/LinkLogServer.hpp>
+#include <tinyBackend/Net/InetAddress.hpp>
+#include <tinyBackend/Net/error/error_mark.hpp>
 
 using namespace std;
 using namespace Base;
@@ -43,10 +50,10 @@ namespace Test {
             });
         }
         TimeInterval begin = Unix_to_now();
-        for (auto &t : pool) {
+        for (auto& t : pool) {
             t.start();
         }
-        for (auto &t : pool) {
+        for (auto& t : pool) {
             t.join();
         }
         cout << (Unix_to_now() - begin).to_ms() << "ms" << endl;
@@ -92,7 +99,7 @@ namespace Test {
                     << " type " << getLinkErrorTypeName(type);
         };
 
-        void center_online(const Address &center_address) override {
+        void center_online(const Address& center_address) override {
             G_INFO << __FUNCTION__;
         };
 
@@ -108,7 +115,7 @@ namespace Test {
 
     class CenterHandler : public LinkLogCenterHandler {
     public:
-        void create_head_logger(const Address &address, LinkServiceID service, LinkNodeID node,
+        void create_head_logger(const Address& address, LinkServiceID service, LinkNodeID node,
                                 TimeInterval time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|'
@@ -116,7 +123,7 @@ namespace Test {
                     << to_string(time, true);
         };
 
-        void register_logger(const Address &address, LinkServiceID service, LinkNodeID node,
+        void register_logger(const Address& address, LinkServiceID service, LinkNodeID node,
                              LinkNodeID parent_node, LinkNodeType type,
                              TimeInterval time, TimeInterval expire_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
@@ -125,7 +132,7 @@ namespace Test {
                     << " time " << to_string(time, true);
         };
 
-        void create_logger(const Address &address, LinkServiceID service, LinkNodeID node,
+        void create_logger(const Address& address, LinkServiceID service, LinkNodeID node,
                            TimeInterval init_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|'
@@ -133,7 +140,7 @@ namespace Test {
                     << to_string(init_time, true);
         };
 
-        void logger_end(const Address &address, LinkServiceID service, LinkNodeID node,
+        void logger_end(const Address& address, LinkServiceID service, LinkNodeID node,
                         TimeInterval end_time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|'
@@ -141,7 +148,7 @@ namespace Test {
                     << to_string(end_time, true);
         };
 
-        void receive_log(const Address &address, Link_Log log) override {
+        void receive_log(const Address& address, Link_Log log) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << log.service.data() << '|'
                     << log.node.data() << " rank " << LogRankName(log.rank)
@@ -149,7 +156,7 @@ namespace Test {
                     << '[' << log.text << ']';
         };
 
-        void handling_error(const Address &address, LinkServiceID service, LinkNodeID node,
+        void handling_error(const Address& address, LinkServiceID service, LinkNodeID node,
                             TimeInterval time, LinkErrorType type) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << ' ' << service.data() << '|' << node.data()
@@ -157,22 +164,22 @@ namespace Test {
                     << " type " << getLinkErrorTypeName(type);
         };
 
-        void node_online(const Address &address, TimeInterval time) override {
+        void node_online(const Address& address, TimeInterval time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << " at " << to_string(time, true);
         };
 
-        void node_offline(const Address &address, TimeInterval time) override {
+        void node_offline(const Address& address, TimeInterval time) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort()
                     << " at " << to_string(time, true);
         };
 
-        bool node_timeout(const Address &address) override {
+        bool node_timeout(const Address& address) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort();
             return true;
         };
 
-        void node_error(const Address &address, error_mark mark) override {
+        void node_error(const Address& address, error_mark mark) override {
             G_DEBUG << __FUNCTION__ << ' ' << address.toIpPort();
         };
 
@@ -267,7 +274,7 @@ namespace Test {
         return LinkNodeID(node_name, NODE_ID_SIZE);
     }
 
-    static void link_log_server(const InetAddress &address, int index);
+    static void link_log_server(const InetAddress& address, int index);
 
 #define USE_CENTER
 #define USE_SERVER
@@ -326,7 +333,7 @@ namespace Test {
 #endif
     }
 
-    static void link_log_server(const InetAddress &address, int index) {
+    static void link_log_server(const InetAddress& address, int index) {
         shared_ptr<ServerHandler> handler = make_shared<ServerHandler>();
         string server_dic(PROJECT_GLOBAL_LOG_PATH "/link_log_server");
         server_dic.append(to_string(index));

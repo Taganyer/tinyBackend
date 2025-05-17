@@ -2,22 +2,24 @@
 // Created by taganyer on 24-5-21.
 //
 
-#include "testing/net_test.hpp"
+#include "../net_test.hpp"
 
 #include <iostream>
 
-#include "Net/Acceptor.hpp"
-#include "Net/InetAddress.hpp"
-#include "Net/monitors/Event.hpp"
-#include "Net/Channel.hpp"
+#include "tinyBackend/Net/Acceptor.hpp"
+#include "tinyBackend/Net/InetAddress.hpp"
+#include "tinyBackend/Net/monitors/Event.hpp"
+#include "tinyBackend/Net/Channel.hpp"
 
-#include "Base/File.hpp"
-#include "Net/error/errors.hpp"
-#include "Net/functions/Interface.hpp"
-#include "LogSystem/SystemLog.hpp"
-#include "Net/TcpMessageAgent.hpp"
-#include "Net/UDP_Communicator.hpp"
-#include "Net/reactor/Reactor.hpp"
+#include <tinyBackend/Base/Condition.hpp>
+#include "tinyBackend/Base/File.hpp"
+#include <tinyBackend/Base/Thread.hpp>
+#include "tinyBackend/Net/error/errors.hpp"
+#include "tinyBackend/Net/functions/Interface.hpp"
+#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Net/TcpMessageAgent.hpp"
+#include "tinyBackend/Net/UDP_Communicator.hpp"
+#include "tinyBackend/Net/reactor/Reactor.hpp"
 
 using namespace Net;
 
@@ -26,23 +28,23 @@ using namespace Base;
 using namespace std;
 
 
-static void server_read(MessageAgent &agent) {
-    auto &input = agent.input();
-    auto &output = agent.output();
+static void server_read(MessageAgent& agent) {
+    auto& input = agent.input();
+    auto& output = agent.output();
     uint32 written = output.write(input, input.readable_len());
     assert(written > 0);
     assert(input.readable_len() == 0);
     agent.send_message();
 }
 
-static void server_close(std::atomic<int> &count, Condition &con) {
+static void server_close(std::atomic<int>& count, Condition& con) {
     if (count.fetch_sub(1) == 1) {
         con.notify_one();
         cout << "server close" << endl;
     }
 }
 
-static void echo_server(Acceptor &acceptor, int client_size, Condition &con, atomic<int> &count) {
+static void echo_server(Acceptor& acceptor, int client_size, Condition& con, atomic<int>& count) {
     Mutex mutex;
 
     Reactor reactor(1_min);
@@ -58,16 +60,16 @@ static void echo_server(Acceptor &acceptor, int client_size, Condition &con, ato
         auto agent_ptr = std::make_unique<TcpMessageAgent>(std::move(socket), 1024, 1024);
         Channel channel;
 
-        channel.set_readCallback([] (MessageAgent &agent) mutable {
+        channel.set_readCallback([] (MessageAgent& agent) mutable {
             server_read(agent);
         });
 
-        channel.set_errorCallback([] (MessageAgent &agent) {
+        channel.set_errorCallback([] (MessageAgent& agent) {
             G_FATAL << '[' << get_error_type_name(agent.error.types) << ']';
             return true;
         });
 
-        channel.set_closeCallback([&count, &con] (MessageAgent &) mutable {
+        channel.set_closeCallback([&count, &con] (MessageAgent&) mutable {
             server_close(count, con);
         });
 
@@ -82,7 +84,7 @@ static void echo_server(Acceptor &acceptor, int client_size, Condition &con, ato
     cout << "wait end" << endl;
 }
 
-static void echo_client(InetAddress &server_address, Condition &con, atomic<int> &count) {
+static void echo_client(InetAddress& server_address, Condition& con, atomic<int>& count) {
     Socket client_socket(AF_INET, SOCK_STREAM);
     bool success = client_socket.connect(server_address);
     assert(success);

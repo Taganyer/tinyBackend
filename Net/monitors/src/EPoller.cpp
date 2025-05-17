@@ -3,7 +3,7 @@
 //
 
 #include "../EPoller.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/error/errors.hpp"
 #include "Net/functions/poll_interface.hpp"
 

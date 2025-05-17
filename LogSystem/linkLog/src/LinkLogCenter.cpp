@@ -4,7 +4,7 @@
 
 #include "../LinkLogCenter.hpp"
 #include "Net/InetAddress.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/TcpMessageAgent.hpp"
 #include "Net/error/error_mark.hpp"
 

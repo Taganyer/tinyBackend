@@ -3,11 +3,11 @@
 //
 
 #include "../AOP_test.hpp"
-#include "AOP/AOP.hpp"
-#include "AOP/SourceLocation.hpp"
 
 #include <cassert>
 #include <iostream>
+#include <tinyBackend/AOP/AOP.hpp>
+#include <tinyBackend/AOP/SourceLocation.hpp>
 
 using namespace std;
 using namespace Base;

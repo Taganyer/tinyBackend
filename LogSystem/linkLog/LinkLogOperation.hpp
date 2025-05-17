@@ -8,7 +8,7 @@
 #ifdef LOGSYSTEM_LINKLOGOPERATION_HPP
 
 #include "LinkLogErrors.hpp"
-#include "LogSystem/LogRank.hpp"
+#include "Base/LogRank.hpp"
 #include "Base/Time/TimeInterval.hpp"
 
 

@@ -4,7 +4,7 @@
 
 #include "../FileDescriptor.hpp"
 #include "Net/functions/Interface.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/error/errors.hpp"
 
 

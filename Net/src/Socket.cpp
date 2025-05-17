@@ -7,7 +7,7 @@
 #include "../Socket.hpp"
 #include "Net/InetAddress.hpp"
 #include "Net/error/errors.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
 
 #ifdef IGNORE_SIGPIPE

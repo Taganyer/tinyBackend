@@ -4,7 +4,7 @@
 
 #include "../FilePool.hpp"
 #include "Base/Thread.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/functions/Interface.hpp"
 
 

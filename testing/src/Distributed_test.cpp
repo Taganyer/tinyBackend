@@ -5,10 +5,15 @@
 
 #include <iostream>
 #include <unistd.h>
-#include "Distributed/raft/RaftInstance.hpp"
-#include "Distributed/raft/RaftMessage.hpp"
-#include "Distributed/raft/RaftStateMachine.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include <vector>
+#include <tinyBackend/Base/SystemLog.hpp>
+#include <tinyBackend/Base/Thread.hpp>
+#include <tinyBackend/Base/VersionNumber.hpp>
+#include <tinyBackend/Base/Time/TimeInterval.hpp>
+#include <tinyBackend/Distributed/raft/RaftInstance.hpp>
+#include <tinyBackend/Distributed/raft/RaftMessage.hpp>
+#include <tinyBackend/Distributed/raft/RaftStateMachine.hpp>
+#include <tinyBackend/Net/InetAddress.hpp>
 
 using namespace std;
 
@@ -22,30 +27,30 @@ using namespace Base;
 
 class RaftMachine final : public RaftStateMachine {
 public:
-    bool can_be_leader(const Address &sender_address, const RaftMessage &message) override {
+    bool can_be_leader(const Address& sender_address, const RaftMessage& message) override {
         return true;
     };
 
-    std::string leader_notify_message(const Address &follower_address) override {
+    std::string leader_notify_message(const Address& follower_address) override {
         char arr[sizeof(VersionNumber64)] {};
         memcpy(arr, &version, sizeof(VersionNumber64));
         return arr;
     };
 
-    bool need_synchronize_from(const Address &sender_address, const RaftMessage &message) override {
+    bool need_synchronize_from(const Address& sender_address, const RaftMessage& message) override {
         VersionNumber64 v;
         memcpy(&v, message.extra_data, message.extra_data_size);
         return version < v;
     };
 
-    std::string ready_to_receiving(const Address &sender_address, const RaftMessage &message) override {
+    std::string ready_to_receiving(const Address& sender_address, const RaftMessage& message) override {
         VersionNumber64 v;
         memcpy(&v, message.extra_data, message.extra_data_size);
         version = v;
         return "Respond Leader: " + sender_address.toIpPort();
     };
 
-    void ready_to_send_to(const Address &receiver_address, const RaftMessage &message) override {
+    void ready_to_send_to(const Address& receiver_address, const RaftMessage& message) override {
         cout << __FUNCTION__ << ": " << receiver_address.toIpPort()
             << " " << message.extra_data << endl;
     };

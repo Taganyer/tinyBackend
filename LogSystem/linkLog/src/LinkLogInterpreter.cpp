@@ -5,7 +5,7 @@
 #include <map>
 #include "Base/Detail/FileDir.hpp"
 #include "../LinkLogInterpreter.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "LogSystem/linkLog/LinkLogMessage.hpp"
 
 using namespace LogSystem;

@@ -4,7 +4,7 @@
 
 #include "../Poller.hpp"
 #include "Net/error/errors.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/functions/poll_interface.hpp"
 
 using namespace Net;

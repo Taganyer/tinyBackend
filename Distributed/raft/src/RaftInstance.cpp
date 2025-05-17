@@ -3,7 +3,7 @@
 //
 
 #include "../RaftInstance.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Distributed/raft/RaftAgent.hpp"
 #include "Distributed/raft/RaftMessage.hpp"
 

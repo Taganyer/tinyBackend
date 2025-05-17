@@ -2,7 +2,7 @@
 // Created by taganyer on 3/14/24.
 //
 
-#include "../../LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 #include "Net/Acceptor.hpp"
 #include "Net/InetAddress.hpp"
 

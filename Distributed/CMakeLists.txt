@@ -10,7 +10,7 @@ FILE(GLOB_RECURSE HEAD_LIST "*.hpp")
 # 创建静态库
 add_library(${PROJECT_NAME} STATIC ${SRC_LIST} ${HEAD_LIST})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Base PUBLIC Net PUBLIC LogSystem)
+target_link_libraries(${PROJECT_NAME} PUBLIC Base PUBLIC Net)
 
 # 设置包含目录
 target_include_directories(${PROJECT_NAME}

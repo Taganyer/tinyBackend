@@ -3,7 +3,7 @@
 //
 
 #include "../Interface.hpp"
-#include "LogSystem/SystemLog.hpp"
+#include "Base/SystemLog.hpp"
 
 #include <iconv.h>
 #include <sys/sendfile.h>
