@@ -55,7 +55,7 @@ namespace Base {
         union type {
             unsigned char data[Size] {};
 
-            struct __attribute__((__aligned__((Alignment)))) {} __align;
+            struct __attribute__((__aligned__((Alignment)))) {} _align;
         } st;
 
     };

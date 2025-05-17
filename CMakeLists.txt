@@ -13,21 +13,31 @@ set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Project root direct
 
 set(CMAKE_INSTALL_PREFIX "/home/taganyer/Code/Clion_project/tinyBackend/install" CACHE PATH "Install prefix" FORCE)
 
-#if (NOT DEFINED CMAKE_INSTALL_PREFIX)
-#    set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Install prefix" FORCE)
-#endif ()
-
 if (NOT DEFINED LOG_PATH)
     set(LOG_PATH ${CMAKE_CURRENT_SOURCE_DIR}/global_logs CACHE PATH "Project log directory" FORCE)
 endif ()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/CMake_config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/CMake_config.h")
 
+
 # 设置安装路径
 set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME} CACHE PATH "Project includes directory" FORCE)
 set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME} CACHE PATH "Project library directory" FORCE)
 set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME} CACHE PATH "Project run time directory" FORCE)
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME} CACHE PATH "Project cmake config directory" FORCE)
+
+# uninstall target
+if(NOT TARGET uninstall)
+    configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+            IMMEDIATE @ONLY)
+
+    message(TRACE "${CMAKE_BINARY_DIR}")
+
+    add_custom_target(uninstall
+            COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+endif()
 
 set(ADD_TESTING OFF CACHE BOOL "Enable testing components" FORCE)
 set(ADD_AOP ON CACHE BOOL "Enable AOP components" FORCE)
