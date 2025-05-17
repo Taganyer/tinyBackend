@@ -1,0 +1,8 @@
+foreach (filename @LIBRARY_LIST@)
+    set(config_file "@INSTALL_CONFIG_DIR@/${filename}/${filename}Config.cmake")
+    if(EXISTS "${config_file}")
+        include(${config_file})
+    else()
+        message(FATAL_ERROR "Config file not found: ${config_file}")
+    endif()
+endforeach ()

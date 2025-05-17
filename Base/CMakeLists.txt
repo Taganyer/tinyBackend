@@ -47,8 +47,8 @@ write_basic_package_version_file(
 
 install(EXPORT ${PROJECT_NAME}Targets
         FILE ${PROJECT_NAME}Targets.cmake
-        NAMESPACE TinyBackend::${PROJECT_NAME}::  # 设置嵌套命名空间
-        DESTINATION ${INSTALL_CONFIG_DIR}
+        NAMESPACE ${PROJECT_ROOT_NAME}::  # 设置嵌套命名空间
+        DESTINATION ${INSTALL_CONFIG_DIR}/${PROJECT_NAME}
 )
 
 # 配置和安装包配置文件
@@ -57,5 +57,5 @@ configure_file(${CONFIG_PREFIX}/${PROJECT_NAME}Config.cmake.in
 install(FILES
         "${CMAKE_BUILD_PREFIX}/${PROJECT_NAME}/${PROJECT_NAME}Config.cmake"
         "${CMAKE_BUILD_PREFIX}/${PROJECT_NAME}/${PROJECT_NAME}Version.cmake"
-        DESTINATION ${INSTALL_CONFIG_DIR}
+        DESTINATION ${INSTALL_CONFIG_DIR}/${PROJECT_NAME}
 )

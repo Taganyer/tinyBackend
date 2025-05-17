@@ -3,3 +3,7 @@ CMake_config.h
 cmake-build-*
 
 global_logs
+
+build
+
+install

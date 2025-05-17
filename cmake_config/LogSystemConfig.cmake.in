@@ -1,6 +1,8 @@
 include(CMakeFindDependencyMacro)
 
-find_dependency(Base REQUIRED Net REQUIRED)
+#find_dependency(Base REQUIRED)
+#find_dependency(Net REQUIRED)
 
 # Add the targets file
-include("@INSTALL_CONFIG_DIR@/@PROJECT_NAME@Targets.cmake")
+include("@INSTALL_CONFIG_DIR@/@PROJECT_NAME@/@PROJECT_NAME@Targets.cmake")
+
