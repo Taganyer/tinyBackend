@@ -1,0 +1,4 @@
+include(CMakeFindDependencyMacro)
+
+# Add the targets file
+include("@INSTALL_CONFIG_DIR@/@PROJECT_NAME@Targets.cmake")

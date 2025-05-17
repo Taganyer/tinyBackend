@@ -1,0 +1,6 @@
+include(CMakeFindDependencyMacro)
+
+find_dependency(Base REQUIRED Net REQUIRED LogSystem REQUIRED)
+
+# Add the targets file
+include("@INSTALL_CONFIG_DIR@/@PROJECT_NAME@Targets.cmake")

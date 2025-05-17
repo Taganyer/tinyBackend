@@ -9,15 +9,19 @@ set(CMAKE_CXX_STANDARD 17)
 # 设置编译器优化级别
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
 
-set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Project root directory")
+set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR} CACHE PATH "Project root directory" FORCE)
 
-set(CMAKE_INSTALL_PREFIX "/home/taganyer/Code/Clion_project/tinyBackend/install" CACHE PATH "Install prefix" FORCE)
+set(CONFIG_PREFIX "${PROJECT_ROOT_DIR}/cmake_config" CACHE PATH "config prefix" FORCE)
+
+set(CMAKE_BUILD_PREFIX "${PROJECT_ROOT_DIR}/build" CACHE PATH "build prefix" FORCE)
+
+set(CMAKE_INSTALL_PREFIX "${PROJECT_ROOT_DIR}/install" CACHE PATH "Install prefix" FORCE)
 
 if (NOT DEFINED LOG_PATH)
-    set(LOG_PATH ${CMAKE_CURRENT_SOURCE_DIR}/global_logs CACHE PATH "Project log directory" FORCE)
+    set(LOG_PATH ${PROJECT_ROOT_DIR}/global_logs CACHE PATH "Project log directory" FORCE)
 endif ()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/CMake_config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/CMake_config.h")
+configure_file("${CONFIG_PREFIX}/CMake_config.h.in" "${PROJECT_ROOT_DIR}/CMake_config.h")
 
 
 # 设置安装路径
@@ -29,8 +33,8 @@ set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_PREFIX}/cmake/${PROJECT_NAME} CACHE PATH 
 # uninstall target
 if(NOT TARGET uninstall)
     configure_file(
-            "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+            "${CONFIG_PREFIX}/cmake_uninstall.cmake.in"
+            "${CMAKE_BUILD_PREFIX}/cmake_uninstall.cmake"
             IMMEDIATE @ONLY)
 
     message(TRACE "${CMAKE_BINARY_DIR}")
@@ -68,10 +72,12 @@ set(Net_VERSION 1.0 CACHE STRING "Net Version")
 add_subdirectory(Net)
 
 if (ADD_AOP)
+    set(AOP_VERSION 1.0 CACHE STRING "AOP Version")
     add_subdirectory(AOP)
 endif ()
 
 if (ADD_DISTRIBUTED)
+    set(Distributed_VERSION 1.0 CACHE STRING "Distributed Version")
     add_subdirectory(Distributed)
 endif ()
 
