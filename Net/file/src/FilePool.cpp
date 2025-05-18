@@ -4,7 +4,7 @@
 
 #include "../FilePool.hpp"
 #include "tinyBackend/Base/Thread.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/functions/Interface.hpp"
 
 
@@ -22,7 +22,7 @@ FilePool::~FilePool() {
     if (running()) {
         shutdown();
         Lock l(_mutex);
-        _con.wait(l, [this] { return shut; });
+        _con.wait(l, [this] { return shut.load(); });
     }
 }
 

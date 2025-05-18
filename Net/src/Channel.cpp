@@ -3,7 +3,8 @@
 //
 
 #include "../Channel.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/error/errors.hpp"
 
 using namespace Base;

@@ -3,7 +3,7 @@
 //
 
 #include "../RaftAgent.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Distributed/raft/RaftMessage.hpp"
 #include "tinyBackend/Distributed/raft/RaftInstance.hpp"
 

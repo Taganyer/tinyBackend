@@ -4,7 +4,7 @@
 
 #include "../LinkLogCenter.hpp"
 #include "tinyBackend/Net/InetAddress.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/TcpMessageAgent.hpp"
 #include "tinyBackend/Net/error/error_mark.hpp"
 

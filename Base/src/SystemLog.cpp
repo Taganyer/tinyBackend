@@ -114,10 +114,3 @@ void SystemLog::LogScheduler::force_invoke() {
     write_to_file(_buffer);
     _buffer->clear();
 }
-
-
-#ifdef GLOBAL_LOG
-
-SystemLog Global_Logger(Global_ScheduledThread, Global_BufferPool, GLOBAL_LOG_PATH, TRACE);
-
-#endif

@@ -2,54 +2,77 @@
 // Created by taganyer on 24-10-29.
 //
 
-#ifndef LOGSYSTEM_GLOBALOBJECT_HPP
-#define LOGSYSTEM_GLOBALOBJECT_HPP
+#pragma once
 
-#ifdef LOGSYSTEM_GLOBALOBJECT_HPP
+#include "tinyBackend/CMake_config.h"
+#include "SystemLog.hpp"
 
+#ifdef GLOBAL_OBJETS
 
-/// 解除注释开启全局 BufferPool 对象
-#define GLOBAL_BUFFER_POOL
-#ifdef GLOBAL_BUFFER_POOL
-#include "tinyBackend/Base/Buffer/BufferPool.hpp"
+inline Base::BufferPool Global_BufferPool(Global_BufferPool_SIZE);
 
-inline Base::BufferPool Global_BufferPool(1 << 28);
-/// 解除注释开启全局 ScheduledThread 对象
-#define GLOBAL_SCHEDULED_THREAD
+constexpr Base::TimeInterval Global_ScheduledThread_FlushTime(Base::operator ""_ms(Global_ScheduledThread_FlushTime_MS));
 
-#endif
-
-#ifdef GLOBAL_SCHEDULED_THREAD
-#include "tinyBackend/Base/ScheduledThread.hpp"
-
-constexpr Base::TimeInterval Global_ScheduledThread_FlushTime(Base::operator ""_s(1));
 inline Base::ScheduledThread Global_ScheduledThread(Global_ScheduledThread_FlushTime);
-/// 解除注释开启全局日志
-#define GLOBAL_LOG
 
-#endif
-
+inline LogSystem::SystemLog Global_Logger(Global_ScheduledThread, Global_BufferPool, GLOBAL_LOG_PATH, LogSystem::Global_Logger_RANK);
 
 /// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define TRACE(val) if ((val).get_rank() <= LogSystem::LogRank::TRACE) \
-                        ((val).stream(LogSystem::LogRank::TRACE))
+#define G_TRACE TRACE(Global_Logger)
 
-#define DEBUG(val) if ((val).get_rank() <= LogSystem::LogRank::DEBUG) \
-                        ((val).stream(LogSystem::LogRank::DEBUG))
+#define G_DEBUG DEBUG(Global_Logger)
 
-#define INFO(val) if ((val).get_rank() <= LogSystem::LogRank::INFO) \
-                        ((val).stream(LogSystem::LogRank::INFO))
+#define G_INFO INFO(Global_Logger)
 
-#define WARN(val) if ((val).get_rank() <= LogSystem::LogRank::WARN) \
-                        ((val).stream(LogSystem::LogRank::WARN))
+#define G_WARN WARN(Global_Logger)
 
-#define ERROR(val) if ((val).get_rank() <= LogSystem::LogRank::ERROR) \
-                        ((val).stream(LogSystem::LogRank::ERROR))
+#define G_ERROR ERROR(Global_Logger)
 
-#define FATAL(val) if ((val).get_rank() <= LogSystem::LogRank::FATAL) \
-                        ((val).stream(LogSystem::LogRank::FATAL))
+#define G_FATAL FATAL(Global_Logger)
 
+#else
+
+class Empty {
+public:
+#define Empty_fun(type) constexpr Empty &operator<<(type) { return *this; };
+
+    Empty_fun(const std::string &)
+
+    Empty_fun(const std::string_view &)
+
+    Empty_fun(char)
+
+    Empty_fun(const char *)
+
+    Empty_fun(int)
+
+    Empty_fun(long)
+
+    Empty_fun(long long)
+
+    Empty_fun(unsigned)
+
+    Empty_fun(unsigned long)
+
+    Empty_fun(unsigned long long)
+
+    Empty_fun(double)
+
+#undef Empty_fun
+
+};
+
+/// FIXME 可能会存在 else 悬挂问题，使用时注意
+#define G_TRACE if (false) (Empty())
+
+#define G_DEBUG if (false) (Empty())
+
+#define G_INFO if (false) (Empty())
+
+#define G_WARN if (false) (Empty())
+
+#define G_ERROR if (false) (Empty())
+
+#define G_FATAL if (false) (Empty())
 
 #endif
-
-#endif //LOGSYSTEM_GLOBALOBJECT_HPP

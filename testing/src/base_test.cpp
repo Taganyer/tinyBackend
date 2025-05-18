@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <tinyBackend/Base/LinkedThreadPool.hpp>
-#include <tinyBackend/Base/SystemLog.hpp>
+#include <tinyBackend/Base/GlobalObject.hpp>
 #include <tinyBackend/Base/Thread.hpp>
 #include <tinyBackend/Base/ThreadPool.hpp>
 #include <tinyBackend/Base/BPTree_impls/BPTree.hpp>
@@ -366,7 +366,7 @@ namespace Test {
 
     void BPTree_test() {
         BPTree<BPTree_impl<int, int>> tree(Global_ScheduledThread,
-                                           PROJECT_GLOBAL_LOG_PATH "/table_int_int",
+                                           GLOBAL_LOG_PATH "/table_int_int",
                                            1 << 20);
         BPTree_insert_test(tree);
         BPTree_erase_test(tree);

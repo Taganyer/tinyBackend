@@ -16,8 +16,8 @@ int main() {
     // InetAddress_test();
     // AOP_test();
     // BlockFile_test();
-    // log_test();
-    BPTree_test();
+    log_test();
+    // BPTree_test();
     // ThreadPool_test();
     // LinkedThreadTest();
     // UDP_test();

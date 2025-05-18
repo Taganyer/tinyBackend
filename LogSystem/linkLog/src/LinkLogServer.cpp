@@ -3,7 +3,7 @@
 //
 
 #include "../LinkLogServer.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/monitors/Poller.hpp"
 #include "tinyBackend/Net/functions/Interface.hpp"
 #include "tinyBackend/LogSystem/linkLog/LinkLogMessage.hpp"

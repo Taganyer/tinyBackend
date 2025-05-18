@@ -8,7 +8,7 @@
 #include <iconv.h>
 #include <sys/sendfile.h>
 
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 
 using namespace Net;
 

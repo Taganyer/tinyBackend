@@ -4,7 +4,7 @@
 
 #include "../UDP_Communicator.hpp"
 #include "tinyBackend/Net/error/errors.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/functions/Interface.hpp"
 
 using namespace Base;

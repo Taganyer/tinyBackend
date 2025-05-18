@@ -3,7 +3,7 @@
 //
 
 #include "../Poller.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/error/errors.hpp"
 #include "tinyBackend/Net/functions/poll_interface.hpp"
 

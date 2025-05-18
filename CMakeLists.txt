@@ -6,8 +6,10 @@ project(tinyBackend)
 # C++ 语言标准
 set(CMAKE_CXX_STANDARD 17)
 
-# 设置编译器优化级别
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
+add_compile_options(
+        $<$<CONFIG:Debug>:-g>    # 调试模式添加调试符号
+        $<$<CONFIG:Release>:-O3> # 发布模式添加优化
+)
 
 set(PROJECT_ROOT_NAME ${PROJECT_NAME} CACHE STRING "Project root name" FORCE)
 
@@ -31,14 +33,13 @@ set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME} CACHE PATH "Proj
 set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME} CACHE PATH "Project run time directory" FORCE)
 set(INSTALL_CONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake/${PROJECT_NAME} CACHE PATH "Project cmake config directory" FORCE)
 
-
 install(FILES
         ${PROJECT_ROOT_DIR}/CMake_config.h
         DESTINATION ${INSTALL_INCLUDE_DIR}
 )
 
 # uninstall target
-if(NOT TARGET uninstall)
+if (NOT TARGET uninstall)
     configure_file(
             "${CONFIG_PREFIX}/cmake_uninstall.cmake.in"
             "${CMAKE_BUILD_PREFIX}/cmake_uninstall.cmake"
@@ -48,26 +49,28 @@ if(NOT TARGET uninstall)
 
     add_custom_target(uninstall
             COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif()
+endif ()
 
 
 set(ADD_AOP ON CACHE BOOL "Enable AOP components" FORCE)
 set(ADD_LOGSYSTEM ON CACHE BOOL "Enable LogSystem components" FORCE)
 set(ADD_DISTRIBUTED ON CACHE BOOL "Enable distributed components" FORCE)
 
-if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.12)
-    cmake_parse_arguments(
-            ARG "" "" "ADD_LOGSYSTEM;ADD_AOP;ADD_DISTRIBUTED" ${CMAKE_ARGV}
-    )
-    if (ARG_ADD_LOGSYSTEM)
-        set(ADD_LOGSYSTEM ${ARG_ADD_LOGSYSTEM} FORCE)
-    endif ()
-    if (ARG_ADD_AOP)
-        set(ADD_AOP ${ARG_ADD_AOP} FORCE)
-    endif ()
-    if (ARG_ADD_DISTRIBUTED)
-        set(ADD_DISTRIBUTED ${ARG_ADD_DISTRIBUTED} FORCE)
-    endif ()
+cmake_parse_arguments(
+        ARG
+        ""
+        ""
+        "ADD_LOGSYSTEM;ADD_AOP;ADD_DISTRIBUTED"
+        ${CMAKE_ARGV}
+)
+if (ARG_ADD_LOGSYSTEM)
+    set(ADD_LOGSYSTEM ${ARG_ADD_LOGSYSTEM} FORCE)
+endif ()
+if (ARG_ADD_AOP)
+    set(ADD_AOP ${ARG_ADD_AOP} FORCE)
+endif ()
+if (ARG_ADD_DISTRIBUTED)
+    set(ADD_DISTRIBUTED ${ARG_ADD_DISTRIBUTED} FORCE)
 endif ()
 
 set(LIBRARY_LIST)

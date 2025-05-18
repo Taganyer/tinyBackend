@@ -6,7 +6,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <vector>
-#include <tinyBackend/Base/SystemLog.hpp>
+#include <tinyBackend/Base/GlobalObject.hpp>
 #include <tinyBackend/Base/Thread.hpp>
 #include <tinyBackend/Base/VersionNumber.hpp>
 #include <tinyBackend/Base/Time/TimeInterval.hpp>

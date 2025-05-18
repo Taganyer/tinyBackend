@@ -5,7 +5,7 @@
 #include "../Socket.hpp"
 #include <fcntl.h>
 #include <netinet/tcp.h>
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/InetAddress.hpp"
 #include "tinyBackend/Net/error/errors.hpp"
 #include "tinyBackend/Net/functions/Interface.hpp"

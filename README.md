@@ -43,14 +43,20 @@ C++17 实现，功能丰富的后端组件库。
 ## 安装
 可指定 CMAKE_INSTALL_PREFIX 改变安装路径（默认 /usr/local/）
 
+可指定 LOG_PATH 改变日志路径（默认 ${PROJECT_ROOT_DIR}/global_logs）
+
 可定义 -DADD_AOP=OFF -DADD_LOGSYSTEM=OFF -DADD_DISTRIBUTED=OFF 关闭这三个部分的编译（默认编译打开）
-```shell
-cmake .
-# cmake -DCMAKE_INSTALL_PREFIX=/path/to/install ...
+````shell
+mkdir build
+cd build
+cmake ..
+# 可选项
+# cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/install -DADD_AOP=OFF -DADD_LOGSYSTEM=OFF -DADD_DISTRIBUTED=OFF
 sudo make install
 # sudo make uninstall
-```
+````
 ## 使用（以CMake为例）
+可以编辑 cmake_config/CMake_config.h.in 文件改变 GlobalObjects 的配置。
 ````CMake
 find_package(tinyBackend REQUIRED)
 

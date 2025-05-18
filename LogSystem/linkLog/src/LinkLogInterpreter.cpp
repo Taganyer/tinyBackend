@@ -4,7 +4,7 @@
 
 #include "../LinkLogInterpreter.hpp"
 #include <map>
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Base/Detail/FileDir.hpp"
 #include "tinyBackend/LogSystem/linkLog/LinkLogMessage.hpp"
 

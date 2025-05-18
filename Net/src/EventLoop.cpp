@@ -4,7 +4,7 @@
 
 #include "../EventLoop.hpp"
 
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 
 using namespace Net;
 

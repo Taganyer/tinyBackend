@@ -3,14 +3,12 @@
 //
 
 #include "../logSystem_test.hpp"
+
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <tinyBackend/CMake_config.h>
-#include <tinyBackend/Base/File.hpp>
-#include <tinyBackend/Base/SystemLog.hpp>
+#include <tinyBackend/Base/GlobalObject.hpp>
 #include <tinyBackend/Base/Thread.hpp>
-#include <tinyBackend/Base/Time/Time.hpp>
 #include <tinyBackend/Base/Time/TimeInterval.hpp>
 #include <tinyBackend/LogSystem/linkLog/Identification.hpp>
 #include <tinyBackend/LogSystem/linkLog/LinkLogCenter.hpp>
@@ -29,7 +27,7 @@ using namespace LogSystem;
 namespace Test {
 
     void log_test() {
-#ifdef GLOBAL_LOG
+#ifdef GLOBAL_OBJETS
         string file(PROJECT_ROOT_DIR "/resource/poem.txt");
         vector<Thread> pool;
         SystemLog log1(Global_ScheduledThread, Global_BufferPool, GLOBAL_LOG_PATH, INFO);
@@ -287,7 +285,7 @@ namespace Test {
         vector<Thread> threads;
 
 #ifdef USE_CENTER
-        string center_dic(PROJECT_GLOBAL_LOG_PATH "/link_log_center");
+        string center_dic(GLOBAL_LOG_PATH "/link_log_center");
         shared_ptr<CenterHandler> handler = make_shared<CenterHandler>();
         LinkLogCenter center(handler, center_dic, Global_ScheduledThread);
 
@@ -335,7 +333,7 @@ namespace Test {
 
     static void link_log_server(const InetAddress& address, int index) {
         shared_ptr<ServerHandler> handler = make_shared<ServerHandler>();
-        string server_dic(PROJECT_GLOBAL_LOG_PATH "/link_log_server");
+        string server_dic(GLOBAL_LOG_PATH "/link_log_server");
         server_dic.append(to_string(index));
         LinkLogServer server(address, handler, server_dic);
 #ifdef USE_CENTER

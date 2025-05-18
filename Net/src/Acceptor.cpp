@@ -3,7 +3,7 @@
 //
 
 #include "tinyBackend/Net/Acceptor.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/InetAddress.hpp"
 
 using namespace Net;

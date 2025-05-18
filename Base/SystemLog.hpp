@@ -8,7 +8,6 @@
 #ifdef LOGSYSTEM_SYSTEMLOG_HPP
 
 #include "LogRank.hpp"
-#include "GlobalObject.hpp"
 #include "tinyBackend/Base/Detail/oFile.hpp"
 #include "tinyBackend/Base/ScheduledThread.hpp"
 #include "tinyBackend/Base/Buffer/BufferPool.hpp"
@@ -168,93 +167,18 @@ namespace LogSystem {
 
 }
 
-
-#ifdef GLOBAL_SCHEDULED_THREAD
-#ifdef GLOBAL_BUFFER_POOL
-
-#define GLOBAL_LOG
-
-#endif
-#endif
-
-#ifdef GLOBAL_LOG
-
-#include "../CMake_config.h"
-
-/// 设置全局日志文件夹路径
-constexpr char GLOBAL_LOG_PATH[] = PROJECT_GLOBAL_LOG_PATH;
-
-static_assert(sizeof(GLOBAL_LOG_PATH) > 1, "GLOBAL_LOG_PATH cannot be empty");
-
-extern LogSystem::SystemLog Global_Logger;
-
-#endif
-
-
-#ifdef GLOBAL_LOG
-
 /// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define G_TRACE TRACE(Global_Logger)
+#define TRACE(val) if ((val).get_rank() <= LogSystem::LogRank::TRACE) ((val).stream(LogSystem::LogRank::TRACE))
 
-#define G_DEBUG DEBUG(Global_Logger)
+#define DEBUG(val) if ((val).get_rank() <= LogSystem::LogRank::DEBUG) ((val).stream(LogSystem::LogRank::DEBUG))
 
-#define G_INFO INFO(Global_Logger)
+#define INFO(val) if ((val).get_rank() <= LogSystem::LogRank::INFO) ((val).stream(LogSystem::LogRank::INFO))
 
-#define G_WARN WARN(Global_Logger)
+#define WARN(val) if ((val).get_rank() <= LogSystem::LogRank::WARN) ((val).stream(LogSystem::LogRank::WARN))
 
-#define G_ERROR ERROR(Global_Logger)
+#define ERROR(val) if ((val).get_rank() <= LogSystem::LogRank::ERROR) ((val).stream(LogSystem::LogRank::ERROR))
 
-#define G_FATAL FATAL(Global_Logger)
-
-#else
-
-class Empty {
-public:
-#define Empty_fun(type) Empty &operator<<(type) { \
-        return *this;                             \
-};
-
-    Empty_fun(const std::string &)
-
-    Empty_fun(const std::string_view &)
-
-    Empty_fun(char)
-
-    Empty_fun(const char *)
-
-    Empty_fun(int)
-
-    Empty_fun(long)
-
-    Empty_fun(long long)
-
-    Empty_fun(unsigned)
-
-    Empty_fun(unsigned long)
-
-    Empty_fun(unsigned long long)
-
-    Empty_fun(double)
-
-#undef Empty_fun
-
-};
-
-/// FIXME 可能会存在 else 悬挂问题，使用时注意
-#define G_TRACE if (false) (Empty())
-
-#define G_DEBUG if (false) (Empty())
-
-#define G_INFO if (false) (Empty())
-
-#define G_WARN if (false) (Empty())
-
-#define G_ERROR if (false) (Empty())
-
-#define G_FATAL if (false) (Empty())
-
-#endif
-
+#define FATAL(val) if ((val).get_rank() <= LogSystem::LogRank::FATAL) ((val).stream(LogSystem::LogRank::FATAL))
 
 #endif
 

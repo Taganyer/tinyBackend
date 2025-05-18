@@ -3,7 +3,7 @@
 //
 
 #include "../Reactor.hpp"
-#include "tinyBackend/Base/SystemLog.hpp"
+#include "tinyBackend/Base/GlobalObject.hpp"
 #include "tinyBackend/Net/EventLoop.hpp"
 #include "tinyBackend/Net/monitors/EPoller.hpp"
 #include "tinyBackend/Net/monitors/Poller.hpp"

@@ -6,6 +6,7 @@
 #define NET_FILEPOOL_HPP
 
 
+#include <atomic>
 #include <map>
 #include <functional>
 #include "tinyBackend/Base/Detail/oFile.hpp"
@@ -45,7 +46,7 @@ namespace Net {
 
         void shutdown();
 
-        [[nodiscard]] bool running() const { return run; };
+        [[nodiscard]] bool running() const { return run.load(); };
 
     private:
         struct Data {
@@ -66,7 +67,7 @@ namespace Net {
 
         std::vector<std::pair<int, Data>> _prepare;
 
-        volatile bool run = false, shut = false;
+        std::atomic<bool> run = false, shut = false;
 
         void thread_start();
 
