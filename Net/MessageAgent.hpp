@@ -41,7 +41,7 @@ namespace Net {
 
         /// 此函数的主要目的是警告并检测可能存在的不合理的多线程访问情况。
         void assert_thread_safe() const {
-            assert(Base::CurrentThread::tid() == _running_thread);
+            assert(Base::CurrentThread::tid() == _running_thread || _running_thread == 0);
         };
 
         [[nodiscard]] virtual const Base::InputBuffer& input() const = 0;

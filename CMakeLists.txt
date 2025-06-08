@@ -6,6 +6,12 @@ project(tinyBackend)
 # C++ 语言标准
 set(CMAKE_CXX_STANDARD 17)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "选择构建类型: Debug, Release, RelWithDebInfo, MinSizeRel" FORCE)
+    # 为CMake GUI添加构建类型选项
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+endif()
+
 add_compile_options(
         $<$<CONFIG:Debug>:-g>    # 调试模式添加调试符号
         $<$<CONFIG:Release>:-O3> # 发布模式添加优化

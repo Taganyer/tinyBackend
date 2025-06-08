@@ -76,6 +76,7 @@ void LinkLogServer::accept_center_link(Poller& poller) {
     poller.remove_fd(_acceptor.socket().fd(), false);
     _handler->center_online(address);
     _center.reset_socket(std::move(socket));
+    _center.set_running_thread();
     G_INFO << "Accepting center link: " << address.toIpPort();
 }
 
@@ -156,6 +157,7 @@ void LinkLogServer::init_thread(Poller& poller, std::vector<BufferIter>& flush_o
     event.set_error();
     poller.set_tid(CurrentThread::tid());
     poller.add_fd(event);
+    _receiver.set_running_thread();
     event.fd = _acceptor.socket().fd();
     poller.add_fd(event);
 

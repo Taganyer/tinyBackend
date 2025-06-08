@@ -21,6 +21,25 @@
 using namespace std;
 using namespace Base;
 
+class CurrentThreadGlobalObject {
+public:
+    explicit CurrentThreadGlobalObject(int a) : a(a) {};
+
+    virtual ~CurrentThreadGlobalObject() {
+        ++a;
+        print();
+    };
+
+    void print() const {
+        cout << __PRETTY_FUNCTION__ << " " << a << endl;
+    }
+
+    int a;
+};
+
+/// 这里为了测试全局变量是否会在CurrentThread::terminal_function调用之前销毁。
+static CurrentThreadGlobalObject test(1);
+
 namespace Test {
 
     static void exit_test_fun() {
@@ -38,6 +57,7 @@ namespace Test {
         t.start();
 
         CurrentThread::set_global_terminal_function([] (CurrentThread::ExceptionPtr) {
+            test.print();
             std::cout << "global" << std::endl;
         });
         cout << CurrentThread::set_exit_function(exit_test_fun) << endl;
