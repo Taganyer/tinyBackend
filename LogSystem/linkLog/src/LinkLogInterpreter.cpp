@@ -337,7 +337,9 @@ LinkLogStorage::get_query_set(const LinkServiceID& id, const NodeFilter& filter)
 }
 
 void LinkLogStorage::destroy_query_set(void *set) {
+#ifdef GLOBAL_LOGGER
     Global_Logger.flush();
+#endif
     delete static_cast<QuerySet *>(set);
 }
 

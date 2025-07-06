@@ -35,16 +35,25 @@ LinkLogServer::LinkLogServer(const Address& listen_address,
     _encoder(std::move(dictionary_path)) {
     assert(_handler);
     if (!create_local_link()) {
+#ifdef GLOBAL_LOGGER
         Global_Logger.flush();
+#endif
         CurrentThread::emergency_exit("LinkLogServer: failed to create link log");
     }
 }
 
 LinkLogServer::~LinkLogServer() {
     LinkLogMessage message(LinkLogMessage::ShutDownServer);
+
+#ifdef GLOBAL_LOGGER
     CHECK(safe_notify(message),
           Global_Logger.flush();
           CurrentThread::emergency_exit("LinkLogServer::close failed."))
+#else
+    CHECK(safe_notify(message),
+          CurrentThread::emergency_exit("LinkLogServer::close failed."))
+#endif
+
     _thread.join();
 }
 

@@ -15,6 +15,10 @@ constexpr Base::TimeInterval Global_ScheduledThread_FlushTime(Base::operator ""_
 
 inline Base::ScheduledThread Global_ScheduledThread(Global_ScheduledThread_FlushTime);
 
+#endif
+
+#if defined(GLOBAL_OBJETS) && defined(GLOBAL_LOGGER)
+
 inline LogSystem::SystemLog Global_Logger(Global_ScheduledThread, Global_BufferPool, GLOBAL_LOG_PATH, LogSystem::Global_Logger_RANK);
 
 /// FIXME 可能会存在 else 悬挂问题，使用时注意

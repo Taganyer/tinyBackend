@@ -5,6 +5,9 @@
 /// 开启全局 BufferPool ScheduledThread SystemLog
 #define GLOBAL_OBJETS
 
+/// 开启全局 Global_Logger
+// #define GLOBAL_LOGGER
+
 /// 全局 BufferPool 大小
 #define Global_BufferPool_SIZE 1 << 28
 

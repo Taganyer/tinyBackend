@@ -357,7 +357,7 @@ namespace Test {
                 header.fork(fork_node2, 1_s);
                 sleep(2);
                 LinkLogger fork2(TRACE, header, fork_node2, 1_s);
-                INFO(fork1) << "fork2 log: " << to_string(j + 1);
+                INFO(fork2) << "fork2 log: " << to_string(j + 1);
 
                 auto follow_node = get_node_id(index, j + 2);
                 fork1.follow(follow_node, 1_s);

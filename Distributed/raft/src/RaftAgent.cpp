@@ -374,7 +374,9 @@ void RaftAgent::assert_split_brain(RaftInstance& instance,
     if (unlikely(message.version < instance._transmitter.version
         || (message.version == instance._transmitter.version
             && instance._state == RaftInstance::Leader))) {
+#ifdef GLOBAL_LOGGER
         Global_Logger.flush();
+#endif
         CurrentThread::emergency_exit(instance.name_state() + ": Split-brain happen between "
             + instance._leader.toIpPort() + " and " + address.toIpPort()
             + " message type: " + RaftMessage::get_TypeName(message.type));

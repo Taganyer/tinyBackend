@@ -158,7 +158,9 @@ uint64 LinkLogCenter::replay_history(LinkLogReplayHandler& handler, const char *
                     break;
                 default:
                     ASSERT_WRONG_TYPE(ot)
+#ifdef GLOBAL_LOGGER
                     Global_Logger.flush();
+#endif
                     CurrentThread::emergency_exit(__PRETTY_FUNCTION__);
             }
             total_read += read;
@@ -197,7 +199,9 @@ void LinkLogCenter::handle_read(MessageAgent& agent) {
                 break;
             default:
                 ASSERT_WRONG_TYPE(ot)
+#ifdef GLOBAL_LOGGER
                 Global_Logger.flush();
+#endif
                 CurrentThread::emergency_exit(__PRETTY_FUNCTION__);
         }
         total_read += read;
